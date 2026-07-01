@@ -1,0 +1,50 @@
+import type { ContentRecord, StoredUser, TagType } from '@veneer/core';
+
+//The raw shape of a content row as it comes back from MySQL.
+interface ContentRow {
+  tag: string;
+  type: string;
+  body: string;
+  media_url: string | null;
+  updated_at: Date | string | null;
+  updated_by: string | null;
+}
+
+//Reads a tag type value safely, falling back to plain text.
+const toTagType = (value: string): TagType =>
+  value === 'rich' ? 'rich' : value === 'media' ? 'media' : 'plain';
+
+//The raw shape of a user row as it comes back from MySQL.
+interface UserRow {
+  id: number | string;
+  email: string;
+  password_hash: string;
+  role: string;
+}
+
+//Turns a database timestamp, which may be a Date or a string, into an iso string.
+const toIso = (value: Date | string | null): string | null => {
+  if (value === null) {
+    return null;
+  }
+
+  return value instanceof Date ? value.toISOString() : String(value);
+};
+
+//Turns a database content row into the camel case shape the rest of Veneer uses.
+export const mapContentRow = (row: ContentRow): ContentRecord => ({
+  tag: row.tag,
+  type: toTagType(row.type),
+  body: row.body,
+  mediaUrl: row.media_url,
+  updatedAt: toIso(row.updated_at),
+  updatedBy: row.updated_by,
+});
+
+//Turns a database user row into the stored user shape, including the password hash.
+export const mapUserRow = (row: UserRow): StoredUser => ({
+  id: String(row.id),
+  email: row.email,
+  passwordHash: row.password_hash,
+  role: row.role === 'superuser' ? 'superuser' : 'editor',
+});

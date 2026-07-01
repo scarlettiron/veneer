@@ -1,0 +1,709 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+
+import {
+  ACTIONS,
+  DEFAULT_API_BASE_PATH,
+  type AuthResult,
+  type AuthUser,
+  type ContentRecord,
+} from '@veneer/core';
+
+import { VeneerContext, type VeneerContextValue } from '../context/veneer-context.js';
+import { createApiClient } from '../utilities/api-client.js';
+import { readStoredToken, writeStoredToken } from '../utilities/token-storage.js';
+import { findVeneerElements, veneerTagOf } from '../dom/scanner.js';
+import { DefaultLoader } from './default-loader.js';
+import { ToastHost, type Toast } from './toast-host.js';
+import { ConfirmDialog } from './confirm-dialog.js';
+import { TagEditorModal } from './tag-editor-modal.js';
+
+//The details of an open confirm popup, including how to answer it.
+interface ConfirmState {
+  message: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  resolve: (confirmed: boolean) => void;
+}
+
+//The shape returned by the getContent action.
+interface GetContentResponse {
+  content: ContentRecord[];
+}
+
+//The props for the provider that wraps the host app.
+export interface VeneerProviderProps {
+  children: ReactNode;
+
+  //Where the backend handler is mounted. Defaults to /api/veneer.
+  apiBasePath?: string;
+
+  //When true, editing happens in place on the page. When false, editing happens
+  //in a popup form that lists every tag. Defaults to true.
+  editInView?: boolean;
+
+  //A custom loading component to show while content loads.
+  loadingComponent?: ReactNode;
+}
+
+//The provider holds all of the shared state for Veneer.
+//It crawls the page for data-veneer attributes, shows the saved content to
+//everyone, tracks the signed in user, and turns on editing for editors.
+export const VeneerProvider = ({
+  children,
+  apiBasePath = DEFAULT_API_BASE_PATH,
+  editInView = true,
+  loadingComponent,
+}: VeneerProviderProps): ReactElement => {
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [contentByTag, setContentByTag] = useState<Record<string, ContentRecord | null>>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+
+  const canEdit = user !== null;
+
+  //These refs hold the latest values so the crawler helpers, which stay stable
+  //for the life of the provider, can read current state without being rebuilt.
+  const tokenRef = useRef<string | null>(null);
+  const contentRef = useRef<Record<string, ContentRecord | null>>({});
+  const isEditingRef = useRef(false);
+  const canEditRef = useRef(false);
+  const editInViewRef = useRef(true);
+
+  tokenRef.current = token;
+  contentRef.current = contentByTag;
+  isEditingRef.current = isEditing;
+  canEditRef.current = canEdit;
+  editInViewRef.current = editInView;
+
+  //Tags we have already asked for, so we never request the same one twice.
+  const requestedRef = useRef<Set<string>>(new Set());
+
+  //Tags waiting to be fetched in the next batch.
+  const pendingRef = useRef<Set<string>>(new Set());
+
+  //The registry of which elements belong to each tag.
+  //When content arrives we update just these elements, no page scan needed.
+  const elementsByTagRef = useRef<Map<string, Set<HTMLElement>>>(new Map());
+
+  //Elements the crawler has made editable, with their input handlers.
+  const boundRef = useRef<Map<HTMLElement, () => void>>(new Map());
+
+  //Which tag each editable element belongs to, for quick lookups on save.
+  const tagByElementRef = useRef<Map<HTMLElement, string>>(new Map());
+
+  //The text each element had before editing, so we can put it back on discard.
+  const originalTextRef = useRef<Map<HTMLElement, string>>(new Map());
+
+  //Elements that have been changed but not saved yet.
+  const dirtyRef = useRef<Set<HTMLElement>>(new Set());
+
+  //A counter used to give each popup message a unique id.
+  const toastIdRef = useRef(0);
+
+  //A pending prune timer, so many removals collapse into one cleanup.
+  const pruneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  //The api client is stable for the life of the provider.
+  const apiRef = useRef(
+    createApiClient({ basePath: apiBasePath, getToken: () => tokenRef.current }),
+  );
+
+  //Loads a batch of pending tags in a single request.
+  const flushPendingTags = useCallback(async (): Promise<void> => {
+    const tags = Array.from(pendingRef.current);
+    pendingRef.current.clear();
+
+    if (tags.length === 0) {
+      return;
+    }
+
+    try {
+      const result = await apiRef.current.request<GetContentResponse>(ACTIONS.GET_CONTENT, {
+        tags,
+      });
+
+      const byTag = new Map(result.content.map((record) => [record.tag, record]));
+
+      setContentByTag((previous) => {
+        const next = { ...previous };
+
+        for (const tag of tags) {
+          //A tag with no record is stored as null so we stop asking for it.
+          next[tag] = byTag.get(tag) ?? null;
+        }
+
+        return next;
+      });
+    } catch {
+      //A failed load should not crash the page, so we quietly leave the tags unset.
+    }
+  }, []);
+
+  //Asks the provider to load these tags if it has not already.
+  const requestTags = useCallback(
+    (tags: string[]): void => {
+      let hasNew = false;
+
+      for (const tag of tags) {
+        if (requestedRef.current.has(tag)) {
+          continue;
+        }
+
+        requestedRef.current.add(tag);
+        pendingRef.current.add(tag);
+        hasNew = true;
+      }
+
+      if (hasNew) {
+        //Wait a tick so several elements can be batched into one request.
+        setTimeout(() => {
+          void flushPendingTags();
+        }, 0);
+      }
+    },
+    [flushPendingTags],
+  );
+
+  const getContent = useCallback(
+    (tag: string): ContentRecord | null | undefined => contentByTag[tag],
+    [contentByTag],
+  );
+
+  const saveContent = useCallback(
+    async (tag: string, body: string, mediaUrl?: string | null): Promise<void> => {
+      const result = await apiRef.current.request<{ content: ContentRecord }>(
+        ACTIONS.UPDATE_CONTENT,
+        { tag, body, mediaUrl: mediaUrl ?? null },
+      );
+
+      setContentByTag((previous) => ({ ...previous, [tag]: result.content }));
+    },
+    [],
+  );
+
+  //Creates a brand new tag, then optionally saves a starting body for it.
+  //The server only allows a superuser to reach this.
+  const createTag = useCallback(
+    async (tag: string, body?: string): Promise<void> => {
+      const result = await apiRef.current.request<{ content: ContentRecord }>(
+        ACTIONS.CREATE_TAG,
+        { tag },
+      );
+
+      //Remember it so the crawler does not fetch it again, and cache the row.
+      requestedRef.current.add(tag);
+      setContentByTag((previous) => ({ ...previous, [tag]: result.content }));
+
+      if (body && body.trim() !== '') {
+        await saveContent(tag, body);
+      }
+    },
+    [saveContent],
+  );
+
+  //Deletes a tag and its content. The server only allows a superuser to do this.
+  const deleteTag = useCallback(async (tag: string): Promise<void> => {
+    await apiRef.current.request(ACTIONS.DELETE_TAG, { tag });
+
+    //Mark the tag as having no content now. Elements keep their last text until
+    //the page reloads, at which point the crawler shows the fallback again.
+    setContentByTag((previous) => ({ ...previous, [tag]: null }));
+  }, []);
+
+  //Reads the full list of tags that exist in the database.
+  const listTags = useCallback(async (): Promise<string[]> => {
+    const result = await apiRef.current.request<{ tags: string[] }>(ACTIONS.LIST_TAGS);
+
+    return result.tags;
+  }, []);
+
+  //Loads content for a set of tags and returns the records, updating the cache.
+  //The popup editor uses this so it can wait for the data and prefill its inputs.
+  const loadContent = useCallback(async (tags: string[]): Promise<ContentRecord[]> => {
+    if (tags.length === 0) {
+      return [];
+    }
+
+    const result = await apiRef.current.request<GetContentResponse>(ACTIONS.GET_CONTENT, { tags });
+    const byTag = new Map(result.content.map((record) => [record.tag, record]));
+
+    setContentByTag((previous) => {
+      const next = { ...previous };
+
+      for (const tag of tags) {
+        requestedRef.current.add(tag);
+        next[tag] = byTag.get(tag) ?? null;
+      }
+
+      return next;
+    });
+
+    return result.content;
+  }, []);
+
+  //Shows a short popup message that fades away on its own.
+  const notify = useCallback((message: string, type: 'success' | 'error'): void => {
+    toastIdRef.current += 1;
+    const id = toastIdRef.current;
+
+    setToasts((previous) => [...previous, { id, message, type }]);
+
+    setTimeout(() => {
+      setToasts((previous) => previous.filter((toast) => toast.id !== id));
+    }, 4000);
+  }, []);
+
+  //Opens the confirm popup and resolves once the user answers it.
+  const confirm = useCallback(
+    (
+      message: string,
+      options?: { confirmLabel?: string; cancelLabel?: string },
+    ): Promise<boolean> =>
+      new Promise<boolean>((resolve) => {
+        setConfirmState({
+          message,
+          confirmLabel: options?.confirmLabel ?? 'Confirm',
+          cancelLabel: options?.cancelLabel ?? 'Cancel',
+          resolve,
+        });
+      }),
+    [],
+  );
+
+  //Answers the open confirm popup and closes it.
+  const answerConfirm = useCallback(
+    (confirmed: boolean): void => {
+      setConfirmState((current) => {
+        current?.resolve(confirmed);
+
+        return null;
+      });
+    },
+    [],
+  );
+
+  //Puts the saved content into one element for display.
+  //Images get their source set, everything else gets its text set.
+  //We never overwrite an element the user is actively editing.
+  const showContentInElement = useCallback(
+    (element: HTMLElement, record: ContentRecord): void => {
+      //Never overwrite an element the user is editing or has unsaved changes in.
+      if (document.activeElement === element || dirtyRef.current.has(element)) {
+        return;
+      }
+
+      if (element.tagName === 'IMG') {
+        const url = record.mediaUrl ?? record.body;
+
+        if (url && element.getAttribute('src') !== url) {
+          element.setAttribute('src', url);
+        }
+
+        return;
+      }
+
+      if (element.innerText !== record.body) {
+        element.innerText = record.body;
+      }
+    },
+    [],
+  );
+
+  //Makes one element editable. Changes are only remembered here, not saved yet.
+  //The user saves everything at once with the Save button.
+  const bindElement = useCallback((element: HTMLElement, tag: string): void => {
+    if (boundRef.current.has(element)) {
+      return;
+    }
+
+    //Remember the text as it was, so a discard can put it back.
+    if (!originalTextRef.current.has(element)) {
+      originalTextRef.current.set(element, element.innerText);
+    }
+
+    const onInput = (): void => {
+      dirtyRef.current.add(element);
+      setHasUnsavedChanges(true);
+    };
+
+    element.setAttribute('contenteditable', 'true');
+    element.style.outline = '1px dashed rgba(0, 0, 0, 0.3)';
+    element.addEventListener('input', onInput);
+    boundRef.current.set(element, onInput);
+  }, []);
+
+  //Removes the editing behavior from one element.
+  const unbindElement = useCallback((element: HTMLElement): void => {
+    const onInput = boundRef.current.get(element);
+
+    if (onInput) {
+      element.removeEventListener('input', onInput);
+    }
+
+    element.removeAttribute('contenteditable');
+    element.style.outline = '';
+    boundRef.current.delete(element);
+  }, []);
+
+  //Saves every changed element at once and reports how it went.
+  const saveEdits = useCallback(async (): Promise<void> => {
+    const elements = Array.from(dirtyRef.current);
+
+    if (elements.length === 0) {
+      notify('There are no changes to save.', 'success');
+
+      return;
+    }
+
+    let saved = 0;
+    const failedTags: string[] = [];
+
+    for (const element of elements) {
+      const tag = tagByElementRef.current.get(element);
+
+      if (!tag) {
+        continue;
+      }
+
+      try {
+        await saveContent(tag, element.innerText.trim());
+        dirtyRef.current.delete(element);
+        saved += 1;
+      } catch {
+        failedTags.push(tag);
+      }
+    }
+
+    setHasUnsavedChanges(dirtyRef.current.size > 0);
+
+    if (failedTags.length === 0) {
+      notify(`Saved ${saved} change${saved === 1 ? '' : 's'}.`, 'success');
+    } else {
+      notify(`Saved ${saved}, but could not save: ${failedTags.join(', ')}.`, 'error');
+    }
+  }, [notify, saveContent]);
+
+  //Throws away every unsaved change and puts the saved content back on the page.
+  const discardEdits = useCallback((): void => {
+    for (const element of dirtyRef.current) {
+      const tag = tagByElementRef.current.get(element);
+      const record = tag ? contentRef.current[tag] : undefined;
+
+      if (record) {
+        element.innerText = record.body;
+      } else {
+        element.innerText = originalTextRef.current.get(element) ?? '';
+      }
+    }
+
+    dirtyRef.current.clear();
+    setHasUnsavedChanges(false);
+  }, []);
+
+  //Adds one newly found element to the registry, shows any content we already
+  //have, turns on editing if we are in edit mode, and asks for its content.
+  const registerElement = useCallback(
+    (element: HTMLElement, tag: string): void => {
+      let set = elementsByTagRef.current.get(tag);
+
+      if (!set) {
+        set = new Set();
+        elementsByTagRef.current.set(tag, set);
+      }
+
+      if (set.has(element)) {
+        return;
+      }
+
+      set.add(element);
+      tagByElementRef.current.set(element, tag);
+
+      const record = contentRef.current[tag];
+
+      if (record) {
+        showContentInElement(element, record);
+      }
+
+      if (isEditingRef.current && canEditRef.current && editInViewRef.current) {
+        bindElement(element, tag);
+      }
+
+      requestTags([tag]);
+    },
+    [bindElement, requestTags, showContentInElement],
+  );
+
+  //Removes one element from the registry and from editing.
+  const unregisterElement = useCallback(
+    (element: HTMLElement, tag: string): void => {
+      const set = elementsByTagRef.current.get(tag);
+
+      if (set) {
+        set.delete(element);
+
+        if (set.size === 0) {
+          elementsByTagRef.current.delete(tag);
+        }
+      }
+
+      tagByElementRef.current.delete(element);
+      originalTextRef.current.delete(element);
+      dirtyRef.current.delete(element);
+      unbindElement(element);
+    },
+    [unbindElement],
+  );
+
+  //Registers a newly added subtree. This looks only at what was added,
+  //so the cost is proportional to the change, not the size of the page.
+  const registerTree = useCallback(
+    (root: HTMLElement): void => {
+      const rootTag = veneerTagOf(root);
+
+      if (rootTag) {
+        registerElement(root, rootTag);
+      }
+
+      for (const { element, tag } of findVeneerElements(root)) {
+        registerElement(element, tag);
+      }
+    },
+    [registerElement],
+  );
+
+  //Drops any registered elements that have left the page.
+  const prune = useCallback((): void => {
+    const toRemove: Array<{ element: HTMLElement; tag: string }> = [];
+
+    for (const [tag, elements] of elementsByTagRef.current) {
+      for (const element of elements) {
+        if (!element.isConnected) {
+          toRemove.push({ element, tag });
+        }
+      }
+    }
+
+    for (const { element, tag } of toRemove) {
+      unregisterElement(element, tag);
+    }
+  }, [unregisterElement]);
+
+  //Runs a prune on the next tick, collapsing many removals into one pass.
+  const schedulePrune = useCallback((): void => {
+    if (typeof window === 'undefined' || pruneTimerRef.current !== null) {
+      return;
+    }
+
+    pruneTimerRef.current = setTimeout(() => {
+      pruneTimerRef.current = null;
+      prune();
+    }, 0);
+  }, [prune]);
+
+  const login = useCallback(async (email: string, password: string): Promise<void> => {
+    const result = await apiRef.current.request<AuthResult>(ACTIONS.LOGIN, { email, password });
+
+    writeStoredToken(result.token);
+    setToken(result.token);
+    setUser(result.user);
+  }, []);
+
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      await apiRef.current.request(ACTIONS.LOGOUT);
+    } finally {
+      writeStoredToken(null);
+      setToken(null);
+      setUser(null);
+      setIsEditing(false);
+    }
+  }, []);
+
+  const setEditing = useCallback(
+    (on: boolean): void => {
+      //Only a signed in user is allowed to turn edit mode on.
+      setIsEditing(on && canEdit);
+    },
+    [canEdit],
+  );
+
+  //On first load, read any saved token and confirm who the user is.
+  useEffect(() => {
+    const saved = readStoredToken();
+
+    if (!saved) {
+      return;
+    }
+
+    setToken(saved);
+
+    apiRef.current
+      .request<{ user: AuthUser }>(ACTIONS.ME)
+      .then((result) => {
+        setUser(result.user);
+      })
+      .catch(() => {
+        //The saved token is no longer good, so clear it.
+        writeStoredToken(null);
+        setToken(null);
+        setUser(null);
+      });
+  }, []);
+
+  //Scan the page once on mount, then watch only for what is added or removed.
+  //This is what keeps it working across route changes and dynamic content
+  //without ever re-walking the whole page.
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    registerTree(document.body);
+
+    const observer = new MutationObserver((mutations) => {
+      let removed = false;
+
+      for (const mutation of mutations) {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            registerTree(node as HTMLElement);
+          }
+        });
+
+        if (mutation.removedNodes.length > 0) {
+          removed = true;
+        }
+      }
+
+      if (removed) {
+        schedulePrune();
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+
+      for (const element of Array.from(boundRef.current.keys())) {
+        unbindElement(element);
+      }
+
+      elementsByTagRef.current.clear();
+
+      if (pruneTimerRef.current !== null) {
+        clearTimeout(pruneTimerRef.current);
+        pruneTimerRef.current = null;
+      }
+    };
+  }, [registerTree, schedulePrune, unbindElement]);
+
+  //When content arrives, update just the elements in the registry for those tags.
+  useEffect(() => {
+    for (const [tag, elements] of elementsByTagRef.current) {
+      const record = contentByTag[tag];
+
+      if (!record) {
+        continue;
+      }
+
+      for (const element of elements) {
+        showContentInElement(element, record);
+      }
+    }
+  }, [contentByTag, showContentInElement]);
+
+  //When editing turns on or off, bind or unbind the registered elements only.
+  //In place binding only happens when editInView is on. When it is off, editing
+  //is done in the popup form instead, so nothing on the page is made editable.
+  useEffect(() => {
+    const shouldEdit = isEditing && canEdit && editInView;
+
+    for (const [tag, elements] of elementsByTagRef.current) {
+      for (const element of elements) {
+        if (shouldEdit) {
+          bindElement(element, tag);
+        } else {
+          unbindElement(element);
+        }
+      }
+    }
+
+    //Leaving edit mode clears any leftover change tracking.
+    if (!shouldEdit) {
+      dirtyRef.current.clear();
+      originalTextRef.current.clear();
+      setHasUnsavedChanges(false);
+    }
+  }, [isEditing, canEdit, editInView, bindElement, unbindElement]);
+
+  const value = useMemo<VeneerContextValue>(
+    () => ({
+      apiBasePath,
+      user,
+      isEditing,
+      editInView,
+      canEdit,
+      setEditing,
+      login,
+      logout,
+      getContent,
+      requestTags,
+      saveContent,
+      createTag,
+      deleteTag,
+      listTags,
+      loadContent,
+      hasUnsavedChanges,
+      saveEdits,
+      discardEdits,
+      notify,
+      confirm,
+      loadingComponent: loadingComponent ?? <DefaultLoader />,
+    }),
+    [
+      apiBasePath,
+      user,
+      isEditing,
+      editInView,
+      canEdit,
+      setEditing,
+      login,
+      logout,
+      getContent,
+      requestTags,
+      saveContent,
+      createTag,
+      deleteTag,
+      listTags,
+      loadContent,
+      hasUnsavedChanges,
+      saveEdits,
+      discardEdits,
+      notify,
+      confirm,
+      loadingComponent,
+    ],
+  );
+
+  return (
+    <VeneerContext.Provider value={value}>
+      {children}
+      <ToastHost toasts={toasts} />
+      {!editInView && isEditing && canEdit ? <TagEditorModal /> : null}
+      {confirmState ? (
+        <ConfirmDialog
+          message={confirmState.message}
+          confirmLabel={confirmState.confirmLabel}
+          cancelLabel={confirmState.cancelLabel}
+          onConfirm={() => answerConfirm(true)}
+          onCancel={() => answerConfirm(false)}
+        />
+      ) : null}
+    </VeneerContext.Provider>
+  );
+};

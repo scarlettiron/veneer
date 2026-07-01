@@ -1,0 +1,222 @@
+import mysql from 'mysql2/promise';
+import type { Pool, PoolOptions, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+
+import {
+  conflict,
+  notFound,
+  type Actor,
+  type ContentInput,
+  type ContentRecord,
+  type CreateUserInput,
+  type DatabaseConfig,
+  type DbAdapter,
+  type StoredUser,
+  type TagType,
+  AUTH_TABLE,
+  CONTENT_TABLE,
+} from '@veneer/core';
+
+import { DUPLICATE_ENTRY, MIGRATIONS_TABLE } from './constants/index.js';
+import { MIGRATIONS } from './migrations/migrations.js';
+import { mapContentRow, mapUserRow } from './utilities/row-mappers.js';
+
+//Builds the settings the mysql pool needs from the user database config.
+//Supports either a full connection string or the separate parts.
+const buildPoolOptions = (config: DatabaseConfig): PoolOptions | string => {
+  if (config.connectionString) {
+    return config.connectionString;
+  }
+
+  return {
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    database: config.database,
+    ssl: config.ssl ? { rejectUnauthorized: false } : undefined,
+  };
+};
+
+//Reads a MySQL error code in a type safe way.
+const errorCode = (error: unknown): string | undefined => {
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    return String((error as { code: unknown }).code);
+  }
+
+  return undefined;
+};
+
+//The MySQL and MariaDB implementation of the Veneer database adapter.
+//MariaDB speaks the MySQL protocol, so the same code serves both.
+export class MysqlAdapter implements DbAdapter {
+  private readonly pool: Pool;
+
+  constructor(config: DatabaseConfig) {
+    this.pool = mysql.createPool(buildPoolOptions(config));
+  }
+
+  public async runMigrations(): Promise<void> {
+    await this.pool.query(
+      `CREATE TABLE IF NOT EXISTS \`${MIGRATIONS_TABLE}\` (
+        id VARCHAR(255) PRIMARY KEY,
+        applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );`,
+    );
+
+    const [appliedRows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT id FROM \`${MIGRATIONS_TABLE}\`;`,
+    );
+    const appliedIds = new Set(appliedRows.map((row) => String(row.id)));
+
+    for (const migration of MIGRATIONS) {
+      if (appliedIds.has(migration.id)) {
+        continue;
+      }
+
+      const connection = await this.pool.getConnection();
+
+      try {
+        await connection.beginTransaction();
+        await connection.query(migration.sql);
+        await connection.query(`INSERT INTO \`${MIGRATIONS_TABLE}\` (id) VALUES (?);`, [
+          migration.id,
+        ]);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    }
+  }
+
+  public async getContentByTags(tags: string[]): Promise<ContentRecord[]> {
+    if (tags.length === 0) {
+      return [];
+    }
+
+    const placeholders = tags.map(() => '?').join(', ');
+
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT tag, type, body, media_url, updated_at, updated_by
+       FROM \`${CONTENT_TABLE}\`
+       WHERE tag IN (${placeholders});`,
+      tags,
+    );
+
+    return rows.map((row) => mapContentRow(row as never));
+  }
+
+  public async createTag(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+    try {
+      await this.pool.execute(
+        `INSERT INTO \`${CONTENT_TABLE}\` (tag, type, body, media_url, updated_by)
+         VALUES (?, ?, '', NULL, ?);`,
+        [tag, type, actor.userId],
+      );
+    } catch (error) {
+      if (errorCode(error) === DUPLICATE_ENTRY) {
+        throw conflict(`The tag "${tag}" already exists`);
+      }
+
+      throw error;
+    }
+
+    const [record] = await this.getContentByTags([tag]);
+
+    if (!record) {
+      throw new Error('The tag could not be read back after it was created');
+    }
+
+    return record;
+  }
+
+  public async upsertContent(input: ContentInput, actor: Actor): Promise<ContentRecord> {
+    await this.pool.execute(
+      `INSERT INTO \`${CONTENT_TABLE}\` (tag, body, media_url, updated_by)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         body = VALUES(body),
+         media_url = VALUES(media_url),
+         updated_at = CURRENT_TIMESTAMP,
+         updated_by = VALUES(updated_by);`,
+      [input.tag, input.body, input.mediaUrl ?? null, actor.userId],
+    );
+
+    const [record] = await this.getContentByTags([input.tag]);
+
+    if (!record) {
+      throw new Error('The content could not be read back after it was saved');
+    }
+
+    return record;
+  }
+
+  public async deleteTag(tag: string): Promise<void> {
+    const [result] = await this.pool.execute<ResultSetHeader>(
+      `DELETE FROM \`${CONTENT_TABLE}\` WHERE tag = ?;`,
+      [tag],
+    );
+
+    if (result.affectedRows === 0) {
+      throw notFound(`The tag "${tag}" does not exist`);
+    }
+  }
+
+  public async listTags(): Promise<string[]> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT tag FROM \`${CONTENT_TABLE}\` ORDER BY tag ASC;`,
+    );
+
+    return rows.map((row) => String(row.tag));
+  }
+
+  public async findUserByEmail(email: string): Promise<StoredUser | null> {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT id, email, password_hash, role FROM \`${AUTH_TABLE}\` WHERE email = ?;`,
+      [email],
+    );
+
+    const row = rows[0];
+
+    return row ? mapUserRow(row as never) : null;
+  }
+
+  public async findUserById(id: string): Promise<StoredUser | null> {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT id, email, password_hash, role FROM \`${AUTH_TABLE}\` WHERE id = ?;`,
+      [id],
+    );
+
+    const row = rows[0];
+
+    return row ? mapUserRow(row as never) : null;
+  }
+
+  public async createUser(input: CreateUserInput): Promise<StoredUser> {
+    try {
+      const [result] = await this.pool.execute<ResultSetHeader>(
+        `INSERT INTO \`${AUTH_TABLE}\` (email, password_hash, role) VALUES (?, ?, ?);`,
+        [input.email, input.passwordHash, input.role],
+      );
+
+      return {
+        id: String(result.insertId),
+        email: input.email,
+        role: input.role,
+        passwordHash: input.passwordHash,
+      };
+    } catch (error) {
+      if (errorCode(error) === DUPLICATE_ENTRY) {
+        throw conflict(`A user with the email "${input.email}" already exists`);
+      }
+
+      throw error;
+    }
+  }
+
+  public async close(): Promise<void> {
+    await this.pool.end();
+  }
+}
