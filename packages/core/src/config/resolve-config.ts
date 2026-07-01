@@ -1,0 +1,66 @@
+import {
+  DEFAULT_API_BASE_PATH,
+  DEFAULT_EDIT_IN_VIEW,
+  DEFAULT_MODE,
+  DEFAULT_TOKEN_TTL_SECONDS,
+} from '../constants/index.js';
+import type { VeneerConfig, VeneerUserConfig } from '../types/index.js';
+import { badRequest } from '../utilities/errors.js';
+
+//Checks that the user config has everything it needs and fills in defaults.
+//Returns the fully resolved config the rest of the system relies on.
+export const resolveConfig = (input: VeneerUserConfig): VeneerConfig => {
+  if (typeof input !== 'object' || input === null) {
+    throw badRequest('The Veneer config must be an object');
+  }
+
+  if (!input.database) {
+    throw badRequest('The config needs a database section');
+  }
+
+  const supportedProviders = ['postgres', 'mysql', 'mariadb', 'sqlite'];
+
+  if (!supportedProviders.includes(input.database.provider)) {
+    throw badRequest(
+      `The database provider must be one of: ${supportedProviders.join(', ')}`,
+    );
+  }
+
+  if (input.database.provider === 'sqlite') {
+    if (!input.database.filename && !input.database.connectionString) {
+      throw badRequest('The sqlite database needs a "filename" pointing to the database file');
+    }
+  } else {
+    const hasConnectionString = typeof input.database.connectionString === 'string';
+    const hasConnectionParts =
+      typeof input.database.host === 'string' && typeof input.database.database === 'string';
+
+    if (!hasConnectionString && !hasConnectionParts) {
+      throw badRequest(
+        'The database config needs either a connectionString or a host and database name',
+      );
+    }
+  }
+
+  if (!input.auth || input.auth.provider !== 'jwt') {
+    throw badRequest('The config needs an auth section with provider set to "jwt"');
+  }
+
+  if (typeof input.auth.jwtSecret !== 'string' || input.auth.jwtSecret.length < 16) {
+    throw badRequest('The auth config needs a jwtSecret of at least 16 characters');
+  }
+
+  return {
+    mode: input.mode ?? DEFAULT_MODE,
+    editInView: input.editInView ?? DEFAULT_EDIT_IN_VIEW,
+    richText: input.richText ?? false,
+    apiBasePath: input.apiBasePath ?? DEFAULT_API_BASE_PATH,
+    database: input.database,
+    auth: {
+      provider: 'jwt',
+      jwtSecret: input.auth.jwtSecret,
+      tokenTtlSeconds: input.auth.tokenTtlSeconds ?? DEFAULT_TOKEN_TTL_SECONDS,
+    },
+    cors: input.cors,
+  };
+};

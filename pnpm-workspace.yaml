@@ -1,0 +1,11 @@
+packages:
+  - 'packages/*'
+  - 'examples/*'
+
+allowBuilds:
+  esbuild: false
+
+# Allow only these dependencies to run their install build scripts.
+# esbuild needs this so tsup can build the packages.
+onlyBuiltDependencies:
+  - esbuild
