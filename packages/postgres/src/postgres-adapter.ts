@@ -5,6 +5,7 @@ import {
   conflict,
   notFound,
   type Actor,
+  type AuthUser,
   type ContentInput,
   type ContentRecord,
   type CreateUserInput,
@@ -220,6 +221,27 @@ export class PostgresAdapter implements DbAdapter {
 
       throw error;
     }
+  }
+
+  public async updateUserPassword(email: string, passwordHash: string): Promise<boolean> {
+    const result = await this.pool.query(
+      `UPDATE "${AUTH_TABLE}" SET password_hash = $2 WHERE email = $1;`,
+      [email, passwordHash],
+    );
+
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  public async listUsers(): Promise<AuthUser[]> {
+    const result = await this.pool.query(
+      `SELECT id, email, role FROM "${AUTH_TABLE}" ORDER BY email ASC;`,
+    );
+
+    return result.rows.map((row) => ({
+      id: String(row.id),
+      email: String(row.email),
+      role: row.role === 'superuser' ? 'superuser' : 'editor',
+    }));
   }
 
   public async close(): Promise<void> {

@@ -1,5 +1,8 @@
 import { runCreateSuperuser } from './commands/create-superuser.js';
 import { runMigrate } from './commands/migrate.js';
+import { runUpdatePassword } from './commands/update-password.js';
+import { runListTags } from './commands/list-tags.js';
+import { runListUsers } from './commands/list-users.js';
 import { parseFlags } from './utilities/args.js';
 import { loadEnv } from './utilities/env.js';
 
@@ -12,6 +15,9 @@ const printHelp = (): void => {
       'Usage:',
       '  veneer migrate [--config path]',
       '  veneer create-superuser --email you@example.com --password secret [--role superuser|editor] [--config path]',
+      '  veneer update-password --email you@example.com --password newsecret [--config path]',
+      '  veneer list-tags [--config path]',
+      '  veneer list-users [--config path]',
       '',
       'The config path is optional. When left out, Veneer looks for a veneer.config file',
       'in the current folder.',
@@ -34,6 +40,15 @@ export const runCli = async (argv: string[]): Promise<number> => {
 
     case 'create-superuser':
       return runCreateSuperuser(flags);
+
+    case 'update-password':
+      return runUpdatePassword(flags);
+
+    case 'list-tags':
+      return runListTags(flags);
+
+    case 'list-users':
+      return runListUsers(flags);
 
     case undefined:
     case 'help':

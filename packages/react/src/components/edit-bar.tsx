@@ -225,6 +225,18 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
   const [entries, setEntries] = useState<TagEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+
+  //How many tags to show on one page of the list.
+  const PAGE_SIZE = 10;
+
+  //Filter by the search text, then work out the current page of results.
+  const query = search.trim().toLowerCase();
+  const filtered = (entries ?? []).filter((entry) => entry.tag.toLowerCase().includes(query));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages - 1);
+  const pageItems = filtered.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
 
   //Loads the tag names, and their types when rich text is on.
   const loadEntries = async (): Promise<TagEntry[]> => {
@@ -367,55 +379,98 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
 
       <strong>Existing tags</strong>
 
+      <input
+        style={inputStyle}
+        type="search"
+        placeholder="Search tags..."
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+          setPage(0);
+        }}
+      />
+
       {entries === null ? (
         <span style={{ opacity: 0.6 }}>Loading...</span>
       ) : entries.length === 0 ? (
         <span style={{ opacity: 0.6 }}>No tags yet.</span>
+      ) : filtered.length === 0 ? (
+        <span style={{ opacity: 0.6 }}>No tags match "{search}".</span>
       ) : (
-        <ul
-          className={SCROLLBAR_CLASS}
-          style={{
-            margin: 0,
-            padding: '0 0.4rem 0 0',
-            listStyle: 'none',
-            maxHeight: '12rem',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.5rem',
-            scrollbarWidth: 'thin',
-            scrollbarColor: `${COLORS.primary} ${COLORS.surfaceRaised}`,
-          }}
-        >
-          {entries.map((entry) => (
-            <li
-              key={entry.tag}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}
-            >
-              <span style={{ fontFamily: 'monospace', flex: 1, minWidth: '6rem' }}>{entry.tag}</span>
+        <>
+          <ul
+            className={SCROLLBAR_CLASS}
+            style={{
+              margin: 0,
+              padding: '0 0.4rem 0 0',
+              listStyle: 'none',
+              maxHeight: '16rem',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem',
+              scrollbarWidth: 'thin',
+              scrollbarColor: `${COLORS.primary} ${COLORS.surfaceRaised}`,
+            }}
+          >
+            {pageItems.map((entry) => (
+              <li
+                key={entry.tag}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}
+              >
+                <span style={{ fontFamily: 'monospace', flex: 1, minWidth: '6rem' }}>
+                  {entry.tag}
+                </span>
 
-              {richText ? (
-                <select
-                  style={{ ...inputStyle, padding: '0.2rem 0.3rem' }}
-                  value={entry.type}
-                  onChange={(event) => void handleChangeType(entry.tag, event.target.value as TagType)}
+                {richText ? (
+                  <select
+                    style={{ ...inputStyle, padding: '0.2rem 0.3rem' }}
+                    value={entry.type}
+                    onChange={(event) =>
+                      void handleChangeType(entry.tag, event.target.value as TagType)
+                    }
+                  >
+                    <option value="plain">plain</option>
+                    <option value="rich">rich</option>
+                    <option value="media">media</option>
+                  </select>
+                ) : null}
+
+                <button
+                  type="button"
+                  style={{ ...buttonStyle, background: COLORS.danger, padding: '0.2rem 0.5rem' }}
+                  onClick={() => void handleDelete(entry.tag)}
                 >
-                  <option value="plain">plain</option>
-                  <option value="rich">rich</option>
-                  <option value="media">media</option>
-                </select>
-              ) : null}
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
 
+          {totalPages > 1 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <button
                 type="button"
-                style={{ ...buttonStyle, background: COLORS.danger, padding: '0.2rem 0.5rem' }}
-                onClick={() => void handleDelete(entry.tag)}
+                style={subtleButtonStyle}
+                disabled={currentPage === 0}
+                onClick={() => setPage((current) => Math.max(0, current - 1))}
               >
-                Delete
+                Prev
               </button>
-            </li>
-          ))}
-        </ul>
+              <span style={{ opacity: 0.7 }}>
+                Page {currentPage + 1} of {totalPages}
+              </span>
+              <button
+                type="button"
+                style={subtleButtonStyle}
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
+        </>
       )}
 
       <span style={{ opacity: 0.6, fontSize: '12px' }}>

@@ -5,6 +5,7 @@ import {
   conflict,
   notFound,
   type Actor,
+  type AuthUser,
   type ContentInput,
   type ContentRecord,
   type CreateUserInput,
@@ -229,6 +230,27 @@ export class MysqlAdapter implements DbAdapter {
 
       throw error;
     }
+  }
+
+  public async updateUserPassword(email: string, passwordHash: string): Promise<boolean> {
+    const [result] = await this.pool.execute<ResultSetHeader>(
+      `UPDATE \`${AUTH_TABLE}\` SET password_hash = ? WHERE email = ?;`,
+      [passwordHash, email],
+    );
+
+    return result.affectedRows > 0;
+  }
+
+  public async listUsers(): Promise<AuthUser[]> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT id, email, role FROM \`${AUTH_TABLE}\` ORDER BY email ASC;`,
+    );
+
+    return rows.map((row) => ({
+      id: String(row.id),
+      email: String(row.email),
+      role: row.role === 'superuser' ? 'superuser' : 'editor',
+    }));
   }
 
   public async close(): Promise<void> {
