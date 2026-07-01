@@ -4,6 +4,7 @@ import {
   conflict,
   notFound,
   type Actor,
+  type AuthUser,
   type ContentInput,
   type ContentRecord,
   type CreateUserInput,
@@ -217,6 +218,26 @@ export class SqliteAdapter implements DbAdapter {
 
       throw error;
     }
+  }
+
+  public async updateUserPassword(email: string, passwordHash: string): Promise<boolean> {
+    const result = this.db
+      .prepare(`UPDATE "${AUTH_TABLE}" SET password_hash = ? WHERE email = ?;`)
+      .run(passwordHash, email);
+
+    return result.changes > 0;
+  }
+
+  public async listUsers(): Promise<AuthUser[]> {
+    const rows = this.db
+      .prepare(`SELECT id, email, role FROM "${AUTH_TABLE}" ORDER BY email ASC;`)
+      .all() as Array<{ id: number | bigint; email: string; role: string }>;
+
+    return rows.map((row) => ({
+      id: String(row.id),
+      email: row.email,
+      role: row.role === 'superuser' ? 'superuser' : 'editor',
+    }));
   }
 
   public async close(): Promise<void> {

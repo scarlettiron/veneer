@@ -5,6 +5,7 @@ import {
   createHandler,
   type Actor,
   type AuthAdapter,
+  type AuthUser,
   type ContentInput,
   type ContentRecord,
   type CreateUserInput,
@@ -96,6 +97,14 @@ class FakeDb implements DbAdapter {
 
   async createUser(input: CreateUserInput): Promise<StoredUser> {
     return { id: '1', email: input.email, role: input.role, passwordHash: input.passwordHash };
+  }
+
+  async updateUserPassword(): Promise<boolean> {
+    return true;
+  }
+
+  async listUsers(): Promise<AuthUser[]> {
+    return [];
   }
 
   async close(): Promise<void> {}

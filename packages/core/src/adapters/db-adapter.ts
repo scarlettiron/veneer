@@ -1,5 +1,6 @@
 import type {
   Actor,
+  AuthUser,
   ContentInput,
   ContentRecord,
   CreateUserInput,
@@ -14,6 +15,10 @@ export interface UserStore {
   findUserByEmail(email: string): Promise<StoredUser | null>;
   findUserById(id: string): Promise<StoredUser | null>;
   createUser(input: CreateUserInput): Promise<StoredUser>;
+
+  //Change the stored password hash for the user with this email.
+  //Returns true when a user was updated, or false when no user matched.
+  updateUserPassword(email: string, passwordHash: string): Promise<boolean>;
 }
 
 //The full database adapter.
@@ -43,6 +48,9 @@ export interface DbAdapter extends UserStore {
 
   //List every tag that currently has a row.
   listTags(): Promise<string[]>;
+
+  //List every user, without their password hashes.
+  listUsers(): Promise<AuthUser[]>;
 
   //Close any open database connections.
   close(): Promise<void>;

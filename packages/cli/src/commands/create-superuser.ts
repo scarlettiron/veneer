@@ -1,4 +1,4 @@
-import { ROLES } from '@veneer/core';
+import { ROLES, assertNoSqlInjection } from '@veneer/core';
 import { createVeneerServerFromConfig } from '@veneer/server';
 
 //Creates a new user, defaulting to the superuser role.
@@ -12,6 +12,9 @@ export const runCreateSuperuser = async (flags: Record<string, string>): Promise
 
     return 1;
   }
+
+  //A second layer of defense on top of the parameterized query.
+  assertNoSqlInjection(email, 'email');
 
   //Allow making an editor too, but default to superuser since that is the common case.
   const role = flags.role === ROLES.EDITOR ? ROLES.EDITOR : ROLES.SUPERUSER;
