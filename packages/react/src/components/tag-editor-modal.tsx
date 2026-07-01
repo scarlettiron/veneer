@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties, ReactElement } from 'react';
 
+import type { TagType } from '@veneer/core';
+
 import { useVeneer } from '../hooks/use-veneer.js';
 import { Spinner } from './spinner.js';
+import { RichTextEditor } from './rich-text-editor.js';
 
 //The editable fields for one tag.
 interface Draft {
+  type: TagType;
   body: string;
   mediaUrl: string;
 }
@@ -110,7 +114,7 @@ const closeButtonStyle: CSSProperties = {
 //It lists every tag with labeled inputs, prefilled with the saved content, and
 //shows a spinner while the content loads.
 export const TagEditorModal = (): ReactElement => {
-  const { listTags, loadContent, saveContent, confirm, notify, setEditing } = useVeneer();
+  const { listTags, loadContent, saveContent, confirm, notify, setEditing, richText } = useVeneer();
 
   const [loading, setLoading] = useState(true);
   const [tags, setTags] = useState<string[]>([]);
@@ -134,7 +138,11 @@ export const TagEditorModal = (): ReactElement => {
 
         for (const name of names) {
           const record = byTag.get(name);
-          initial[name] = { body: record?.body ?? '', mediaUrl: record?.mediaUrl ?? '' };
+          initial[name] = {
+            type: record?.type ?? 'plain',
+            body: record?.body ?? '',
+            mediaUrl: record?.mediaUrl ?? '',
+          };
         }
 
         if (active) {
@@ -165,9 +173,9 @@ export const TagEditorModal = (): ReactElement => {
 
   const hasUnsaved = tags.some((tag) => isDirty(tag));
 
-  const setField = (tag: string, field: keyof Draft, value: string): void => {
+  const setField = (tag: string, field: 'body' | 'mediaUrl', value: string): void => {
     setDrafts((previous) => {
-      const current = previous[tag] ?? { body: '', mediaUrl: '' };
+      const current = previous[tag] ?? { type: 'plain', body: '', mediaUrl: '' };
 
       return { ...previous, [tag]: { ...current, [field]: value } };
     });
@@ -267,28 +275,59 @@ export const TagEditorModal = (): ReactElement => {
           ) : tags.length === 0 ? (
             <span style={{ opacity: 0.6 }}>There are no tags to edit yet.</span>
           ) : (
-            tags.map((tag) => (
-              <div key={tag} style={rowStyle}>
-                <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{tag}</span>
+            tags.map((tag) => {
+              const draft = drafts[tag];
 
-                <label style={labelStyle}>Text content</label>
-                <textarea
-                  style={{ ...inputStyle, resize: 'vertical' }}
-                  rows={2}
-                  value={drafts[tag]?.body ?? ''}
-                  onChange={(event) => setField(tag, 'body', event.target.value)}
-                />
+              if (!draft) {
+                return null;
+              }
 
-                <label style={labelStyle}>Media URL</label>
-                <input
-                  style={inputStyle}
-                  type="text"
-                  placeholder="https://... (optional)"
-                  value={drafts[tag]?.mediaUrl ?? ''}
-                  onChange={(event) => setField(tag, 'mediaUrl', event.target.value)}
-                />
-              </div>
-            ))
+              return (
+                <div key={tag} style={rowStyle}>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                    {tag}
+                    {richText ? (
+                      <span style={{ opacity: 0.5, fontWeight: 400 }}> &middot; {draft.type}</span>
+                    ) : null}
+                  </span>
+
+                  {draft.type === 'media' ? (
+                    <>
+                      <label style={labelStyle}>Media URL</label>
+                      <input
+                        style={inputStyle}
+                        type="text"
+                        placeholder="https://..."
+                        value={draft.mediaUrl}
+                        onChange={(event) => setField(tag, 'mediaUrl', event.target.value)}
+                      />
+                      {draft.mediaUrl ? (
+                        <img
+                          src={draft.mediaUrl}
+                          alt=""
+                          style={{ maxWidth: '12rem', marginTop: '0.5rem', borderRadius: '0.3rem' }}
+                        />
+                      ) : null}
+                    </>
+                  ) : draft.type === 'rich' ? (
+                    <>
+                      <label style={labelStyle}>Rich text</label>
+                      <RichTextEditor value={draft.body} onChange={(html) => setField(tag, 'body', html)} />
+                    </>
+                  ) : (
+                    <>
+                      <label style={labelStyle}>Text content</label>
+                      <textarea
+                        style={{ ...inputStyle, resize: 'vertical' }}
+                        rows={2}
+                        value={draft.body}
+                        onChange={(event) => setField(tag, 'body', event.target.value)}
+                      />
+                    </>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>

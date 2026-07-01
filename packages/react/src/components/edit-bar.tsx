@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties, ReactElement } from 'react';
 
-import { ROLES, isValidTag } from '@veneer/core';
+import { ROLES, isValidTag, type TagType } from '@veneer/core';
 
 import { useVeneer } from '../hooks/use-veneer.js';
 
@@ -102,10 +102,11 @@ const PanelHeader = ({ title, onClose }: { title: string; onClose: () => void })
 
 //The panel where a superuser creates new tags, deletes them, and sees the list.
 const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
-  const { createTag, deleteTag, listTags, notify, confirm } = useVeneer();
+  const { createTag, deleteTag, listTags, notify, confirm, richText } = useVeneer();
 
   const [newTag, setNewTag] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [newType, setNewType] = useState<TagType>('plain');
   const [tags, setTags] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -131,9 +132,10 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
     setBusy(true);
 
     try {
-      await createTag(tag, newContent);
+      await createTag(tag, newContent, newType);
       setNewTag('');
       setNewContent('');
+      setNewType('plain');
 
       const refreshed = await listTags();
       setTags(refreshed);
@@ -186,10 +188,25 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
         onChange={(event) => setNewTag(event.target.value)}
       />
 
+      {richText ? (
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <span style={{ opacity: 0.7, fontSize: '12px' }}>Type</span>
+          <select
+            style={inputStyle}
+            value={newType}
+            onChange={(event) => setNewType(event.target.value as TagType)}
+          >
+            <option value="plain">Plain text</option>
+            <option value="rich">Rich text</option>
+            <option value="media">Media</option>
+          </select>
+        </label>
+      ) : null}
+
       <input
         style={inputStyle}
         type="text"
-        placeholder="starting text (optional)"
+        placeholder={newType === 'media' ? 'starting media url (optional)' : 'starting text (optional)'}
         value={newContent}
         onChange={(event) => setNewContent(event.target.value)}
       />
