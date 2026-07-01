@@ -28,3 +28,11 @@ export type { ScannedElement } from './dom/scanner.js';
 
 export { createApiClient } from './utilities/api-client.js';
 export type { ApiClient, ApiClientOptions } from './utilities/api-client.js';
+
+//Re-export every shared type so app code can import them straight from here,
+//for example: import type { TagType, ContentRecord, Role } from '@veneer/react'.
+export type * from '@veneer/core';
+
+//Re-export the shared enums as values, for comparisons in your own code,
+//for example: if (user.role === ROLES.SUPERUSER) or content.type === TAG_TYPES.RICH.
+export { ACTIONS, ERROR_CODES, ROLES, TAG_TYPES } from '@veneer/core';
