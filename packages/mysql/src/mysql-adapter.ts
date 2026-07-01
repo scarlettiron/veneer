@@ -20,22 +20,15 @@ import { DUPLICATE_ENTRY, MIGRATIONS_TABLE } from './constants/index.js';
 import { MIGRATIONS } from './migrations/migrations.js';
 import { mapContentRow, mapUserRow } from './utilities/row-mappers.js';
 
-//Builds the settings the mysql pool needs from the user database config.
-//Supports either a full connection string or the separate parts.
-const buildPoolOptions = (config: DatabaseConfig): PoolOptions | string => {
-  if (config.connectionString) {
-    return config.connectionString;
-  }
-
-  return {
-    host: config.host,
-    port: config.port,
-    user: config.user,
-    password: config.password,
-    database: config.database,
-    ssl: config.ssl ? { rejectUnauthorized: false } : undefined,
-  };
-};
+//Builds the pool options from the separate connection parts.
+const buildPoolOptions = (config: DatabaseConfig): PoolOptions => ({
+  host: config.host,
+  port: config.port,
+  user: config.user,
+  password: config.password,
+  database: config.database,
+  ssl: config.ssl ? { rejectUnauthorized: false } : undefined,
+});
 
 //Reads a MySQL error code in a type safe way.
 const errorCode = (error: unknown): string | undefined => {
@@ -52,7 +45,11 @@ export class MysqlAdapter implements DbAdapter {
   private readonly pool: Pool;
 
   constructor(config: DatabaseConfig) {
-    this.pool = mysql.createPool(buildPoolOptions(config));
+    //A connection string and an options object use different overloads,
+    //so we call the right one for each case.
+    this.pool = config.connectionString
+      ? mysql.createPool(config.connectionString)
+      : mysql.createPool(buildPoolOptions(config));
   }
 
   public async runMigrations(): Promise<void> {

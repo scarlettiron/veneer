@@ -3,6 +3,7 @@ packages:
   - 'examples/*'
 
 allowBuilds:
+  better-sqlite3: false
   esbuild: false
 
 # Allow only these dependencies to run their install build scripts.

@@ -618,6 +618,29 @@ If you already have your own Node backend, like Express, you can skip the standa
 mount `@veneer/server`'s handler yourself. `createVeneerServer(config).nodeHandler` is a plain
 `(req, res)` handler you can attach to any route.
 
+## Types for TypeScript
+
+All of Veneer's shared types are exported so you can use them in your own code. They come from
+`@veneer/core`, and are also re-exported from `@veneer/react` and `@veneer/next` so you can import
+them from whichever package you already use.
+
+```ts
+import type {
+  TagType, // 'plain' | 'rich' | 'media'
+  ContentRecord, // a saved tag and its content
+  Role, // 'superuser' | 'editor'
+  AuthUser,
+  VeneerUserConfig,
+  DatabaseConfig,
+} from '@veneer/next';
+
+//The enums are exported as values too, for comparisons.
+import { TAG_TYPES, ROLES } from '@veneer/next';
+```
+
+Adapter authors can also import the `DbAdapter` and `AuthAdapter` interfaces from `@veneer/core`
+to build a new database or auth backend.
+
 ## Packages
 
 | Package            | Runs on  | What it does                                                          |
