@@ -150,6 +150,24 @@ export class MysqlAdapter implements DbAdapter {
     return record;
   }
 
+  public async setTagType(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+    await this.pool.execute(
+      `UPDATE \`${CONTENT_TABLE}\`
+       SET type = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+       WHERE tag = ?;`,
+      [type, actor.userId, tag],
+    );
+
+    //Read the row back to confirm it exists and return the new values.
+    const [record] = await this.getContentByTags([tag]);
+
+    if (!record) {
+      throw notFound(`The tag "${tag}" does not exist`);
+    }
+
+    return record;
+  }
+
   public async deleteTag(tag: string): Promise<void> {
     const [result] = await this.pool.execute<ResultSetHeader>(
       `DELETE FROM \`${CONTENT_TABLE}\` WHERE tag = ?;`,

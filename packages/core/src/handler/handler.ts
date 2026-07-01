@@ -174,6 +174,20 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     return { status: 200, body: { content } };
   };
 
+  const handleUpdateTagType = async (request: VeneerRequest): Promise<VeneerResponse> => {
+    const actor = await requireActor(request);
+
+    if (actor.role !== ROLES.SUPERUSER) {
+      throw forbidden('Only a superuser can change a tag type');
+    }
+
+    const tag = assertValidTag(requireString(request.payload, 'tag'));
+    const type = readTagType(request.payload);
+    const content = await db.setTagType(tag, type, actor);
+
+    return { status: 200, body: { content } };
+  };
+
   const handleDeleteTag = async (request: VeneerRequest): Promise<VeneerResponse> => {
     const actor = await requireActor(request);
 
@@ -211,6 +225,9 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
 
         case ACTIONS.UPDATE_CONTENT:
           return await handleUpdateContent(request);
+
+        case ACTIONS.UPDATE_TAG_TYPE:
+          return await handleUpdateTagType(request);
 
         case ACTIONS.DELETE_TAG:
           return await handleDeleteTag(request);

@@ -29,6 +29,7 @@ export const ACTIONS = {
   LIST_TAGS: 'listTags',
   CREATE_TAG: 'createTag',
   UPDATE_CONTENT: 'updateContent',
+  UPDATE_TAG_TYPE: 'updateTagType',
   DELETE_TAG: 'deleteTag',
 } as const;
 

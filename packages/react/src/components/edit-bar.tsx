@@ -1,43 +1,175 @@
-import { useEffect, useState } from 'react';
-import type { CSSProperties, ReactElement } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactElement } from 'react';
 
 import { ROLES, isValidTag, type TagType } from '@veneer/core';
 
 import { useVeneer } from '../hooks/use-veneer.js';
 
-//A few inline styles to keep the bar self contained.
-//The look is dark and simple so it sits on top of any site without clashing.
+//The top layer, so the bar and its popups sit over the whole page.
+const TOP_LAYER = 2147483647;
+
+//The width below which the bar collapses into a mobile menu.
+const NARROW_QUERY = '(max-width: 640px)';
+
+//Shared colors and shapes, kept in one place for a consistent look.
+const COLORS = {
+  surface: '#14151a',
+  surfaceRaised: '#1e2028',
+  border: '#2b2d38',
+  text: '#f3f4f6',
+  muted: '#9aa0ac',
+  primary: '#5b8cff',
+  primaryHover: '#7aa2ff',
+  danger: '#e5484d',
+};
+
+const panelShadow = '0 10px 34px rgba(0, 0, 0, 0.45)';
+
+const baseFont = '14px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+
 const barStyle: CSSProperties = {
   position: 'fixed',
   right: '1rem',
   bottom: '1rem',
-  zIndex: 2147483647,
+  zIndex: TOP_LAYER,
   display: 'flex',
-  gap: '0.5rem',
+  flexWrap: 'wrap',
+  maxWidth: 'calc(100vw - 2rem)',
+  gap: '0.4rem',
   alignItems: 'center',
-  padding: '0.75rem',
-  borderRadius: '0.5rem',
-  background: '#111',
-  color: '#fff',
-  font: '14px system-ui, sans-serif',
-  boxShadow: '0 6px 24px rgba(0, 0, 0, 0.35)',
+  padding: '0.5rem',
+  borderRadius: '0.75rem',
+  border: `1px solid ${COLORS.border}`,
+  background: COLORS.surface,
+  color: COLORS.text,
+  font: baseFont,
+  boxShadow: panelShadow,
 };
+
+const dragHandleStyle: CSSProperties = {
+  cursor: 'grab',
+  touchAction: 'none',
+  userSelect: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  padding: '0 0.15rem',
+};
+
+const gripDotsStyle: CSSProperties = {
+  width: '10px',
+  height: '18px',
+  backgroundImage: `radial-gradient(${COLORS.muted} 1.2px, transparent 1.3px)`,
+  backgroundSize: '5px 5px',
+  backgroundPosition: 'center',
+};
+
+const emailStyle: CSSProperties = {
+  color: COLORS.muted,
+  padding: '0 0.35rem',
+  maxWidth: '14rem',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const buttonStyle: CSSProperties = {
+  padding: '0.45rem 0.75rem',
+  borderRadius: '0.5rem',
+  border: 'none',
+  background: COLORS.primary,
+  color: '#fff',
+  cursor: 'pointer',
+  font: baseFont,
+  fontWeight: 600,
+};
+
+const subtleButtonStyle: CSSProperties = {
+  ...buttonStyle,
+  background: COLORS.surfaceRaised,
+  border: `1px solid ${COLORS.border}`,
+  color: COLORS.text,
+  fontWeight: 500,
+};
+
+const iconButtonStyle: CSSProperties = {
+  ...subtleButtonStyle,
+  width: '2.1rem',
+  padding: '0.45rem 0',
+  textAlign: 'center',
+};
+
+const inputStyle: CSSProperties = {
+  padding: '0.45rem 0.55rem',
+  borderRadius: '0.5rem',
+  border: `1px solid ${COLORS.border}`,
+  background: COLORS.surfaceRaised,
+  color: COLORS.text,
+  font: baseFont,
+};
+
+//A full width input for the stacked card layouts.
+const fullInputStyle: CSSProperties = {
+  ...inputStyle,
+  width: '100%',
+  boxSizing: 'border-box',
+};
+
+//A round button that opens the mobile menu.
+const fabStyle: CSSProperties = {
+  position: 'fixed',
+  right: '1rem',
+  bottom: '1rem',
+  zIndex: TOP_LAYER,
+  width: '3rem',
+  height: '3rem',
+  borderRadius: '50%',
+  border: `1px solid ${COLORS.border}`,
+  background: COLORS.primary,
+  color: '#fff',
+  cursor: 'pointer',
+  fontSize: '1.1rem',
+  boxShadow: panelShadow,
+};
+
+//The vertical mobile menu card.
+const menuStyle: CSSProperties = {
+  position: 'fixed',
+  right: '1rem',
+  bottom: '1rem',
+  zIndex: TOP_LAYER,
+  width: 'min(18rem, calc(100vw - 2rem))',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.5rem',
+  padding: '0.75rem',
+  borderRadius: '0.75rem',
+  border: `1px solid ${COLORS.border}`,
+  background: COLORS.surface,
+  color: COLORS.text,
+  font: baseFont,
+  boxShadow: panelShadow,
+};
+
+//Full width versions of the buttons for the stacked mobile menu.
+const menuButtonStyle: CSSProperties = { ...buttonStyle, width: '100%' };
+const menuSubtleStyle: CSSProperties = { ...subtleButtonStyle, width: '100%' };
 
 const panelStyle: CSSProperties = {
   position: 'fixed',
   right: '1rem',
-  bottom: '4.5rem',
-  zIndex: 2147483647,
-  width: '20rem',
+  bottom: '4.75rem',
+  zIndex: TOP_LAYER,
+  width: 'min(21rem, calc(100vw - 2rem))',
   display: 'flex',
   flexDirection: 'column',
   gap: '0.6rem',
   padding: '1rem',
-  borderRadius: '0.5rem',
-  background: '#111',
-  color: '#fff',
-  font: '14px system-ui, sans-serif',
-  boxShadow: '0 6px 24px rgba(0, 0, 0, 0.35)',
+  borderRadius: '0.75rem',
+  border: `1px solid ${COLORS.border}`,
+  background: COLORS.surface,
+  color: COLORS.text,
+  font: baseFont,
+  boxShadow: panelShadow,
 };
 
 const headerStyle: CSSProperties = {
@@ -49,45 +181,21 @@ const headerStyle: CSSProperties = {
 const closeButtonStyle: CSSProperties = {
   border: 'none',
   background: 'transparent',
-  color: '#fff',
+  color: COLORS.text,
   cursor: 'pointer',
   fontSize: '1.1rem',
   lineHeight: 1,
   padding: '0 0.25rem',
 };
 
-const inputStyle: CSSProperties = {
-  padding: '0.35rem 0.5rem',
-  borderRadius: '0.35rem',
-  border: '1px solid #444',
-  background: '#1c1c1c',
-  color: '#fff',
-};
-
-const buttonStyle: CSSProperties = {
-  padding: '0.4rem 0.7rem',
-  borderRadius: '0.35rem',
-  border: 'none',
-  background: '#5b8cff',
-  color: '#fff',
-  cursor: 'pointer',
-};
-
-const subtleButtonStyle: CSSProperties = {
-  ...buttonStyle,
-  background: '#333',
-};
-
-//A themed scrollbar for the tag list, so it matches the dark Veneer look.
-//The pseudo elements are for Chrome and Safari, and the inline scrollbar
-//properties on the list itself cover Firefox.
+//A themed scrollbar for the tag list.
 const SCROLLBAR_CLASS = 'veneer-scroll';
 
 const scrollbarCss = `
 .${SCROLLBAR_CLASS}::-webkit-scrollbar { width: 8px; }
-.${SCROLLBAR_CLASS}::-webkit-scrollbar-track { background: #1c1c1c; border-radius: 4px; }
-.${SCROLLBAR_CLASS}::-webkit-scrollbar-thumb { background: #5b8cff; border-radius: 4px; }
-.${SCROLLBAR_CLASS}::-webkit-scrollbar-thumb:hover { background: #7aa2ff; }
+.${SCROLLBAR_CLASS}::-webkit-scrollbar-track { background: ${COLORS.surfaceRaised}; border-radius: 4px; }
+.${SCROLLBAR_CLASS}::-webkit-scrollbar-thumb { background: ${COLORS.primary}; border-radius: 4px; }
+.${SCROLLBAR_CLASS}::-webkit-scrollbar-thumb:hover { background: ${COLORS.primaryHover}; }
 `;
 
 //A shared header with a title and a close X for the popups.
@@ -100,27 +208,61 @@ const PanelHeader = ({ title, onClose }: { title: string; onClose: () => void })
   </div>
 );
 
-//The panel where a superuser creates new tags, deletes them, and sees the list.
+//One tag row in the Tags panel.
+interface TagEntry {
+  tag: string;
+  type: TagType;
+}
+
+//The panel where a superuser creates tags, changes their type, and deletes them.
 const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
-  const { createTag, deleteTag, listTags, notify, confirm, richText } = useVeneer();
+  const { createTag, deleteTag, setTagType, listTags, loadContent, notify, confirm, richText } =
+    useVeneer();
 
   const [newTag, setNewTag] = useState('');
   const [newContent, setNewContent] = useState('');
   const [newType, setNewType] = useState<TagType>('plain');
-  const [tags, setTags] = useState<string[] | null>(null);
+  const [entries, setEntries] = useState<TagEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  //Load the current list of tags when the panel opens.
+  //Loads the tag names, and their types when rich text is on.
+  const loadEntries = async (): Promise<TagEntry[]> => {
+    const names = await listTags();
+    let typeByTag = new Map<string, TagType>();
+
+    if (richText) {
+      const records = await loadContent(names);
+      typeByTag = new Map(records.map((record) => [record.tag, record.type]));
+    }
+
+    return names.map((tag) => ({ tag, type: typeByTag.get(tag) ?? 'plain' }));
+  };
+
   useEffect(() => {
-    listTags()
-      .then((result) => setTags(result))
-      .catch(() => setTags([]));
-  }, [listTags]);
+    let active = true;
+
+    loadEntries()
+      .then((result) => {
+        if (active) {
+          setEntries(result);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setEntries([]);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+    //loadEntries reads current values, running it once on open is enough.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCreate = async (): Promise<void> => {
     setError(null);
-
     const tag = newTag.trim();
 
     if (!isValidTag(tag)) {
@@ -136,9 +278,7 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
       setNewTag('');
       setNewContent('');
       setNewType('plain');
-
-      const refreshed = await listTags();
-      setTags(refreshed);
+      setEntries(await loadEntries());
       notify(`Created the tag "${tag}".`, 'success');
     } catch (createError) {
       const message =
@@ -147,6 +287,18 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
       notify(message, 'error');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleChangeType = async (tag: string, type: TagType): Promise<void> => {
+    try {
+      await setTagType(tag, type);
+      setEntries((current) =>
+        current ? current.map((entry) => (entry.tag === tag ? { ...entry, type } : entry)) : current,
+      );
+      notify(`Changed "${tag}" to ${type}.`, 'success');
+    } catch (typeError) {
+      notify(typeError instanceof Error ? typeError.message : 'Could not change the type', 'error');
     }
   };
 
@@ -162,13 +314,10 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
 
     try {
       await deleteTag(tag);
-      setTags((current) => (current ? current.filter((name) => name !== tag) : current));
+      setEntries((current) => (current ? current.filter((entry) => entry.tag !== tag) : current));
       notify(`Deleted the tag "${tag}".`, 'success');
     } catch (deleteError) {
-      notify(
-        deleteError instanceof Error ? deleteError.message : 'Could not delete the tag',
-        'error',
-      );
+      notify(deleteError instanceof Error ? deleteError.message : 'Could not delete the tag', 'error');
     }
   };
 
@@ -189,18 +338,15 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
       />
 
       {richText ? (
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <span style={{ opacity: 0.7, fontSize: '12px' }}>Type</span>
-          <select
-            style={inputStyle}
-            value={newType}
-            onChange={(event) => setNewType(event.target.value as TagType)}
-          >
-            <option value="plain">Plain text</option>
-            <option value="rich">Rich text</option>
-            <option value="media">Media</option>
-          </select>
-        </label>
+        <select
+          style={inputStyle}
+          value={newType}
+          onChange={(event) => setNewType(event.target.value as TagType)}
+        >
+          <option value="plain">Plain text</option>
+          <option value="rich">Rich text</option>
+          <option value="media">Media</option>
+        </select>
       ) : null}
 
       <input
@@ -215,43 +361,55 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
         {busy ? 'Creating...' : 'Create tag'}
       </button>
 
-      {error ? <span style={{ color: '#ff8080' }}>{error}</span> : null}
+      {error ? <span style={{ color: '#ff9a9a' }}>{error}</span> : null}
 
-      <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #333', margin: 0 }} />
+      <hr style={{ width: '100%', border: 'none', borderTop: `1px solid ${COLORS.border}`, margin: 0 }} />
 
       <strong>Existing tags</strong>
 
-      {tags === null ? (
+      {entries === null ? (
         <span style={{ opacity: 0.6 }}>Loading...</span>
-      ) : tags.length === 0 ? (
+      ) : entries.length === 0 ? (
         <span style={{ opacity: 0.6 }}>No tags yet.</span>
       ) : (
         <ul
           className={SCROLLBAR_CLASS}
           style={{
             margin: 0,
-            //A little padding on the right keeps the Delete buttons off the scrollbar.
             padding: '0 0.4rem 0 0',
             listStyle: 'none',
-            maxHeight: '10rem',
+            maxHeight: '12rem',
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.35rem',
+            gap: '0.5rem',
             scrollbarWidth: 'thin',
-            scrollbarColor: '#5b8cff #1c1c1c',
+            scrollbarColor: `${COLORS.primary} ${COLORS.surfaceRaised}`,
           }}
         >
-          {tags.map((tag) => (
+          {entries.map((entry) => (
             <li
-              key={tag}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              key={entry.tag}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}
             >
-              <span style={{ fontFamily: 'monospace' }}>{tag}</span>
+              <span style={{ fontFamily: 'monospace', flex: 1, minWidth: '6rem' }}>{entry.tag}</span>
+
+              {richText ? (
+                <select
+                  style={{ ...inputStyle, padding: '0.2rem 0.3rem' }}
+                  value={entry.type}
+                  onChange={(event) => void handleChangeType(entry.tag, event.target.value as TagType)}
+                >
+                  <option value="plain">plain</option>
+                  <option value="rich">rich</option>
+                  <option value="media">media</option>
+                </select>
+              ) : null}
+
               <button
                 type="button"
-                style={{ ...buttonStyle, background: '#b3261e', padding: '0.2rem 0.5rem' }}
-                onClick={() => void handleDelete(tag)}
+                style={{ ...buttonStyle, background: COLORS.danger, padding: '0.2rem 0.5rem' }}
+                onClick={() => void handleDelete(entry.tag)}
               >
                 Delete
               </button>
@@ -276,7 +434,6 @@ const HelpItem = ({ title, children }: { title: string; children: string }): Rea
 );
 
 //A short help popup with tips on how to use the editor.
-//The tag tips only show for a superuser, since only they manage tags.
 const HelpPanel = ({
   onClose,
   isSuperuser,
@@ -310,16 +467,16 @@ const HelpPanel = ({
     ) : null}
 
     {isSuperuser ? (
-      <HelpItem title="Delete a tag">
-        In the Tags panel, click Delete next to a tag. You are asked to confirm, because deleting
-        removes its content for good.
+      <HelpItem title="Change or delete a tag">
+        In the Tags panel, change a tag's type with its dropdown, or click Delete to remove it. You
+        are asked to confirm before a delete.
       </HelpItem>
     ) : null}
   </div>
 );
 
-//A small floating bar that lets a user sign in, turn edit mode on and off,
-//get help, and, for a superuser, manage tags.
+//The floating admin bar. It shows a login form when signed out, a horizontal
+//toolbar on wider screens, and a collapsible menu on small screens.
 export const VeneerEditBar = (): ReactElement => {
   const {
     user,
@@ -339,8 +496,29 @@ export const VeneerEditBar = (): ReactElement => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [openPanel, setOpenPanel] = useState<'tags' | 'help' | null>(null);
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+  const [isNarrow, setIsNarrow] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const barRef = useRef<HTMLDivElement | null>(null);
+  const dragOffset = useRef<{ x: number; y: number } | null>(null);
 
   const isSuperuser = user?.role === ROLES.SUPERUSER;
+
+  //Track whether the screen is narrow enough to use the mobile menu.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return;
+    }
+
+    const query = window.matchMedia(NARROW_QUERY);
+    const update = (): void => setIsNarrow(query.matches);
+
+    update();
+    query.addEventListener('change', update);
+
+    return () => query.removeEventListener('change', update);
+  }, []);
 
   const togglePanel = (panel: 'tags' | 'help'): void => {
     setOpenPanel((current) => (current === panel ? null : panel));
@@ -358,19 +536,14 @@ export const VeneerEditBar = (): ReactElement => {
     }
   };
 
-  //Ask before saving, then save everything at once.
   const handleSave = async (): Promise<void> => {
-    const ok = await confirm('Save your changes?', {
-      confirmLabel: 'Save',
-      cancelLabel: 'Cancel',
-    });
+    const ok = await confirm('Save your changes?', { confirmLabel: 'Save', cancelLabel: 'Cancel' });
 
     if (ok) {
       await saveEdits();
     }
   };
 
-  //Warn about unsaved changes before leaving edit mode.
   const handleClose = async (): Promise<void> => {
     if (hasUnsavedChanges) {
       const ok = await confirm('You have unsaved changes that will be lost. Close without saving?', {
@@ -387,46 +560,201 @@ export const VeneerEditBar = (): ReactElement => {
     setEditing(false);
   };
 
+  //Drag handlers, used only for the wide screen bar.
+  const startDrag = (event: ReactPointerEvent<HTMLSpanElement>): void => {
+    const bar = barRef.current;
+
+    if (!bar) {
+      return;
+    }
+
+    const rect = bar.getBoundingClientRect();
+    dragOffset.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onDrag = (event: ReactPointerEvent<HTMLSpanElement>): void => {
+    const offset = dragOffset.current;
+    const bar = barRef.current;
+
+    if (!offset || !bar) {
+      return;
+    }
+
+    const maxLeft = Math.max(0, window.innerWidth - bar.offsetWidth);
+    const maxTop = Math.max(0, window.innerHeight - bar.offsetHeight);
+    const left = Math.min(Math.max(0, event.clientX - offset.x), maxLeft);
+    const top = Math.min(Math.max(0, event.clientY - offset.y), maxTop);
+
+    setPosition({ left, top });
+  };
+
+  const endDrag = (event: ReactPointerEvent<HTMLSpanElement>): void => {
+    dragOffset.current = null;
+
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      //The pointer may already be released, which is fine.
+    }
+  };
+
+  const positionStyle: CSSProperties = position
+    ? { left: position.left, top: position.top, right: 'auto', bottom: 'auto' }
+    : {};
+
+  //The reusable grab handle for the card and bar headers.
+  const dragHandle = (
+    <span
+      style={dragHandleStyle}
+      onPointerDown={startDrag}
+      onPointerMove={onDrag}
+      onPointerUp={endDrag}
+      title="Drag to move"
+      aria-label="Drag to move"
+    >
+      <span style={gripDotsStyle} />
+    </span>
+  );
+
+  //The editing controls, shared by both layouts.
+  const editControls = (stacked: boolean): ReactElement | null => {
+    const primary = stacked ? menuButtonStyle : buttonStyle;
+    const subtle = stacked ? menuSubtleStyle : subtleButtonStyle;
+
+    if (!isEditing) {
+      return (
+        <button style={primary} type="button" disabled={!canEdit} onClick={() => setEditing(true)}>
+          Edit page
+        </button>
+      );
+    }
+
+    if (editInView) {
+      return (
+        <>
+          <button style={primary} type="button" onClick={() => void handleSave()}>
+            Save{hasUnsavedChanges ? ' *' : ''}
+          </button>
+          <button style={subtle} type="button" onClick={() => void handleClose()}>
+            Close
+          </button>
+        </>
+      );
+    }
+
+    return null;
+  };
+
+  //The panels are shared across layouts.
+  const panels = (
+    <>
+      {openPanel === 'tags' && isSuperuser ? <TagManager onClose={() => setOpenPanel(null)} /> : null}
+      {openPanel === 'help' ? (
+        <HelpPanel onClose={() => setOpenPanel(null)} isSuperuser={Boolean(isSuperuser)} />
+      ) : null}
+    </>
+  );
+
+  //Signed out: a tidy vertical login card, the same on every screen size.
   if (!user) {
     return (
-      <div style={barStyle}>
+      <div ref={barRef} style={{ ...menuStyle, ...positionStyle }}>
+        <div style={headerStyle}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            {dragHandle}
+            <strong>Sign in to edit</strong>
+          </span>
+        </div>
+
         <input
-          style={inputStyle}
+          style={fullInputStyle}
           type="email"
           placeholder="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
         <input
-          style={inputStyle}
+          style={fullInputStyle}
           type="password"
           placeholder="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
-        <button style={buttonStyle} type="button" onClick={() => void handleLogin()}>
+        <button style={menuButtonStyle} type="button" onClick={() => void handleLogin()}>
           Sign in
         </button>
-        {error ? <span style={{ color: '#ff8080' }}>{error}</span> : null}
+        {error ? <span style={{ color: '#ff9a9a' }}>{error}</span> : null}
       </div>
     );
   }
 
+  //Signed in, small screen: a collapsible menu opened by an arrow button.
+  if (isNarrow) {
+    if (!menuOpen) {
+      return (
+        <>
+          {panels}
+          <button
+            style={fabStyle}
+            type="button"
+            aria-label="Open the editor menu"
+            onClick={() => setMenuOpen(true)}
+          >
+            &#9650;
+          </button>
+        </>
+      );
+    }
+
+    return (
+      <>
+        {panels}
+        <div style={menuStyle}>
+          <div style={headerStyle}>
+            <span style={{ ...emailStyle, maxWidth: 'none' }}>{user.email}</span>
+            <button
+              style={closeButtonStyle}
+              type="button"
+              aria-label="Close the editor menu"
+              onClick={() => setMenuOpen(false)}
+            >
+              &#9660;
+            </button>
+          </div>
+
+          <button style={menuSubtleStyle} type="button" onClick={() => togglePanel('help')}>
+            Help
+          </button>
+
+          {isSuperuser ? (
+            <button style={menuSubtleStyle} type="button" onClick={() => togglePanel('tags')}>
+              Tags
+            </button>
+          ) : null}
+
+          {editControls(true)}
+
+          <button style={menuSubtleStyle} type="button" onClick={() => void logout()}>
+            Sign out
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  //Signed in, wide screen: the horizontal toolbar.
   return (
     <>
-      {openPanel === 'tags' && isSuperuser ? (
-        <TagManager onClose={() => setOpenPanel(null)} />
-      ) : null}
+      {panels}
 
-      {openPanel === 'help' ? (
-        <HelpPanel onClose={() => setOpenPanel(null)} isSuperuser={Boolean(isSuperuser)} />
-      ) : null}
+      <div ref={barRef} style={{ ...barStyle, ...positionStyle }}>
+        {dragHandle}
 
-      <div style={barStyle}>
-        <span style={{ opacity: 0.8 }}>{user.email}</span>
+        <span style={emailStyle}>{user.email}</span>
 
         <button
-          style={openPanel === 'help' ? buttonStyle : subtleButtonStyle}
+          style={openPanel === 'help' ? buttonStyle : iconButtonStyle}
           type="button"
           aria-label="Help"
           title="Help and tips"
@@ -445,25 +773,7 @@ export const VeneerEditBar = (): ReactElement => {
           </button>
         ) : null}
 
-        {!isEditing ? (
-          <button
-            style={buttonStyle}
-            type="button"
-            disabled={!canEdit}
-            onClick={() => setEditing(true)}
-          >
-            Edit page
-          </button>
-        ) : editInView ? (
-          <>
-            <button style={buttonStyle} type="button" onClick={() => void handleSave()}>
-              Save{hasUnsavedChanges ? ' *' : ''}
-            </button>
-            <button style={subtleButtonStyle} type="button" onClick={() => void handleClose()}>
-              Close
-            </button>
-          </>
-        ) : null}
+        {editControls(false)}
 
         <button style={subtleButtonStyle} type="button" onClick={() => void logout()}>
           Sign out

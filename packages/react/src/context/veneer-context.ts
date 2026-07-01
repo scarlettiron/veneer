@@ -50,6 +50,9 @@ export interface VeneerContextValue {
   //Deletes a tag and its content. Superuser only.
   deleteTag: (tag: string) => Promise<void>;
 
+  //Changes an existing tag's type. Superuser only.
+  setTagType: (tag: string, type: TagType) => Promise<void>;
+
   //Lists every tag that currently exists in the database.
   listTags: () => Promise<string[]>;
 
