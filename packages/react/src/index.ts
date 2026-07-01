@@ -14,6 +14,8 @@ export { Spinner } from './components/spinner.js';
 export { TagEditorModal } from './components/tag-editor-modal.js';
 export { RichTextEditor } from './components/rich-text-editor.js';
 export type { RichTextEditorProps } from './components/rich-text-editor.js';
+export { RichTextToolbar } from './components/rich-text-toolbar.js';
+export type { RichTextToolbarProps } from './components/rich-text-toolbar.js';
 
 export { useVeneer } from './hooks/use-veneer.js';
 export { useEditableTag } from './hooks/use-editable-tag.js';

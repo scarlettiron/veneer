@@ -18,6 +18,7 @@ import { DefaultLoader } from './default-loader.js';
 import { ToastHost, type Toast } from './toast-host.js';
 import { ConfirmDialog } from './confirm-dialog.js';
 import { TagEditorModal } from './tag-editor-modal.js';
+import { RichTextToolbar } from './rich-text-toolbar.js';
 
 //The details of an open confirm popup, including how to answer it.
 interface ConfirmState {
@@ -26,6 +27,15 @@ interface ConfirmState {
   cancelLabel: string;
   resolve: (confirmed: boolean) => void;
 }
+
+//Works out where to float the rich text toolbar for an element.
+//It sits just above the element, or just below when there is no room above.
+const computeToolbarPosition = (element: HTMLElement): { left: number; top: number } => {
+  const rect = element.getBoundingClientRect();
+  const above = rect.top - 44;
+
+  return { left: Math.max(4, rect.left), top: above < 4 ? rect.bottom + 4 : above };
+};
 
 //The shape returned by the getContent action.
 interface GetContentResponse {
@@ -67,6 +77,10 @@ export const VeneerProvider = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+  const [richToolbar, setRichToolbar] = useState<{ left: number; top: number } | null>(null);
+
+  //The rich element currently being edited in place, if any.
+  const activeRichElementRef = useRef<HTMLElement | null>(null);
 
   const canEdit = user !== null;
 
@@ -210,6 +224,16 @@ export const VeneerProvider = ({
     [saveContent],
   );
 
+  //Changes a tag's type. The server only allows a superuser to do this.
+  const setTagType = useCallback(async (tag: string, type: TagType): Promise<void> => {
+    const result = await apiRef.current.request<{ content: ContentRecord }>(
+      ACTIONS.UPDATE_TAG_TYPE,
+      { tag, type },
+    );
+
+    setContentByTag((previous) => ({ ...previous, [tag]: result.content }));
+  }, []);
+
   //Deletes a tag and its content. The server only allows a superuser to do this.
   const deleteTag = useCallback(async (tag: string): Promise<void> => {
     await apiRef.current.request(ACTIONS.DELETE_TAG, { tag });
@@ -352,23 +376,62 @@ export const VeneerProvider = ({
       setHasUnsavedChanges(true);
     };
 
+    //When a rich tag element is focused, float the formatting toolbar above it.
+    const onFocus = (): void => {
+      const currentTag = tagByElementRef.current.get(element);
+      const record = currentTag ? contentRef.current[currentTag] : undefined;
+
+      if (record?.type === 'rich') {
+        activeRichElementRef.current = element;
+        setRichToolbar(computeToolbarPosition(element));
+      }
+    };
+
+    //Hide the toolbar when leaving the element. Toolbar buttons keep the
+    //selection with a mousedown, so clicking them does not trigger this.
+    const onBlur = (): void => {
+      activeRichElementRef.current = null;
+      setRichToolbar(null);
+    };
+
     element.setAttribute('contenteditable', 'true');
     element.style.outline = '1px dashed rgba(0, 0, 0, 0.3)';
     element.addEventListener('input', onInput);
-    boundRef.current.set(element, onInput);
+    element.addEventListener('focus', onFocus);
+    element.addEventListener('blur', onBlur);
+
+    //Store a cleanup that removes everything this binding added.
+    boundRef.current.set(element, () => {
+      element.removeEventListener('input', onInput);
+      element.removeEventListener('focus', onFocus);
+      element.removeEventListener('blur', onBlur);
+      element.removeAttribute('contenteditable');
+      element.style.outline = '';
+    });
   }, []);
 
   //Removes the editing behavior from one element.
   const unbindElement = useCallback((element: HTMLElement): void => {
-    const onInput = boundRef.current.get(element);
+    const cleanup = boundRef.current.get(element);
 
-    if (onInput) {
-      element.removeEventListener('input', onInput);
+    if (cleanup) {
+      cleanup();
     }
 
-    element.removeAttribute('contenteditable');
-    element.style.outline = '';
     boundRef.current.delete(element);
+  }, []);
+
+  //Runs a formatting command from the floating toolbar on the element being
+  //edited in place, then marks it as changed so the edit is saved.
+  const applyRichCommand = useCallback((command: string): void => {
+    document.execCommand(command);
+
+    const element = activeRichElementRef.current;
+
+    if (element) {
+      dirtyRef.current.add(element);
+      setHasUnsavedChanges(true);
+    }
   }, []);
 
   //Saves every changed element at once and reports how it went.
@@ -667,8 +730,34 @@ export const VeneerProvider = ({
       dirtyRef.current.clear();
       originalTextRef.current.clear();
       setHasUnsavedChanges(false);
+      setRichToolbar(null);
     }
   }, [isEditing, canEdit, editInView, bindElement, unbindElement]);
+
+  //Keep the floating rich text toolbar over its element as the page scrolls.
+  const toolbarActive = richToolbar !== null;
+
+  useEffect(() => {
+    if (!toolbarActive || typeof window === 'undefined') {
+      return;
+    }
+
+    const reposition = (): void => {
+      const element = activeRichElementRef.current;
+
+      if (element) {
+        setRichToolbar(computeToolbarPosition(element));
+      }
+    };
+
+    window.addEventListener('scroll', reposition, true);
+    window.addEventListener('resize', reposition);
+
+    return () => {
+      window.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', reposition);
+    };
+  }, [toolbarActive]);
 
   const value = useMemo<VeneerContextValue>(
     () => ({
@@ -686,6 +775,7 @@ export const VeneerProvider = ({
       saveContent,
       createTag,
       deleteTag,
+      setTagType,
       listTags,
       loadContent,
       hasUnsavedChanges,
@@ -710,6 +800,7 @@ export const VeneerProvider = ({
       saveContent,
       createTag,
       deleteTag,
+      setTagType,
       listTags,
       loadContent,
       hasUnsavedChanges,
@@ -726,6 +817,17 @@ export const VeneerProvider = ({
       {children}
       <ToastHost toasts={toasts} />
       {!editInView && isEditing && canEdit ? <TagEditorModal /> : null}
+      {richToolbar ? (
+        <RichTextToolbar
+          onCommand={applyRichCommand}
+          style={{
+            position: 'fixed',
+            left: richToolbar.left,
+            top: richToolbar.top,
+            zIndex: 2147483647,
+          }}
+        />
+      ) : null}
       {confirmState ? (
         <ConfirmDialog
           message={confirmState.message}

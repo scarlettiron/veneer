@@ -147,6 +147,24 @@ export class PostgresAdapter implements DbAdapter {
     return mapContentRow(result.rows[0]);
   }
 
+  public async setTagType(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+    const result = await this.pool.query(
+      `UPDATE "${CONTENT_TABLE}"
+       SET type = $2, updated_at = now(), updated_by = $3
+       WHERE tag = $1
+       RETURNING tag, type, body, media_url, updated_at, updated_by;`,
+      [tag, type, actor.userId],
+    );
+
+    const row = result.rows[0];
+
+    if (!row) {
+      throw notFound(`The tag "${tag}" does not exist`);
+    }
+
+    return mapContentRow(row);
+  }
+
   public async deleteTag(tag: string): Promise<void> {
     const result = await this.pool.query(`DELETE FROM "${CONTENT_TABLE}" WHERE tag = $1;`, [tag]);
 

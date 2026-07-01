@@ -65,6 +65,19 @@ class FakeDb implements DbAdapter {
     return record;
   }
 
+  async setTagType(tag: string, type: TagType): Promise<ContentRecord> {
+    const existing = this.content.get(tag);
+
+    if (!existing) {
+      throw new Error('not found');
+    }
+
+    const record: ContentRecord = { ...existing, type };
+    this.content.set(tag, record);
+
+    return record;
+  }
+
   async deleteTag(tag: string): Promise<void> {
     this.content.delete(tag);
   }

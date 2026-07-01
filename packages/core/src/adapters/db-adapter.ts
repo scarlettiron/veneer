@@ -34,6 +34,9 @@ export interface DbAdapter extends UserStore {
   //The handler decides who is allowed to call this.
   upsertContent(input: ContentInput, actor: Actor): Promise<ContentRecord>;
 
+  //Change a tag's type. Only a superuser should reach this method.
+  setTagType(tag: string, type: TagType, actor: Actor): Promise<ContentRecord>;
+
   //Delete a tag and its content.
   //Only a superuser should reach this method.
   deleteTag(tag: string, actor: Actor): Promise<void>;

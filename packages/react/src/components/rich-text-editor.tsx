@@ -1,6 +1,8 @@
 import { useRef } from 'react';
 import type { CSSProperties, ReactElement } from 'react';
 
+import { RichTextToolbar } from './rich-text-toolbar.js';
+
 //The props for the rich text editor.
 export interface RichTextEditorProps {
   //The current html value.
@@ -10,24 +12,9 @@ export interface RichTextEditorProps {
   onChange: (html: string) => void;
 }
 
-const toolbarStyle: CSSProperties = {
-  display: 'flex',
-  gap: '0.25rem',
-  marginBottom: '0.35rem',
-};
-
-const toolButtonStyle: CSSProperties = {
-  minWidth: '2rem',
-  padding: '0.25rem 0.4rem',
-  borderRadius: '0.3rem',
-  border: '1px solid #444',
-  background: '#2a2a2a',
-  color: '#fff',
-  cursor: 'pointer',
-};
-
 const editorStyle: CSSProperties = {
   minHeight: '4rem',
+  marginTop: '0.35rem',
   padding: '0.5rem 0.6rem',
   borderRadius: '0.35rem',
   border: '1px solid #444',
@@ -65,55 +52,9 @@ export const RichTextEditor = ({ value, onChange }: RichTextEditorProps): ReactE
     emitChange();
   };
 
-  //Keeps the text selection while a toolbar button is pressed.
-  const keepSelection = (event: { preventDefault: () => void }): void => {
-    event.preventDefault();
-  };
-
   return (
     <div>
-      <div style={toolbarStyle}>
-        <button
-          type="button"
-          style={{ ...toolButtonStyle, fontWeight: 700 }}
-          onMouseDown={keepSelection}
-          onClick={() => runCommand('bold')}
-        >
-          B
-        </button>
-        <button
-          type="button"
-          style={{ ...toolButtonStyle, fontStyle: 'italic' }}
-          onMouseDown={keepSelection}
-          onClick={() => runCommand('italic')}
-        >
-          I
-        </button>
-        <button
-          type="button"
-          style={{ ...toolButtonStyle, textDecoration: 'underline' }}
-          onMouseDown={keepSelection}
-          onClick={() => runCommand('underline')}
-        >
-          U
-        </button>
-        <button
-          type="button"
-          style={toolButtonStyle}
-          onMouseDown={keepSelection}
-          onClick={() => runCommand('insertUnorderedList')}
-        >
-          &bull;
-        </button>
-        <button
-          type="button"
-          style={toolButtonStyle}
-          onMouseDown={keepSelection}
-          onClick={() => runCommand('removeFormat')}
-        >
-          clear
-        </button>
-      </div>
+      <RichTextToolbar onCommand={runCommand} />
 
       <div
         ref={attachRef}
