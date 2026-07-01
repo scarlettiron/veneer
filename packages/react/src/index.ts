@@ -12,6 +12,8 @@ export { ConfirmDialog } from './components/confirm-dialog.js';
 export type { ConfirmDialogProps } from './components/confirm-dialog.js';
 export { Spinner } from './components/spinner.js';
 export { TagEditorModal } from './components/tag-editor-modal.js';
+export { RichTextEditor } from './components/rich-text-editor.js';
+export type { RichTextEditorProps } from './components/rich-text-editor.js';
 
 export { useVeneer } from './hooks/use-veneer.js';
 export { useEditableTag } from './hooks/use-editable-tag.js';

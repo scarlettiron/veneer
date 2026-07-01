@@ -7,6 +7,7 @@ import {
   type AuthResult,
   type AuthUser,
   type ContentRecord,
+  type TagType,
 } from '@veneer/core';
 
 import { VeneerContext, type VeneerContextValue } from '../context/veneer-context.js';
@@ -42,6 +43,9 @@ export interface VeneerProviderProps {
   //in a popup form that lists every tag. Defaults to true.
   editInView?: boolean;
 
+  //Turns on the rich text editor and tag types. Defaults to false.
+  richText?: boolean;
+
   //A custom loading component to show while content loads.
   loadingComponent?: ReactNode;
 }
@@ -53,6 +57,7 @@ export const VeneerProvider = ({
   children,
   apiBasePath = DEFAULT_API_BASE_PATH,
   editInView = true,
+  richText = false,
   loadingComponent,
 }: VeneerProviderProps): ReactElement => {
   const [token, setToken] = useState<string | null>(null);
@@ -188,10 +193,10 @@ export const VeneerProvider = ({
   //Creates a brand new tag, then optionally saves a starting body for it.
   //The server only allows a superuser to reach this.
   const createTag = useCallback(
-    async (tag: string, body?: string): Promise<void> => {
+    async (tag: string, body?: string, type?: TagType): Promise<void> => {
       const result = await apiRef.current.request<{ content: ContentRecord }>(
         ACTIONS.CREATE_TAG,
-        { tag },
+        { tag, type: type ?? 'plain' },
       );
 
       //Remember it so the crawler does not fetch it again, and cache the row.
@@ -296,11 +301,22 @@ export const VeneerProvider = ({
         return;
       }
 
-      if (element.tagName === 'IMG') {
+      //Media tags, and any image element, get their source set from the url.
+      if (record.type === 'media' || element.tagName === 'IMG') {
         const url = record.mediaUrl ?? record.body;
 
         if (url && element.getAttribute('src') !== url) {
           element.setAttribute('src', url);
+        }
+
+        return;
+      }
+
+      //Rich tags hold html, so we set it as html. The server has already
+      //removed anything dangerous like script tags.
+      if (record.type === 'rich') {
+        if (element.innerHTML !== record.body) {
+          element.innerHTML = record.body;
         }
 
         return;
@@ -320,9 +336,15 @@ export const VeneerProvider = ({
       return;
     }
 
-    //Remember the text as it was, so a discard can put it back.
+    //Images cannot be typed into, so they are edited through the popup or the
+    //Tags panel instead of in place.
+    if (element.tagName === 'IMG') {
+      return;
+    }
+
+    //Remember the content as it was, so a discard can put it back.
     if (!originalTextRef.current.has(element)) {
-      originalTextRef.current.set(element, element.innerText);
+      originalTextRef.current.set(element, element.innerHTML);
     }
 
     const onInput = (): void => {
@@ -369,8 +391,12 @@ export const VeneerProvider = ({
         continue;
       }
 
+      //Rich tags are saved as html, everything else as plain text.
+      const record = contentRef.current[tag];
+      const body = record?.type === 'rich' ? element.innerHTML : element.innerText.trim();
+
       try {
-        await saveContent(tag, element.innerText.trim());
+        await saveContent(tag, body);
         dirtyRef.current.delete(element);
         saved += 1;
       } catch {
@@ -393,10 +419,13 @@ export const VeneerProvider = ({
       const tag = tagByElementRef.current.get(element);
       const record = tag ? contentRef.current[tag] : undefined;
 
-      if (record) {
+      if (record && record.type === 'rich') {
+        element.innerHTML = record.body;
+      } else if (record && record.type !== 'media') {
         element.innerText = record.body;
       } else {
-        element.innerText = originalTextRef.current.get(element) ?? '';
+        //No saved record yet, so put back the text that was there before editing.
+        element.innerHTML = originalTextRef.current.get(element) ?? '';
       }
     }
 
@@ -647,6 +676,7 @@ export const VeneerProvider = ({
       user,
       isEditing,
       editInView,
+      richText,
       canEdit,
       setEditing,
       login,
@@ -670,6 +700,7 @@ export const VeneerProvider = ({
       user,
       isEditing,
       editInView,
+      richText,
       canEdit,
       setEditing,
       login,
