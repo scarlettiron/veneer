@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "pnpm -r --filter \"./packages/*\" build",
-    "pack:all": "rm -rf veneer-pack && mkdir -p veneer-pack && for p in core postgres mysql sqlite auth-jwt server react next cli; do (cd packages/$p && pnpm pack --pack-destination ../../veneer-pack); done && echo 'Tarballs written to ./veneer-pack'",
+    "pack:all": "rm -rf veneer-pack && mkdir -p veneer-pack && for p in core db-postgres db-mysql db-mariadb db-sqlite auth-jwt server react next cli; do (cd packages/$p && pnpm pack --pack-destination ../../veneer-pack); done && echo 'Tarballs written to ./veneer-pack'",
     "typecheck": "pnpm -r --filter \"./packages/*\" typecheck",
     "test": "vitest run",
     "test:watch": "vitest",

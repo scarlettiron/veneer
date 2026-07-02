@@ -59,7 +59,7 @@ production. It can reach the database and it holds your secrets.
 
 - Files: your `veneer.config.ts`, your `.env.local` secrets, and the backend route at
   `app/api/veneer/route.ts`.
-- Packages: `@veneer/server` (the handler), `@veneer/postgres` (the database), `@veneer/auth-jwt`
+- Packages: `@veneer/server` (the handler), `@veneer/db-postgres` (the database), `@veneer/auth-jwt`
   (login and tokens), and `@veneer/cli` (the terminal command).
 
 **Client side.** This runs in the browser, on the page your visitors see. It has no database
@@ -439,14 +439,16 @@ So `hero-title` and `section-2` are fine. `HeroTitle`, `hero title`, and `hero_t
 Veneer supports Postgres, MySQL, MariaDB, and SQLite. Postgres comes built in. For the others,
 install the matching adapter package so you only pull in the driver you actually use.
 
-| Database        | Install                        | Example config                                                        |
-| --------------- | ------------------------------ | --------------------------------------------------------------------- |
-| Postgres        | nothing extra                  | `{ provider: 'postgres', connectionString: process.env.DATABASE_URL }` |
-| MySQL           | `npm install @veneer/mysql`    | `{ provider: 'mysql', connectionString: process.env.DATABASE_URL }`    |
-| MariaDB         | `npm install @veneer/mysql`    | `{ provider: 'mariadb', connectionString: process.env.DATABASE_URL }`  |
-| SQLite          | `npm install @veneer/sqlite`   | `{ provider: 'sqlite', filename: './veneer.db' }`                      |
+| Database        | Install                          | Example config                                                        |
+| --------------- | -------------------------------- | --------------------------------------------------------------------- |
+| Postgres        | nothing extra                    | `{ provider: 'postgres', connectionString: process.env.DATABASE_URL }` |
+| MySQL           | `npm install @veneer/db-mysql`   | `{ provider: 'mysql', connectionString: process.env.DATABASE_URL }`    |
+| MariaDB         | `npm install @veneer/db-mariadb` | `{ provider: 'mariadb', connectionString: process.env.DATABASE_URL }`  |
+| SQLite          | `npm install @veneer/db-sqlite`  | `{ provider: 'sqlite', filename: './veneer.db' }`                      |
 
-MySQL and MariaDB share one package, since MariaDB uses the MySQL protocol. SQLite stores
+MariaDB uses the MySQL protocol, so `@veneer/db-mariadb` is a thin package that just installs and
+re-exports `@veneer/db-mysql` for you. You can install either one for MariaDB, but the MariaDB
+named package saves you the confusion of installing something called MySQL. SQLite stores
 everything in a single file, which is handy for small sites and local development. The
 `veneer migrate` and `veneer create-superuser` commands work the same no matter which one you use.
 
@@ -481,12 +483,28 @@ lived **refresh token** quietly gets a new access token when it expires. When th
 itself expires, the user is signed out and simply logs back in. Both lifetimes are set with
 `auth.accessTtlSeconds` and `auth.refreshTtlSeconds`.
 
-**Refresh tokens are rotated and tracked.** Each use issues a new refresh token and retires the
-old one, and they are recorded server side so a stolen one being reused is caught and the whole
-session is revoked. Logout revokes the session too. Access tokens are stateless and simply expire,
-which is fast. If you want a logout or a revoked session to end access **immediately** instead of
-when the short access token expires, turn on `auth.strictRevocation`, which checks the session on
-every request at the cost of one database read per request.
+### Token blocking and revocation, step by step
+
+This is how Veneer stops old or stolen tokens from being used.
+
+1. **On login**, the server starts a token family. It signs an access token and a refresh token,
+   and saves a row for the refresh token in the `__Veneer_Refresh_Tokens__` table with a family id
+   and `revoked = false`.
+2. **On a normal request**, the server verifies the access token by its signature and expiry. This
+   is fast and needs no database read.
+3. **When the access token expires**, the client sends the refresh token. The server checks the
+   saved row, then **rotates**: it marks the old refresh token used, issues a brand new access and
+   refresh token, and saves a new row in the same family.
+4. **If an old, already used refresh token is sent again**, that is a strong sign it was stolen.
+   The server **revokes the whole family**, which blocks every token from that login. The real
+   user just signs in again.
+5. **On logout**, the server revokes the family too, so the refresh token can never be used again.
+
+By default, access tokens are stateless, so a token that was revoked keeps working until it expires
+on its own, which is at most `auth.accessTtlSeconds` (15 minutes by default). If you need a logout
+or a revoked session to block access **right away**, set `auth.strictRevocation: true`. Then every
+request also checks that the session's family is still active, at the cost of one database read per
+request. This is the strongest setting and the tradeoff is a little speed.
 
 By default the tokens are kept in **secure httpOnly cookies**, which JavaScript on the page cannot
 read, so they are protected from cross site scripting. This is the recommended setup and works for
@@ -501,14 +519,33 @@ two choices:
   provider. The token is then held by the browser and sent as a bearer header. This is simpler for
   local development but less protected against cross site scripting.
 
-**Cross site request forgery (CSRF)** is blocked with a double submit token. In cookie mode the
-server sets a readable `veneer_csrf` cookie, and the client sends that value back in an
-`X-Veneer-Csrf` header on every action that changes data. The server checks that the header matches
-the cookie. A site you did not build cannot read your cookie, so it cannot forge the header. Header
-mode does not need this, because the browser does not send the bearer token on its own. If you
-change `auth.csrfCookieName`, pass the same value as the provider's `csrfCookieName` prop. If the
-csrf check ever gets in your way, you can turn it off with `auth.csrfProtection: false`, though it
-is safer to leave it on.
+### CSRF protection, step by step
+
+Cross site request forgery is when another website tricks a visitor's browser into making a request
+to your site using their logged in cookie. Veneer blocks this with a double submit token.
+
+1. **On login and refresh**, the server sets a second cookie named `veneer_csrf` with a random
+   value. Unlike the token cookies, this one is **readable** by JavaScript on your own page.
+2. **On every action that changes data** (create tag, save content, change a tag type, delete a
+   tag, and logout), the Veneer client reads that cookie and sends the value back in an
+   `X-Veneer-Csrf` header.
+3. **The server checks** that the header value matches the cookie value. If they do not match, or
+   the header is missing, it rejects the request.
+4. **Why this works:** another website cannot read your `veneer_csrf` cookie, because browsers only
+   let a page read cookies from its own site. So an attacker cannot put the right value in the
+   header, and their forged request is rejected. Requiring a custom header also forces the browser
+   to ask permission first for cross origin requests, which blocks the simple ones outright.
+
+A few notes:
+
+- **Reads are not affected.** Showing content and signing in do not need the token, so public pages
+  and the login form work normally.
+- **Header mode does not use this**, because the bearer token is never sent by the browser on its
+  own, so there is nothing to forge.
+- If you rename the cookie with `auth.csrfCookieName`, pass the same value as the provider's
+  `csrfCookieName` prop so the client reads the right cookie.
+- If the check ever gets in your way, you can turn it off with `auth.csrfProtection: false`, but it
+  is safer to leave it on.
 
 On top of this, the server rejects script tags and obvious database attacks in saved content,
 passwords are stored as bcrypt hashes (never plaintext), and every database query is parameterized.
@@ -690,13 +727,16 @@ to build a new database or auth backend.
 
 | Package            | Runs on  | What it does                                                          |
 | ------------------ | -------- | -------------------------------------------------------------------- |
-| `@veneer/core`     | Both     | Shared types, the config helper and loader, the adapter interfaces, and the request handler |
-| `@veneer/server`   | Server   | A framework agnostic Node backend handler you mount in your own backend |
-| `@veneer/postgres` | Server   | The Postgres database adapter and migrations                         |
-| `@veneer/auth-jwt` | Server   | Email and password login that issues secure tokens                  |
-| `@veneer/cli`      | Terminal | The `veneer` command for migrations and creating users              |
-| `@veneer/react`    | Browser  | The provider and page scanner that power `data-veneer-*` editing, plus an optional `<Editable>` component and hooks |
-| `@veneer/next`     | Both     | The server side route handler plus the browser side React pieces, in one package |
+| `@veneer/core`       | Both     | Shared types, the config helper and loader, the adapter interfaces, and the request handler |
+| `@veneer/server`     | Server   | A framework agnostic Node backend handler you mount in your own backend |
+| `@veneer/db-postgres` | Server  | The Postgres database adapter and migrations                        |
+| `@veneer/db-mysql`   | Server   | The MySQL and MariaDB database adapter and migrations               |
+| `@veneer/db-mariadb` | Server   | A thin alias that installs and re-exports `@veneer/db-mysql` for MariaDB |
+| `@veneer/db-sqlite`  | Server   | The SQLite database adapter and migrations                          |
+| `@veneer/auth-jwt`   | Server   | Email and password login that issues secure tokens                 |
+| `@veneer/cli`        | Terminal | The `veneer` command for migrations and creating users             |
+| `@veneer/react`      | Browser  | The provider and page scanner that power `data-veneer-*` editing, plus an optional `<Editable>` component and hooks |
+| `@veneer/next`       | Both     | The server side route handler plus the browser side React pieces, in one package |
 
 ## More
 

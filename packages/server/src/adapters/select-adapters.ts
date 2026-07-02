@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 
 import { JwtAuthAdapter } from '@veneer/auth-jwt';
-import { PostgresAdapter } from '@veneer/postgres';
+import { PostgresAdapter } from '@veneer/db-postgres';
 import { badRequest, type AuthAdapter, type DbAdapter, type VeneerConfig } from '@veneer/core';
 
 //Lets us load an optional adapter package by name at runtime, so a project only
@@ -9,12 +9,18 @@ import { badRequest, type AuthAdapter, type DbAdapter, type VeneerConfig } from 
 const requirePackage = createRequire(import.meta.url);
 
 //Loads an optional adapter package and gives a clear error when it is missing.
-const loadAdapter = (packageName: string, provider: string): Record<string, unknown> => {
+//installName is the package to tell people to install, which can differ from
+//the one we load. MariaDB installs @veneer/db-mariadb but loads @veneer/db-mysql.
+const loadAdapter = (
+  packageName: string,
+  provider: string,
+  installName: string = packageName,
+): Record<string, unknown> => {
   try {
     return requirePackage(packageName) as Record<string, unknown>;
   } catch {
     throw badRequest(
-      `The "${packageName}" package is needed for the "${provider}" database. ` +
+      `The "${installName}" package is needed for the "${provider}" database. ` +
         `Install it in your project to use this database.`,
     );
   }
@@ -31,14 +37,17 @@ export const buildDbAdapter = (config: VeneerConfig): DbAdapter => {
   }
 
   if (provider === 'mysql' || provider === 'mariadb') {
-    const module = loadAdapter('@veneer/mysql', provider);
+    //MariaDB uses the same driver, so we always load @veneer/db-mysql, but we
+    //point MariaDB users at the @veneer/db-mariadb package to install.
+    const installName = provider === 'mariadb' ? '@veneer/db-mariadb' : '@veneer/db-mysql';
+    const module = loadAdapter('@veneer/db-mysql', provider, installName);
     const MysqlAdapter = module.MysqlAdapter as new (config: VeneerConfig['database']) => DbAdapter;
 
     return new MysqlAdapter(config.database);
   }
 
   if (provider === 'sqlite') {
-    const module = loadAdapter('@veneer/sqlite', provider);
+    const module = loadAdapter('@veneer/db-sqlite', provider);
     const SqliteAdapter = module.SqliteAdapter as new (
       config: VeneerConfig['database'],
     ) => DbAdapter;
