@@ -290,17 +290,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 The `VeneerEditBar` is a small bar in the corner of the page where you sign in and turn edit mode
 on and off. You can remove it later and build your own controls, but it is the easy way to start.
 
-**Two ways to edit.** By default, editing happens in place on the page, where you click a spot and
-type. If you would rather edit through a form, pass `editInView={false}` to the provider:
+**Three ways to edit.** Veneer gives you three editing styles, so you can pick the one that fits
+your site.
 
-```tsx
-<VeneerProvider apiBasePath="/api/veneer" editInView={false}>
-```
+1. **Edit in place (default).** Editing happens right on the page, where you click a spot and type.
+   This is on by default.
 
-When it is off, clicking **Edit page** opens a full screen, scrollable popup that lists every tag
-with its own labeled inputs, prefilled with the saved content. You change what you want and click
-**Save**. A loading spinner shows while the content is fetched. This is handy when the editable
-spots are hard to click on the page, or when you want to edit many tags at once.
+2. **Popup form.** Pass `editInView={false}` to the provider to edit through a form instead:
+
+   ```tsx
+   <VeneerProvider apiBasePath="/api/veneer" editInView={false}>
+   ```
+
+   Clicking **Edit page** opens a full screen, scrollable popup that lists every tag with its own
+   labeled inputs, prefilled with the saved content. You change what you want and click **Save**. A
+   loading spinner shows while the content is fetched. This is handy when the editable spots are
+   hard to click on the page, or when you want to edit many tags at once.
+
+3. **Full page admin panel.** For a traditional admin panel on its own page, render
+   `VeneerAdminPanel` on a dedicated route instead of the `VeneerEditBar`. See
+   [Full page admin panel](#full-page-admin-panel) below.
 
 **Reacting to edit mode in your own code.** If you want your own components to know when someone is
 editing, read it from the context. The `useIsEditing` hook returns a single boolean that is true
@@ -318,6 +327,45 @@ function Banner() {
 
 The full context is also available through `useVeneer()`, which includes `isEditing`, `canEdit`,
 the current `user`, and the actions.
+
+### Full page admin panel
+
+If you would rather manage your content from a traditional admin panel, instead of on top of your
+live site, render `VeneerAdminPanel` on its own route. It is a full page view that does not need
+the `VeneerEditBar`. Give it a route your visitors will not stumble onto, like `/admin`, and wrap
+it in the same `VeneerProvider`.
+
+For the Next.js app router, create `app/admin/page.tsx`:
+
+```tsx
+'use client';
+
+import { VeneerProvider, VeneerAdminPanel } from '@veneer/next';
+
+export default function AdminPage() {
+  return (
+    <VeneerProvider apiBasePath="/api/veneer" richText>
+      <VeneerAdminPanel />
+    </VeneerProvider>
+  );
+}
+```
+
+Here is what you get:
+
+- **A full page login.** When nobody is signed in, the whole page is a sign in form. There is no
+  floating bar and nothing from your site behind it.
+- **Navigation tabs.** Once signed in, a top bar shows your email and a sign out button, with tabs
+  to switch between **View tags**, **Create tag**, and **Edit tags**. The Create tab only shows for
+  superusers, since only they can create tags.
+- **View tags.** A read only list of every tag with a short preview of its content. It has a search
+  box and pages ten tags at a time.
+- **Create tag.** A form to add a new tag, with a type dropdown when `richText` is on.
+- **Edit tags.** A searchable list, again ten per page, where each tag opens an inline editor
+  prefilled with its saved content. Superusers can also change a tag's type or delete it here.
+
+This mode works well when your editors want a dashboard to work from, rather than editing on the
+page itself. You can use it on its own, or alongside the in place editor on your main site.
 
 ## Step 9, mark content as editable
 

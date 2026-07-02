@@ -12,6 +12,7 @@ export { Editable } from './components/editable.js';
 export type { EditableProps } from './components/editable.js';
 
 export { VeneerEditBar } from './components/edit-bar.js';
+export { VeneerAdminPanel } from './components/admin-panel.js';
 export { DefaultLoader } from './components/default-loader.js';
 export { ToastHost } from './components/toast-host.js';
 export type { Toast } from './components/toast-host.js';
