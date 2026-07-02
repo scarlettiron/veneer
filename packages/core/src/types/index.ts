@@ -111,6 +111,11 @@ export interface AuthConfig {
   //The refresh cookie name, defaults to 'veneer_refresh'.
   refreshCookieName?: string;
 
+  //Whether to protect against cross site request forgery. Defaults to true.
+  //Set to false only if the csrf check is causing problems and you understand
+  //the risk. It has no effect in header mode, which is already safe from csrf.
+  csrfProtection?: boolean;
+
   //The csrf cookie name, defaults to 'veneer_csrf'. This cookie is readable by
   //the client so it can echo the value back in a header.
   csrfCookieName?: string;
@@ -134,6 +139,7 @@ export interface ResolvedAuthConfig {
   tokenStorage: TokenStorage;
   cookieName: string;
   refreshCookieName: string;
+  csrfProtection: boolean;
   csrfCookieName: string;
   cookieSecure: boolean;
   cookieSameSite: 'strict' | 'lax' | 'none';

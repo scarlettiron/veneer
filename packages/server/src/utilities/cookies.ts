@@ -110,13 +110,14 @@ export const resolveAuthCookie = (
   ) {
     const { accessToken: _access, refreshToken: _refresh, ...rest } = response.body;
 
-    //Issue a fresh csrf value alongside the tokens.
-    const csrfCookie = buildCsrfCookie(auth, randomUUID(), auth.refreshTtlSeconds);
+    const setCookies = buildTokenCookies(auth, accessToken, refreshToken);
 
-    return {
-      setCookies: [...buildTokenCookies(auth, accessToken, refreshToken), csrfCookie],
-      body: rest,
-    };
+    //Issue a fresh csrf value alongside the tokens, unless csrf is turned off.
+    if (auth.csrfProtection) {
+      setCookies.push(buildCsrfCookie(auth, randomUUID(), auth.refreshTtlSeconds));
+    }
+
+    return { setCookies, body: rest };
   }
 
   if (action === ACTIONS.LOGOUT) {
