@@ -11,10 +11,12 @@ import {
   type CreateUserInput,
   type DatabaseConfig,
   type DbAdapter,
+  type RefreshTokenRecord,
   type StoredUser,
   type TagType,
   AUTH_TABLE,
   CONTENT_TABLE,
+  REFRESH_TABLE,
 } from '@veneer/core';
 
 import { MIGRATIONS_TABLE, UNIQUE_VIOLATION } from './constants/index.js';
@@ -242,6 +244,45 @@ export class PostgresAdapter implements DbAdapter {
       email: String(row.email),
       role: row.role === 'superuser' ? 'superuser' : 'editor',
     }));
+  }
+
+  public async saveRefreshToken(record: RefreshTokenRecord): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO "${REFRESH_TABLE}" (id, family_id, user_id, expires_at, revoked)
+       VALUES ($1, $2, $3, $4, $5);`,
+      [record.id, record.familyId, record.userId, record.expiresAt, record.revoked],
+    );
+  }
+
+  public async findRefreshToken(id: string): Promise<RefreshTokenRecord | null> {
+    const result = await this.pool.query(
+      `SELECT id, family_id, user_id, expires_at, revoked FROM "${REFRESH_TABLE}" WHERE id = $1;`,
+      [id],
+    );
+
+    const row = result.rows[0];
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: String(row.id),
+      familyId: String(row.family_id),
+      userId: String(row.user_id),
+      expiresAt: String(row.expires_at),
+      revoked: Boolean(row.revoked),
+    };
+  }
+
+  public async revokeRefreshToken(id: string): Promise<void> {
+    await this.pool.query(`UPDATE "${REFRESH_TABLE}" SET revoked = true WHERE id = $1;`, [id]);
+  }
+
+  public async revokeRefreshFamily(familyId: string): Promise<void> {
+    await this.pool.query(`UPDATE "${REFRESH_TABLE}" SET revoked = true WHERE family_id = $1;`, [
+      familyId,
+    ]);
   }
 
   public async close(): Promise<void> {

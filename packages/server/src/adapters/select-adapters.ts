@@ -55,7 +55,8 @@ export const buildAuthAdapter = (config: VeneerConfig, db: DbAdapter): AuthAdapt
   if (config.auth.provider === 'jwt') {
     return new JwtAuthAdapter(db, {
       secret: config.auth.jwtSecret,
-      tokenTtlSeconds: config.auth.tokenTtlSeconds,
+      accessTtlSeconds: config.auth.accessTtlSeconds,
+      refreshTtlSeconds: config.auth.refreshTtlSeconds,
     });
   }
 

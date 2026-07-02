@@ -10,6 +10,7 @@ import {
   type ContentRecord,
   type CreateUserInput,
   type DbAdapter,
+  type RefreshTokenRecord,
   type StoredUser,
   type TagType,
   type VeneerConfig,
@@ -107,13 +108,27 @@ class FakeDb implements DbAdapter {
     return [];
   }
 
+  async saveRefreshToken(): Promise<void> {}
+
+  async findRefreshToken(): Promise<RefreshTokenRecord | null> {
+    return null;
+  }
+
+  async revokeRefreshToken(): Promise<void> {}
+
+  async revokeRefreshFamily(): Promise<void> {}
+
   async close(): Promise<void> {}
 }
 
 //A fake auth adapter that maps known tokens to actors.
 const fakeAuth: AuthAdapter = {
   async login() {
-    return { token: 'super', user: { id: '1', email: 'user@example.com', role: 'superuser' } };
+    return {
+      accessToken: 'super',
+      refreshToken: 'super-refresh',
+      user: { id: '1', email: 'user@example.com', role: 'superuser' },
+    };
   },
   async verify(token: string): Promise<Actor | null> {
     if (token === 'super') {
@@ -122,6 +137,17 @@ const fakeAuth: AuthAdapter = {
 
     if (token === 'editor') {
       return { userId: '2', role: 'editor' };
+    }
+
+    return null;
+  },
+  async refresh(refreshToken: string) {
+    if (refreshToken === 'super-refresh') {
+      return {
+        accessToken: 'super',
+        refreshToken: 'super-refresh',
+        user: { id: '1', email: 'user@example.com', role: 'superuser' },
+      };
     }
 
     return null;

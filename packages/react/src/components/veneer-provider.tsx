@@ -12,7 +12,7 @@ import {
 
 import { VeneerContext, type VeneerContextValue } from '../context/veneer-context.js';
 import { createApiClient } from '../utilities/api-client.js';
-import { readStoredToken, writeStoredToken } from '../utilities/token-storage.js';
+import { readCookie, readStoredTokens, writeStoredTokens } from '../utilities/token-storage.js';
 import { findVeneerElements, veneerTagOf } from '../dom/scanner.js';
 import { DefaultLoader } from './default-loader.js';
 import { ToastHost, type Toast } from './toast-host.js';
@@ -56,6 +56,16 @@ export interface VeneerProviderProps {
   //Turns on the rich text editor and tag types. Defaults to false.
   richText?: boolean;
 
+  //How the login token is kept. 'cookie' relies on a secure httpOnly cookie set
+  //by the server, which is the safest option. 'header' stores the token in the
+  //browser and sends it as a bearer header, needed for a separate app on another
+  //origin. This must match the tokenStorage in your server config. Defaults to
+  //'cookie'.
+  tokenStorage?: 'cookie' | 'header';
+
+  //The csrf cookie name, must match the server config. Defaults to 'veneer_csrf'.
+  csrfCookieName?: string;
+
   //A custom loading component to show while content loads.
   loadingComponent?: ReactNode;
 }
@@ -68,9 +78,10 @@ export const VeneerProvider = ({
   apiBasePath = DEFAULT_API_BASE_PATH,
   editInView = true,
   richText = false,
+  tokenStorage = 'cookie',
+  csrfCookieName = 'veneer_csrf',
   loadingComponent,
 }: VeneerProviderProps): ReactElement => {
-  const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [contentByTag, setContentByTag] = useState<Record<string, ContentRecord | null>>({});
@@ -84,15 +95,27 @@ export const VeneerProvider = ({
 
   const canEdit = user !== null;
 
+  //The tokens for header mode. In cookie mode these stay null and the browser
+  //holds the tokens in httpOnly cookies instead.
+  const accessTokenRef = useRef<string | null>(null);
+  const refreshTokenRef = useRef<string | null>(null);
+
+  //A stable hook the api client calls on a 401, to refresh and retry.
+  //It is set further down, once the refresh logic is in scope.
+  const onUnauthorizedRef = useRef<() => Promise<boolean>>(async () => false);
+
+  //Holds the current refresh so that many requests that fail at once share one
+  //refresh call. Without this, two refreshes would rotate the same token and the
+  //server would treat the second as a stolen token being reused.
+  const refreshPromiseRef = useRef<Promise<boolean> | null>(null);
+
   //These refs hold the latest values so the crawler helpers, which stay stable
   //for the life of the provider, can read current state without being rebuilt.
-  const tokenRef = useRef<string | null>(null);
   const contentRef = useRef<Record<string, ContentRecord | null>>({});
   const isEditingRef = useRef(false);
   const canEditRef = useRef(false);
   const editInViewRef = useRef(true);
 
-  tokenRef.current = token;
   contentRef.current = contentByTag;
   isEditingRef.current = isEditing;
   canEditRef.current = canEdit;
@@ -127,9 +150,63 @@ export const VeneerProvider = ({
   const pruneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   //The api client is stable for the life of the provider.
+  //In cookie mode it sends no bearer token and includes credentials so the
+  //browser attaches the secure cookie.
   const apiRef = useRef(
-    createApiClient({ basePath: apiBasePath, getToken: () => tokenRef.current }),
+    createApiClient({
+      basePath: apiBasePath,
+      getToken: () => (tokenStorage === 'header' ? accessTokenRef.current : null),
+      credentials: tokenStorage === 'cookie' ? 'include' : 'same-origin',
+      onUnauthorized: () => onUnauthorizedRef.current(),
+      //In cookie mode, echo the readable csrf cookie back in a header.
+      getCsrfToken: () => (tokenStorage === 'cookie' ? readCookie(csrfCookieName) : null),
+    }),
   );
+
+  //Try to refresh the session when a request comes back unauthorized.
+  //Returns true when a new access token was issued, so the call can be retried.
+  //When the refresh token has expired this fails, and the user is signed out.
+  //Many failing requests share a single refresh so the token is only rotated once.
+  onUnauthorizedRef.current = (): Promise<boolean> => {
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
+    }
+
+    const promise = (async (): Promise<boolean> => {
+      try {
+        const payload =
+          tokenStorage === 'header' ? { refreshToken: refreshTokenRef.current } : undefined;
+        const result = await apiRef.current.request<AuthResult>(ACTIONS.REFRESH, payload);
+
+        if (tokenStorage === 'header') {
+          writeStoredTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken });
+          accessTokenRef.current = result.accessToken;
+          refreshTokenRef.current = result.refreshToken;
+        }
+
+        return true;
+      } catch {
+        //The refresh token is gone or expired, so the session is over.
+        if (tokenStorage === 'header') {
+          writeStoredTokens(null);
+          accessTokenRef.current = null;
+          refreshTokenRef.current = null;
+        }
+
+        setUser(null);
+        setIsEditing(false);
+
+        return false;
+      }
+    })();
+
+    refreshPromiseRef.current = promise;
+    void promise.finally(() => {
+      refreshPromiseRef.current = null;
+    });
+
+    return promise;
+  };
 
   //Loads a batch of pending tags in a single request.
   const flushPendingTags = useCallback(async (): Promise<void> => {
@@ -596,24 +673,37 @@ export const VeneerProvider = ({
     }, 0);
   }, [prune]);
 
-  const login = useCallback(async (email: string, password: string): Promise<void> => {
-    const result = await apiRef.current.request<AuthResult>(ACTIONS.LOGIN, { email, password });
+  const login = useCallback(
+    async (email: string, password: string): Promise<void> => {
+      const result = await apiRef.current.request<AuthResult>(ACTIONS.LOGIN, { email, password });
 
-    writeStoredToken(result.token);
-    setToken(result.token);
-    setUser(result.user);
-  }, []);
+      //In cookie mode the server sets the httpOnly cookies and the tokens are
+      //not in the response, so we only keep them in header mode.
+      if (tokenStorage === 'header') {
+        writeStoredTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken });
+        accessTokenRef.current = result.accessToken;
+        refreshTokenRef.current = result.refreshToken;
+      }
+
+      setUser(result.user);
+    },
+    [tokenStorage],
+  );
 
   const logout = useCallback(async (): Promise<void> => {
     try {
       await apiRef.current.request(ACTIONS.LOGOUT);
     } finally {
-      writeStoredToken(null);
-      setToken(null);
+      if (tokenStorage === 'header') {
+        writeStoredTokens(null);
+        accessTokenRef.current = null;
+        refreshTokenRef.current = null;
+      }
+
       setUser(null);
       setIsEditing(false);
     }
-  }, []);
+  }, [tokenStorage]);
 
   const setEditing = useCallback(
     (on: boolean): void => {
@@ -623,27 +713,33 @@ export const VeneerProvider = ({
     [canEdit],
   );
 
-  //On first load, read any saved token and confirm who the user is.
+  //On first load, restore the session if there is one.
   useEffect(() => {
-    const saved = readStoredToken();
+    //In header mode, load any saved tokens so requests can use them.
+    if (tokenStorage === 'header') {
+      const saved = readStoredTokens();
 
-    if (!saved) {
-      return;
+      if (!saved) {
+        return;
+      }
+
+      accessTokenRef.current = saved.accessToken;
+      refreshTokenRef.current = saved.refreshToken;
     }
 
-    setToken(saved);
-
+    //Ask the server who we are. The cookie or bearer token is used, and if the
+    //access token has expired the client refreshes it automatically. When there
+    //is no valid session this quietly fails and we stay signed out.
     apiRef.current
       .request<{ user: AuthUser }>(ACTIONS.ME)
       .then((result) => {
         setUser(result.user);
       })
       .catch(() => {
-        //The saved token is no longer good, so clear it.
-        writeStoredToken(null);
-        setToken(null);
-        setUser(null);
+        //No valid session, so remain signed out.
       });
+    //Runs once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   //Scan the page once on mount, then watch only for what is added or removed.

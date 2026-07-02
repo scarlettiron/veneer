@@ -15,7 +15,9 @@ describe('resolveConfig', () => {
     expect(resolved.mode).toBe('embedded');
     expect(resolved.apiBasePath).toBe('/api/veneer');
     expect(resolved.editInView).toBe(false);
-    expect(resolved.auth.tokenTtlSeconds).toBeGreaterThan(0);
+    expect(resolved.auth.accessTtlSeconds).toBeGreaterThan(0);
+    expect(resolved.auth.refreshTtlSeconds).toBeGreaterThan(resolved.auth.accessTtlSeconds);
+    expect(resolved.auth.tokenStorage).toBe('cookie');
   });
 
   it('rejects a short jwt secret', () => {

@@ -1,4 +1,4 @@
-import { AUTH_TABLE, CONTENT_TABLE } from '@veneer/core';
+import { AUTH_TABLE, CONTENT_TABLE, REFRESH_TABLE } from '@veneer/core';
 
 //A single migration step.
 //The id must never change once it has shipped, because it is how we
@@ -41,6 +41,18 @@ export const MIGRATIONS: Migration[] = [
     sql: `
       ALTER TABLE "${CONTENT_TABLE}"
       ADD COLUMN type TEXT NOT NULL DEFAULT 'plain';
+    `,
+  },
+  {
+    id: '0004_create_refresh_tokens',
+    sql: `
+      CREATE TABLE IF NOT EXISTS "${REFRESH_TABLE}" (
+        id TEXT PRIMARY KEY,
+        family_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        revoked INTEGER NOT NULL DEFAULT 0
+      );
     `,
   },
 ];

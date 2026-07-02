@@ -1,6 +1,8 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
 import {
+  CSRF_HEADER,
+  VeneerError,
   createHandler,
   resolveConfig,
   type AuthAdapter,
@@ -14,6 +16,8 @@ import { loadConfig, type LoadConfigOptions } from '@veneer/core/loader';
 import { buildAuthAdapter, buildDbAdapter } from './adapters/select-adapters.js';
 import { readBearerToken, readJsonBody, toVeneerRequest } from './utilities/http.js';
 import { applyCors } from './utilities/cors.js';
+import { parseCookies, resolveAuthCookie } from './utilities/cookies.js';
+import { assertCsrf } from './utilities/csrf.js';
 
 //A Node style request handler that the host mounts on a route.
 export type NodeRequestHandler = (
@@ -66,12 +70,40 @@ export const createVeneerServer = (config: VeneerConfig): VeneerServer => {
 
     try {
       const body = await readJsonBody(req);
-      const token = readBearerToken(req);
-      const request = toVeneerRequest(body, token);
+
+      //The access token can arrive as a bearer header or the access cookie.
+      //The refresh token arrives as its own cookie.
+      const cookies = parseCookies(req.headers.cookie);
+      const accessToken = readBearerToken(req) ?? cookies[config.auth.cookieName];
+      const refreshToken = cookies[config.auth.refreshCookieName];
+      const request = toVeneerRequest(body, accessToken, refreshToken);
+
+      //Block cross site request forgery on the actions that change data.
+      const csrfHeaderRaw = req.headers[CSRF_HEADER];
+      const csrfHeader = Array.isArray(csrfHeaderRaw) ? csrfHeaderRaw[0] : csrfHeaderRaw;
+      assertCsrf(config.auth, request.action, cookies, csrfHeader);
+
       const response = await handle(request);
 
-      sendJson(res, response.status, response.body);
+      //In cookie mode this sets or clears the httpOnly cookies and keeps the
+      //tokens out of the response body.
+      const { setCookies, body: responseBody } = resolveAuthCookie(
+        config.auth,
+        request.action,
+        response,
+      );
+
+      if (setCookies.length > 0) {
+        res.setHeader('Set-Cookie', setCookies);
+      }
+
+      sendJson(res, response.status, responseBody);
     } catch (error) {
+      if (error instanceof VeneerError) {
+        sendJson(res, error.status, { error: error.code, message: error.message });
+        return;
+      }
+
       const message = error instanceof Error ? error.message : 'Unknown error';
       sendJson(res, 500, { error: 'internal_error', message });
     }

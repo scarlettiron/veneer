@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
 import { JwtAuthAdapter } from '@veneer/auth-jwt';
-import type { CreateUserInput, StoredUser, UserStore } from '@veneer/core';
+import type {
+  CreateUserInput,
+  RefreshTokenRecord,
+  RefreshTokenStore,
+  StoredUser,
+  UserStore,
+} from '@veneer/core';
 
-//A simple in memory user store for the auth tests.
-class MemoryUserStore implements UserStore {
+//A simple in memory store for the auth tests, holding users and refresh tokens.
+class MemoryStore implements UserStore, RefreshTokenStore {
   private users: StoredUser[] = [];
+
+  private refreshTokens = new Map<string, RefreshTokenRecord>();
 
   private nextId = 1;
 
@@ -30,13 +38,42 @@ class MemoryUserStore implements UserStore {
 
     return user;
   }
+
+  async updateUserPassword(): Promise<boolean> {
+    return true;
+  }
+
+  async saveRefreshToken(record: RefreshTokenRecord): Promise<void> {
+    this.refreshTokens.set(record.id, { ...record });
+  }
+
+  async findRefreshToken(id: string): Promise<RefreshTokenRecord | null> {
+    return this.refreshTokens.get(id) ?? null;
+  }
+
+  async revokeRefreshToken(id: string): Promise<void> {
+    const record = this.refreshTokens.get(id);
+
+    if (record) {
+      record.revoked = true;
+    }
+  }
+
+  async revokeRefreshFamily(familyId: string): Promise<void> {
+    for (const record of this.refreshTokens.values()) {
+      if (record.familyId === familyId) {
+        record.revoked = true;
+      }
+    }
+  }
 }
 
-const buildAdapter = (): { store: MemoryUserStore; adapter: JwtAuthAdapter } => {
-  const store = new MemoryUserStore();
+const buildAdapter = (): { store: MemoryStore; adapter: JwtAuthAdapter } => {
+  const store = new MemoryStore();
   const adapter = new JwtAuthAdapter(store, {
     secret: 'a-secret-that-is-long-enough',
-    tokenTtlSeconds: 3600,
+    accessTtlSeconds: 900,
+    refreshTtlSeconds: 604800,
   });
 
   return { store, adapter };
@@ -53,10 +90,45 @@ describe('jwt auth adapter', () => {
     expect(result.user.email).toBe('admin@example.com');
     expect(result.user.role).toBe('superuser');
 
-    const actor = await adapter.verify(result.token);
+    const actor = await adapter.verify(result.accessToken);
 
     expect(actor).not.toBeNull();
     expect(actor?.role).toBe('superuser');
+  });
+
+  it('refreshes with a valid refresh token and rejects an access token there', async () => {
+    const { adapter } = buildAdapter();
+
+    await adapter.createUser('admin@example.com', 'supersecret', 'superuser');
+    const result = await adapter.login('admin@example.com', 'supersecret');
+
+    //A refresh token gives a new pair of tokens.
+    const refreshed = await adapter.refresh(result.refreshToken);
+    expect(refreshed).not.toBeNull();
+    expect(refreshed?.user.email).toBe('admin@example.com');
+
+    //An access token must not work as a refresh token.
+    expect(await adapter.refresh(result.accessToken)).toBeNull();
+
+    //A refresh token must not work as an access token.
+    expect(await adapter.verify(result.refreshToken)).toBeNull();
+  });
+
+  it('rotates the refresh token and revokes the family when an old one is reused', async () => {
+    const { adapter } = buildAdapter();
+
+    await adapter.createUser('admin@example.com', 'supersecret', 'superuser');
+    const login = await adapter.login('admin@example.com', 'supersecret');
+
+    //Use the refresh token once to rotate it.
+    const rotated = await adapter.refresh(login.refreshToken);
+    expect(rotated).not.toBeNull();
+
+    //Reusing the original, now rotated, refresh token is treated as theft.
+    expect(await adapter.refresh(login.refreshToken)).toBeNull();
+
+    //The reuse revoked the whole family, so the newer token no longer works either.
+    expect(await adapter.refresh(rotated?.refreshToken ?? '')).toBeNull();
   });
 
   it('rejects a wrong password', async () => {

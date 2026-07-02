@@ -4,6 +4,7 @@ import type {
   ContentInput,
   ContentRecord,
   CreateUserInput,
+  RefreshTokenRecord,
   StoredUser,
   TagType,
 } from '../types/index.js';
@@ -21,9 +22,25 @@ export interface UserStore {
   updateUserPassword(email: string, passwordHash: string): Promise<boolean>;
 }
 
+//The part of the database adapter that stores refresh tokens.
+//The auth adapter uses this to rotate tokens and catch a stolen one being reused.
+export interface RefreshTokenStore {
+  //Save a newly issued refresh token.
+  saveRefreshToken(record: RefreshTokenRecord): Promise<void>;
+
+  //Look up a refresh token by its id, or return null when it is not stored.
+  findRefreshToken(id: string): Promise<RefreshTokenRecord | null>;
+
+  //Mark a single refresh token as used or revoked.
+  revokeRefreshToken(id: string): Promise<void>;
+
+  //Revoke every refresh token in a family, ending that session everywhere.
+  revokeRefreshFamily(familyId: string): Promise<void>;
+}
+
 //The full database adapter.
 //A concrete adapter, like the Postgres one, implements every method here.
-export interface DbAdapter extends UserStore {
+export interface DbAdapter extends UserStore, RefreshTokenStore {
   //Create the Veneer tables if they do not exist yet.
   runMigrations(): Promise<void>;
 

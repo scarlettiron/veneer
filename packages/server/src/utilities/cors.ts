@@ -17,18 +17,20 @@ export const applyCors = (
   const requestOrigin = req.headers.origin;
   let allowOrigin: string | null = null;
 
+  //We echo the exact request origin rather than a star, because cookies are only
+  //sent on credentialed requests, and those are not allowed with a star origin.
   if (cors.origins === '*') {
-    allowOrigin = '*';
+    allowOrigin = requestOrigin ?? null;
   } else if (requestOrigin && cors.origins.includes(requestOrigin)) {
-    //Only reflect the origin back when it is on the allowed list.
     allowOrigin = requestOrigin;
   }
 
   if (allowOrigin) {
     res.setHeader('Access-Control-Allow-Origin', allowOrigin);
     res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Veneer-Csrf');
   }
 
   //The browser sends an OPTIONS request first to check permission.

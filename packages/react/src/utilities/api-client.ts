@@ -1,10 +1,26 @@
-import type { VeneerAction } from '@veneer/core';
+import { ACTIONS, CSRF_HEADER, type VeneerAction } from '@veneer/core';
 
 //The settings the api client needs.
 //It asks for the token on every call so it always sends the latest one.
 export interface ApiClientOptions {
   basePath: string;
   getToken: () => string | null;
+
+  //How the browser sends credentials. Use 'include' for the cookie based mode,
+  //especially when the api is on another origin.
+  credentials?: RequestCredentials;
+
+  //Called when a request comes back as unauthorized. It should try to refresh
+  //the session and return true when it worked, so the request can be retried.
+  onUnauthorized?: () => Promise<boolean>;
+
+  //Returns the csrf token to send in a header, for the double submit csrf check.
+  getCsrfToken?: () => string | null;
+}
+
+//An error from the api that also carries the http status.
+export interface ApiError extends Error {
+  status?: number;
 }
 
 //A small wrapper around fetch that talks to the Veneer backend handler.
@@ -13,9 +29,18 @@ export interface ApiClient {
   request<T>(action: VeneerAction, payload?: unknown): Promise<T>;
 }
 
+//Actions that must never trigger a refresh and retry, to avoid loops.
+const NO_RETRY: VeneerAction[] = [ACTIONS.LOGIN, ACTIONS.REFRESH, ACTIONS.LOGOUT];
+
 //Builds an api client bound to a base path and a token getter.
-export const createApiClient = ({ basePath, getToken }: ApiClientOptions): ApiClient => {
-  const request = async <T>(action: VeneerAction, payload?: unknown): Promise<T> => {
+export const createApiClient = ({
+  basePath,
+  getToken,
+  credentials,
+  onUnauthorized,
+  getCsrfToken,
+}: ApiClientOptions): ApiClient => {
+  const sendRequest = (action: VeneerAction, payload?: unknown): Promise<Response> => {
     const token = getToken();
 
     const headers: Record<string, string> = {
@@ -26,11 +51,33 @@ export const createApiClient = ({ basePath, getToken }: ApiClientOptions): ApiCl
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await fetch(basePath, {
+    const csrf = getCsrfToken?.();
+
+    if (csrf) {
+      headers[CSRF_HEADER] = csrf;
+    }
+
+    return fetch(basePath, {
       method: 'POST',
       headers,
+      credentials: credentials ?? 'same-origin',
       body: JSON.stringify({ action, payload }),
     });
+  };
+
+  const request = async <T>(action: VeneerAction, payload?: unknown): Promise<T> => {
+    let response = await sendRequest(action, payload);
+
+    //If the access token has expired, try to refresh once and repeat the call.
+    const canRetry = Boolean(onUnauthorized) && !NO_RETRY.includes(action);
+
+    if (response.status === 401 && canRetry && onUnauthorized) {
+      const refreshed = await onUnauthorized();
+
+      if (refreshed) {
+        response = await sendRequest(action, payload);
+      }
+    }
 
     const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
 
@@ -40,7 +87,10 @@ export const createApiClient = ({ basePath, getToken }: ApiClientOptions): ApiCl
           ? data.message
           : `The request failed with status ${response.status}`;
 
-      throw new Error(message);
+      const error = new Error(message) as ApiError;
+      error.status = response.status;
+
+      throw error;
     }
 
     return data as T;
