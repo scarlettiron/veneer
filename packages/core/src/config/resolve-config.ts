@@ -1,8 +1,9 @@
 import {
+  DEFAULT_ACCESS_TTL_SECONDS,
   DEFAULT_API_BASE_PATH,
   DEFAULT_EDIT_IN_VIEW,
   DEFAULT_MODE,
-  DEFAULT_TOKEN_TTL_SECONDS,
+  DEFAULT_REFRESH_TTL_SECONDS,
 } from '../constants/index.js';
 import type { VeneerConfig, VeneerUserConfig } from '../types/index.js';
 import { badRequest } from '../utilities/errors.js';
@@ -59,7 +60,14 @@ export const resolveConfig = (input: VeneerUserConfig): VeneerConfig => {
     auth: {
       provider: 'jwt',
       jwtSecret: input.auth.jwtSecret,
-      tokenTtlSeconds: input.auth.tokenTtlSeconds ?? DEFAULT_TOKEN_TTL_SECONDS,
+      accessTtlSeconds: input.auth.accessTtlSeconds ?? DEFAULT_ACCESS_TTL_SECONDS,
+      refreshTtlSeconds: input.auth.refreshTtlSeconds ?? DEFAULT_REFRESH_TTL_SECONDS,
+      tokenStorage: input.auth.tokenStorage ?? 'cookie',
+      cookieName: input.auth.cookieName ?? 'veneer_token',
+      refreshCookieName: input.auth.refreshCookieName ?? 'veneer_refresh',
+      csrfCookieName: input.auth.csrfCookieName ?? 'veneer_csrf',
+      cookieSecure: input.auth.cookieSecure ?? true,
+      cookieSameSite: input.auth.cookieSameSite ?? 'lax',
     },
     cors: input.cors,
   };

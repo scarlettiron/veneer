@@ -92,12 +92,46 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     const password = requireString(request.payload, 'password');
     const result = await auth.login(email, password);
 
-    return { status: 200, body: { token: result.token, user: result.user } };
+    return {
+      status: 200,
+      body: {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        user: result.user,
+      },
+    };
+  };
+
+  const handleRefresh = async (request: VeneerRequest): Promise<VeneerResponse> => {
+    //The refresh token comes from its cookie, or from the body in header mode.
+    const refreshToken = request.refreshToken ?? optionalString(request.payload, 'refreshToken');
+
+    if (!refreshToken) {
+      throw unauthorized('No refresh token was provided');
+    }
+
+    const result = await auth.refresh(refreshToken);
+
+    if (!result) {
+      throw unauthorized('Your session has expired, please sign in again');
+    }
+
+    return {
+      status: 200,
+      body: {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        user: result.user,
+      },
+    };
   };
 
   const handleLogout = async (request: VeneerRequest): Promise<VeneerResponse> => {
-    if (request.authToken) {
-      await auth.logout(request.authToken);
+    //Prefer the refresh token so the whole session family can be revoked.
+    const token = request.refreshToken ?? request.authToken;
+
+    if (token) {
+      await auth.logout(token);
     }
 
     return { status: 200, body: { ok: true } };
@@ -210,6 +244,9 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
 
         case ACTIONS.LOGOUT:
           return await handleLogout(request);
+
+        case ACTIONS.REFRESH:
+          return await handleRefresh(request);
 
         case ACTIONS.ME:
           return await handleMe(request);

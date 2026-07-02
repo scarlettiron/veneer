@@ -2,6 +2,7 @@
 //These are deliberately verbose so they do not clash with host application tables.
 export const CONTENT_TABLE = '__Content_Editable__';
 export const AUTH_TABLE = '__Auth__Static_Editor';
+export const REFRESH_TABLE = '__Veneer_Refresh_Tokens__';
 
 //The two roles a user can have.
 //A superuser can create new tags and edit any content.
@@ -24,6 +25,7 @@ export const TAG_TYPES = {
 export const ACTIONS = {
   LOGIN: 'login',
   LOGOUT: 'logout',
+  REFRESH: 'refresh',
   ME: 'me',
   GET_CONTENT: 'getContent',
   LIST_TAGS: 'listTags',
@@ -55,7 +57,11 @@ export const TAG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const DEFAULT_MODE = 'embedded';
 export const DEFAULT_API_BASE_PATH = '/api/veneer';
 export const DEFAULT_EDIT_IN_VIEW = false;
-export const DEFAULT_TOKEN_TTL_SECONDS = 60 * 60 * 8;
+//The access token is short lived, the refresh token lasts longer.
+//When the access token expires, the refresh token quietly gets a new one.
+//When the refresh token expires, the user is signed out and logs back in.
+export const DEFAULT_ACCESS_TTL_SECONDS = 60 * 15;
+export const DEFAULT_REFRESH_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 //File names the config loader will look for, in order.
 export const CONFIG_FILE_NAMES = [

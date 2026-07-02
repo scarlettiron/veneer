@@ -54,7 +54,11 @@ export const readBearerToken = (req: IncomingMessage): string | undefined => {
 
 //Turns a parsed JSON body into a normalized Veneer request.
 //The body must contain an action, and may contain a payload.
-export const toVeneerRequest = (body: unknown, authToken: string | undefined): VeneerRequest => {
+export const toVeneerRequest = (
+  body: unknown,
+  authToken: string | undefined,
+  refreshToken?: string | undefined,
+): VeneerRequest => {
   if (typeof body !== 'object' || body === null) {
     throw badRequest('The request body must be an object with an action');
   }
@@ -69,5 +73,6 @@ export const toVeneerRequest = (body: unknown, authToken: string | undefined): V
     action: action as VeneerAction,
     payload: (body as Record<string, unknown>).payload,
     authToken,
+    refreshToken,
   };
 };

@@ -76,12 +76,60 @@ export interface DatabaseConfig {
   filename?: string;
 }
 
+//Where the browser keeps the login token.
+//'cookie' uses a secure httpOnly cookie that JavaScript cannot read, which is
+//the safest option and works for same origin apps. 'header' returns the token
+//for the client to store and send itself, which is needed for a separate app on
+//a different origin.
+export type TokenStorage = 'cookie' | 'header';
+
 //The auth settings.
 //For now the only provider is jwt, which signs JSON Web Tokens.
 export interface AuthConfig {
   provider: 'jwt';
   jwtSecret: string;
-  tokenTtlSeconds?: number;
+
+  //How long the short lived access token lasts, in seconds. Defaults to 15 minutes.
+  accessTtlSeconds?: number;
+
+  //How long the refresh token lasts, in seconds. Defaults to 7 days.
+  //When this expires the user is signed out and must log back in.
+  refreshTtlSeconds?: number;
+
+  //How the browser holds the tokens. Defaults to 'cookie'.
+  tokenStorage?: TokenStorage;
+
+  //The access cookie name, defaults to 'veneer_token'.
+  cookieName?: string;
+
+  //The refresh cookie name, defaults to 'veneer_refresh'.
+  refreshCookieName?: string;
+
+  //The csrf cookie name, defaults to 'veneer_csrf'. This cookie is readable by
+  //the client so it can echo the value back in a header.
+  csrfCookieName?: string;
+
+  //Whether the cookies are marked Secure, so they only travel over https.
+  //Defaults to true. Set to false only for local http development.
+  cookieSecure?: boolean;
+
+  //The cookie SameSite setting, defaults to 'lax'.
+  //Use 'none' with Secure for a separate app on another origin.
+  cookieSameSite?: 'strict' | 'lax' | 'none';
+}
+
+//The auth settings after defaults have been applied.
+export interface ResolvedAuthConfig {
+  provider: 'jwt';
+  jwtSecret: string;
+  accessTtlSeconds: number;
+  refreshTtlSeconds: number;
+  tokenStorage: TokenStorage;
+  cookieName: string;
+  refreshCookieName: string;
+  csrfCookieName: string;
+  cookieSecure: boolean;
+  cookieSameSite: 'strict' | 'lax' | 'none';
 }
 
 //Cross origin settings, needed when the Veneer server runs on a different
@@ -114,13 +162,33 @@ export interface VeneerConfig {
   richText: boolean;
   apiBasePath: string;
   database: DatabaseConfig;
-  auth: Required<Pick<AuthConfig, 'provider' | 'jwtSecret' | 'tokenTtlSeconds'>>;
+  auth: ResolvedAuthConfig;
   cors?: CorsConfig;
 }
 
-//The result of a successful login.
+//One stored refresh token, used to rotate tokens and detect reuse.
+//A family groups all the refresh tokens from one login. When an already used
+//token is presented again, the whole family is revoked, which signs the session
+//out everywhere because the token was probably stolen.
+export interface RefreshTokenRecord {
+  //A unique id for this token, the jti claim inside the refresh token.
+  id: string;
+  //The login family this token belongs to.
+  familyId: string;
+  //The user the token belongs to.
+  userId: string;
+  //When the token expires, as an iso string.
+  expiresAt: string;
+  //Whether this token has already been used or revoked.
+  revoked: boolean;
+}
+
+//The result of a successful login or refresh.
+//The access token authenticates requests, the refresh token gets a new access
+//token when it expires.
 export interface AuthResult {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   user: AuthUser;
 }
 
@@ -128,7 +196,10 @@ export interface AuthResult {
 export interface VeneerRequest {
   action: VeneerAction;
   payload?: unknown;
+  //The access token, from the access cookie or a bearer header.
   authToken?: string;
+  //The refresh token, from the refresh cookie.
+  refreshToken?: string;
 }
 
 //A response that has been normalized away from any specific web framework.

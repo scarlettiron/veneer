@@ -3,12 +3,18 @@ import type { Actor, AuthResult, Role } from '../types/index.js';
 //The auth adapter hides how login and tokens actually work.
 //The jwt adapter is one implementation, and other providers can be added later.
 export interface AuthAdapter {
-  //Check an email and password and return a token plus the public user.
-  //Throws a VeneerError when the details are wrong.
+  //Check an email and password and return access and refresh tokens plus the
+  //public user. Throws a VeneerError when the details are wrong.
   login(email: string, password: string): Promise<AuthResult>;
 
-  //Turn a token back into an actor, or return null when the token is invalid.
+  //Turn an access token back into an actor, or return null when it is invalid
+  //or has expired.
   verify(token: string): Promise<Actor | null>;
+
+  //Take a valid refresh token and return fresh access and refresh tokens plus
+  //the user. Returns null when the refresh token is invalid or has expired,
+  //which means the user has to sign in again.
+  refresh(refreshToken: string): Promise<AuthResult | null>;
 
   //End a session.
   //Stateless tokens cannot really be revoked, so this may do nothing for now.

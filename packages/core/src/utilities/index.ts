@@ -18,3 +18,5 @@ export {
 } from './tag.js';
 
 export { assertNoSqlInjection, assertNoDangerousHtml, assertSafeInput } from './safety.js';
+
+export { CSRF_HEADER, requiresCsrf } from './csrf.js';

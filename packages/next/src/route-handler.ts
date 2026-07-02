@@ -1,11 +1,15 @@
 import {
+  CSRF_HEADER,
   VeneerError,
   resolveConfig,
   type VeneerConfig,
   type VeneerUserConfig,
 } from '@veneer/core';
 import {
+  assertCsrf,
   createVeneerServer,
+  parseCookies,
+  resolveAuthCookie,
   toVeneerRequest,
   type NodeRequestHandler,
   type VeneerServer,
@@ -59,10 +63,41 @@ export const createVeneerRouteHandler = (
     }
 
     try {
-      const veneerRequest = toVeneerRequest(body, readToken(request));
+      //The access token can arrive as a bearer header or the access cookie.
+      //The refresh token arrives as its own cookie.
+      const cookies = parseCookies(request.headers.get('cookie') ?? undefined);
+      const accessToken = readToken(request) ?? cookies[resolved.auth.cookieName];
+      const refreshToken = cookies[resolved.auth.refreshCookieName];
+      const veneerRequest = toVeneerRequest(body, accessToken, refreshToken);
+
+      //Block cross site request forgery on the actions that change data.
+      assertCsrf(
+        resolved.auth,
+        veneerRequest.action,
+        cookies,
+        request.headers.get(CSRF_HEADER) ?? undefined,
+      );
+
       const response = await server.handle(veneerRequest);
 
-      return toJsonResponse(response.status, response.body);
+      //In cookie mode this sets or clears the httpOnly cookies and keeps the
+      //tokens out of the response body.
+      const { setCookies, body: responseBody } = resolveAuthCookie(
+        resolved.auth,
+        veneerRequest.action,
+        response,
+      );
+
+      const responseHeaders = new Headers({ 'Content-Type': 'application/json' });
+
+      for (const cookie of setCookies) {
+        responseHeaders.append('Set-Cookie', cookie);
+      }
+
+      return new Response(JSON.stringify(responseBody), {
+        status: response.status,
+        headers: responseHeaders,
+      });
     } catch (error) {
       if (error instanceof VeneerError) {
         return toJsonResponse(error.status, { error: error.code, message: error.message });

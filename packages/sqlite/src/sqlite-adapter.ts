@@ -10,10 +10,12 @@ import {
   type CreateUserInput,
   type DatabaseConfig,
   type DbAdapter,
+  type RefreshTokenRecord,
   type StoredUser,
   type TagType,
   AUTH_TABLE,
   CONTENT_TABLE,
+  REFRESH_TABLE,
 } from '@veneer/core';
 
 import { CONSTRAINT_ERROR_PREFIX, MIGRATIONS_TABLE } from './constants/index.js';
@@ -238,6 +240,45 @@ export class SqliteAdapter implements DbAdapter {
       email: row.email,
       role: row.role === 'superuser' ? 'superuser' : 'editor',
     }));
+  }
+
+  public async saveRefreshToken(record: RefreshTokenRecord): Promise<void> {
+    this.db
+      .prepare(
+        `INSERT INTO "${REFRESH_TABLE}" (id, family_id, user_id, expires_at, revoked)
+         VALUES (?, ?, ?, ?, ?);`,
+      )
+      .run(record.id, record.familyId, record.userId, record.expiresAt, record.revoked ? 1 : 0);
+  }
+
+  public async findRefreshToken(id: string): Promise<RefreshTokenRecord | null> {
+    const row = this.db
+      .prepare(
+        `SELECT id, family_id, user_id, expires_at, revoked FROM "${REFRESH_TABLE}" WHERE id = ?;`,
+      )
+      .get(id) as
+      | { id: string; family_id: string; user_id: string; expires_at: string; revoked: number }
+      | undefined;
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      familyId: row.family_id,
+      userId: row.user_id,
+      expiresAt: row.expires_at,
+      revoked: Boolean(row.revoked),
+    };
+  }
+
+  public async revokeRefreshToken(id: string): Promise<void> {
+    this.db.prepare(`UPDATE "${REFRESH_TABLE}" SET revoked = 1 WHERE id = ?;`).run(id);
+  }
+
+  public async revokeRefreshFamily(familyId: string): Promise<void> {
+    this.db.prepare(`UPDATE "${REFRESH_TABLE}" SET revoked = 1 WHERE family_id = ?;`).run(familyId);
   }
 
   public async close(): Promise<void> {

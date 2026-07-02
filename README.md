@@ -446,7 +446,7 @@ install the matching adapter package so you only pull in the driver you actually
 | MariaDB         | `npm install @veneer/mysql`    | `{ provider: 'mariadb', connectionString: process.env.DATABASE_URL }`  |
 | SQLite          | `npm install @veneer/sqlite`   | `{ provider: 'sqlite', filename: './veneer.db' }`                      |
 
-MySQL and MariaDB share one package, since MariaDB speaks the MySQL protocol. SQLite stores
+MySQL and MariaDB share one package, since MariaDB uses the MySQL protocol. SQLite stores
 everything in a single file, which is handy for small sites and local development. The
 `veneer migrate` and `veneer create-superuser` commands work the same no matter which one you use.
 
@@ -462,11 +462,45 @@ These are the settings you can put in `veneer.config.ts`.
 | `database.filename`       | sqlite only | The path to the sqlite database file.                          |
 | `auth.provider`           | yes      | The login type. Use `'jwt'`.                                      |
 | `auth.jwtSecret`          | yes      | A secret string of at least 16 characters that secures logins.   |
-| `auth.tokenTtlSeconds`    | no       | How long a login lasts, in seconds. Defaults to 8 hours.         |
+| `auth.accessTtlSeconds`   | no       | How long the short access token lasts. Defaults to 15 minutes.   |
+| `auth.refreshTtlSeconds`  | no       | How long the refresh token lasts. Defaults to 7 days. When it expires the user is signed out. |
+| `auth.tokenStorage`       | no       | `'cookie'` (default, a secure httpOnly cookie) or `'header'` (token in the browser, for a separate origin app). |
+| `auth.cookieSecure`       | no       | Whether cookies are marked Secure (https only). Defaults to true. Set false for local http dev. |
+| `auth.cookieSameSite`     | no       | `'lax'` (default), `'strict'`, or `'none'`. Use `'none'` with a separate origin app. |
 | `editInView`              | no       | Turns the edit in place feature on. Defaults to off.             |
 | `apiBasePath`             | no       | Where the backend route lives. Defaults to `/api/veneer`.        |
 | `mode`                    | no       | `'embedded'` for adding to an existing site. This is the default. |
 | `cors.origins`            | no       | Allowed origins when the server runs separately. A list of urls, or `'*'`. |
+
+## Sessions and security
+
+Veneer uses two tokens. A short lived **access token** authenticates each request, and a longer
+lived **refresh token** quietly gets a new access token when it expires. When the refresh token
+itself expires, the user is signed out and simply logs back in. Both lifetimes are set with
+`auth.accessTtlSeconds` and `auth.refreshTtlSeconds`.
+
+By default the tokens are kept in **secure httpOnly cookies**, which JavaScript on the page cannot
+read, so they are protected from cross site scripting. This is the recommended setup and works for
+a Next app served on the same origin as its api.
+
+If your frontend and api are on **different origins** (for example a separate React app), you have
+two choices:
+
+- Keep cookie mode, set `auth.cookieSameSite: 'none'` with `auth.cookieSecure: true` (https only),
+  and list the app origin in `cors.origins`. The browser then sends the cookie across origins.
+- Or set `auth.tokenStorage: 'header'` and pass the matching `tokenStorage="header"` prop to the
+  provider. The token is then held by the browser and sent as a bearer header. This is simpler for
+  local development but less protected against cross site scripting.
+
+**Cross site request forgery (CSRF)** is blocked with a double submit token. In cookie mode the
+server sets a readable `veneer_csrf` cookie, and the client sends that value back in an
+`X-Veneer-Csrf` header on every action that changes data. The server checks that the header matches
+the cookie. A site you did not build cannot read your cookie, so it cannot forge the header. Header
+mode does not need this, because the browser does not send the bearer token on its own. If you
+change `auth.csrfCookieName`, pass the same value as the provider's `csrfCookieName` prop.
+
+On top of this, the server rejects script tags and obvious database attacks in saved content,
+passwords are stored as bcrypt hashes (never plaintext), and every database query is parameterized.
 
 ## Command reference
 

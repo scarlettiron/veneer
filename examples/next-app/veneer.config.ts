@@ -13,5 +13,13 @@ export default defineConfig({
   auth: {
     provider: 'jwt',
     jwtSecret: process.env.VENEER_JWT_SECRET ?? 'replace-this-with-a-long-random-secret',
+
+    //A short access token that quietly refreshes, and a longer refresh token.
+    accessTtlSeconds: 60 * 15,
+    refreshTtlSeconds: 60 * 60 * 24 * 7,
+
+    //The token lives in a secure httpOnly cookie. Secure cookies need https,
+    //so we turn that off for local http development only.
+    cookieSecure: process.env.NODE_ENV === 'production',
   },
 });
