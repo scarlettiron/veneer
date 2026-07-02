@@ -57,6 +57,7 @@ export const buildAuthAdapter = (config: VeneerConfig, db: DbAdapter): AuthAdapt
       secret: config.auth.jwtSecret,
       accessTtlSeconds: config.auth.accessTtlSeconds,
       refreshTtlSeconds: config.auth.refreshTtlSeconds,
+      strictRevocation: config.auth.strictRevocation,
     });
   }
 

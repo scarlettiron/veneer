@@ -464,6 +464,7 @@ These are the settings you can put in `veneer.config.ts`.
 | `auth.jwtSecret`          | yes      | A secret string of at least 16 characters that secures logins.   |
 | `auth.accessTtlSeconds`   | no       | How long the short access token lasts. Defaults to 15 minutes.   |
 | `auth.refreshTtlSeconds`  | no       | How long the refresh token lasts. Defaults to 7 days. When it expires the user is signed out. |
+| `auth.strictRevocation`   | no       | When true, every request checks the session is still active, so logout revokes access at once. Costs one database read per request. Defaults to false. |
 | `auth.tokenStorage`       | no       | `'cookie'` (default, a secure httpOnly cookie) or `'header'` (token in the browser, for a separate origin app). |
 | `auth.cookieSecure`       | no       | Whether cookies are marked Secure (https only). Defaults to true. Set false for local http dev. |
 | `auth.cookieSameSite`     | no       | `'lax'` (default), `'strict'`, or `'none'`. Use `'none'` with a separate origin app. |
@@ -478,6 +479,13 @@ Veneer uses two tokens. A short lived **access token** authenticates each reques
 lived **refresh token** quietly gets a new access token when it expires. When the refresh token
 itself expires, the user is signed out and simply logs back in. Both lifetimes are set with
 `auth.accessTtlSeconds` and `auth.refreshTtlSeconds`.
+
+**Refresh tokens are rotated and tracked.** Each use issues a new refresh token and retires the
+old one, and they are recorded server side so a stolen one being reused is caught and the whole
+session is revoked. Logout revokes the session too. Access tokens are stateless and simply expire,
+which is fast. If you want a logout or a revoked session to end access **immediately** instead of
+when the short access token expires, turn on `auth.strictRevocation`, which checks the session on
+every request at the cost of one database read per request.
 
 By default the tokens are kept in **secure httpOnly cookies**, which JavaScript on the page cannot
 read, so they are protected from cross site scripting. This is the recommended setup and works for

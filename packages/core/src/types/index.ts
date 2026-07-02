@@ -96,6 +96,12 @@ export interface AuthConfig {
   //When this expires the user is signed out and must log back in.
   refreshTtlSeconds?: number;
 
+  //When true, every request checks that the session has not been revoked, so a
+  //logout or a revoked session ends access right away. This costs one database
+  //read per request. When false, access tokens are stateless and simply expire.
+  //Defaults to false.
+  strictRevocation?: boolean;
+
   //How the browser holds the tokens. Defaults to 'cookie'.
   tokenStorage?: TokenStorage;
 
@@ -124,6 +130,7 @@ export interface ResolvedAuthConfig {
   jwtSecret: string;
   accessTtlSeconds: number;
   refreshTtlSeconds: number;
+  strictRevocation: boolean;
   tokenStorage: TokenStorage;
   cookieName: string;
   refreshCookieName: string;

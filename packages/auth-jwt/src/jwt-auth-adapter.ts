@@ -21,6 +21,8 @@ export interface JwtAuthOptions {
   secret: string;
   accessTtlSeconds: number;
   refreshTtlSeconds: number;
+  //When true, verify checks the session is still active on every request.
+  strictRevocation: boolean;
 }
 
 //The store the adapter needs, both users and refresh tokens.
@@ -44,11 +46,14 @@ export class JwtAuthAdapter implements AuthAdapter {
 
   private readonly refreshTtlSeconds: number;
 
+  private readonly strictRevocation: boolean;
+
   constructor(store: AuthStore, options: JwtAuthOptions) {
     this.store = store;
     this.secret = options.secret;
     this.accessTtlSeconds = options.accessTtlSeconds;
     this.refreshTtlSeconds = options.refreshTtlSeconds;
+    this.strictRevocation = options.strictRevocation;
   }
 
   //Signs a new pair of tokens for a user and records the refresh token.
@@ -60,9 +65,11 @@ export class JwtAuthAdapter implements AuthAdapter {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const jti = randomUUID();
 
-    const accessToken = jwt.sign({ sub: user.id, role: user.role, kind: 'access' }, this.secret, {
-      expiresIn: this.accessTtlSeconds,
-    });
+    const accessToken = jwt.sign(
+      { sub: user.id, role: user.role, kind: 'access', fam: familyId },
+      this.secret,
+      { expiresIn: this.accessTtlSeconds },
+    );
 
     const refreshToken = jwt.sign(
       { sub: user.id, kind: 'refresh', jti, fam: familyId },
@@ -116,6 +123,15 @@ export class JwtAuthAdapter implements AuthAdapter {
       //Only an access token may authenticate a request.
       if (typeof decoded === 'string' || !decoded.sub || decoded.kind !== 'access') {
         return null;
+      }
+
+      //In strict mode, make sure the session has not been logged out or revoked.
+      if (this.strictRevocation && decoded.fam) {
+        const active = await this.store.isRefreshFamilyActive(String(decoded.fam));
+
+        if (!active) {
+          return null;
+        }
       }
 
       return { userId: String(decoded.sub), role: toRole(decoded.role) };

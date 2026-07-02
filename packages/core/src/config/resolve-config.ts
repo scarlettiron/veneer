@@ -62,6 +62,7 @@ export const resolveConfig = (input: VeneerUserConfig): VeneerConfig => {
       jwtSecret: input.auth.jwtSecret,
       accessTtlSeconds: input.auth.accessTtlSeconds ?? DEFAULT_ACCESS_TTL_SECONDS,
       refreshTtlSeconds: input.auth.refreshTtlSeconds ?? DEFAULT_REFRESH_TTL_SECONDS,
+      strictRevocation: input.auth.strictRevocation ?? false,
       tokenStorage: input.auth.tokenStorage ?? 'cookie',
       cookieName: input.auth.cookieName ?? 'veneer_token',
       refreshCookieName: input.auth.refreshCookieName ?? 'veneer_refresh',

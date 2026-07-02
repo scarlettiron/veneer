@@ -285,6 +285,15 @@ export class PostgresAdapter implements DbAdapter {
     ]);
   }
 
+  public async isRefreshFamilyActive(familyId: string): Promise<boolean> {
+    const result = await this.pool.query(
+      `SELECT 1 FROM "${REFRESH_TABLE}" WHERE family_id = $1 AND revoked = false LIMIT 1;`,
+      [familyId],
+    );
+
+    return (result.rowCount ?? 0) > 0;
+  }
+
   public async close(): Promise<void> {
     await this.pool.end();
   }

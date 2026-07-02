@@ -294,6 +294,15 @@ export class MysqlAdapter implements DbAdapter {
     ]);
   }
 
+  public async isRefreshFamilyActive(familyId: string): Promise<boolean> {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT 1 FROM \`${REFRESH_TABLE}\` WHERE family_id = ? AND revoked = 0 LIMIT 1;`,
+      [familyId],
+    );
+
+    return rows.length > 0;
+  }
+
   public async close(): Promise<void> {
     await this.pool.end();
   }

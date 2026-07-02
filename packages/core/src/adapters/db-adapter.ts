@@ -36,6 +36,10 @@ export interface RefreshTokenStore {
 
   //Revoke every refresh token in a family, ending that session everywhere.
   revokeRefreshFamily(familyId: string): Promise<void>;
+
+  //Whether a family still has a live token. Used by strict revocation to check
+  //that an access token's session has not been logged out or revoked.
+  isRefreshFamilyActive(familyId: string): Promise<boolean>;
 }
 
 //The full database adapter.

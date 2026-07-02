@@ -281,6 +281,14 @@ export class SqliteAdapter implements DbAdapter {
     this.db.prepare(`UPDATE "${REFRESH_TABLE}" SET revoked = 1 WHERE family_id = ?;`).run(familyId);
   }
 
+  public async isRefreshFamilyActive(familyId: string): Promise<boolean> {
+    const row = this.db
+      .prepare(`SELECT 1 FROM "${REFRESH_TABLE}" WHERE family_id = ? AND revoked = 0 LIMIT 1;`)
+      .get(familyId);
+
+    return row !== undefined;
+  }
+
   public async close(): Promise<void> {
     this.db.close();
   }
