@@ -6,6 +6,7 @@
 //Scarlett A. Scott (codescarlett)
 
 import { runCreateSuperuser } from './commands/create-superuser.js';
+import { runCreateUser } from './commands/create-user.js';
 import { runMigrate } from './commands/migrate.js';
 import { runUpdatePassword } from './commands/update-password.js';
 import { runListTags } from './commands/list-tags.js';
@@ -22,6 +23,7 @@ const printHelp = (): void => {
       'Usage:',
       '  veneer migrate [--config path]',
       '  veneer create-superuser --email you@example.com --password secret [--role superuser|editor] [--config path]',
+      '  veneer create-user --email you@example.com --password secret [--config path]',
       '  veneer update-password --email you@example.com --password newsecret [--config path]',
       '  veneer list-tags [--config path]',
       '  veneer list-users [--config path]',
@@ -47,6 +49,9 @@ export const runCli = async (argv: string[]): Promise<number> => {
 
     case 'create-superuser':
       return runCreateSuperuser(flags);
+
+    case 'create-user':
+      return runCreateUser(flags);
 
     case 'update-password':
       return runUpdatePassword(flags);

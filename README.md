@@ -261,6 +261,13 @@ npx veneer create-superuser --email you@example.com --password choose-a-strong-p
 
 You will use this email and password to sign in on the page in a moment.
 
+To add a regular editor later, who can change existing content but cannot create, retype, or delete
+tags, use `create-user` instead:
+
+```sh
+npx veneer create-user --email editor@example.com --password choose-a-strong-password
+```
+
 ## Step 8, wrap your app
 
 _This is client side. It runs in the browser._
@@ -536,7 +543,7 @@ itself expires, the user is signed out and simply logs back in. Both lifetimes a
 This is how Veneer stops old or stolen tokens from being used.
 
 1. **On login**, the server starts a token family. It signs an access token and a refresh token,
-   and saves a row for the refresh token in the `__Veneer_Refresh_Tokens__` table with a family id
+   and saves a row for the refresh token in the `__Veneer__Refresh_Tokens` table with a family id
    and `revoked = false`.
 2. **On a normal request**, the server verifies the access token by its signature and expiry. This
    is fast and needs no database read.
@@ -606,7 +613,10 @@ Run these from the root of your app.
 | ------------------------------------------------------------ | ------------------------------------- |
 | `npx veneer migrate`                                         | Creates or updates the database tables. |
 | `npx veneer create-superuser --email EMAIL --password PASS` | Creates a superuser who can make tags.  |
-| `npx veneer create-superuser --email EMAIL --password PASS --role editor` | Creates an editor instead. |
+| `npx veneer create-user --email EMAIL --password PASS`      | Creates a regular editor who can only change existing content. |
+| `npx veneer update-password --email EMAIL --password PASS`  | Sets a new password for an existing user. |
+| `npx veneer list-tags`                                      | Lists every tag in the database.        |
+| `npx veneer list-users`                                     | Lists every user and their role.        |
 | `npx veneer help`                                           | Shows the available commands.          |
 
 ## Troubleshooting
