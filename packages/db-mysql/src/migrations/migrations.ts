@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 import { AUTH_TABLE, CONTENT_TABLE, REFRESH_TABLE } from '@veneer/core';
 
 //A single migration step.

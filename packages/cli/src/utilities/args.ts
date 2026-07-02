@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 //Turns a list of command line arguments into a simple map of flags.
 //It understands "--name value" and "--name=value" forms.
 export const parseFlags = (args: string[]): Record<string, string> => {

@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 import { DATA_ATTRIBUTE_PREFIX, tagFromDataAttribute } from '@veneer/core';
 
 //Marks elements that the Editable component already controls,

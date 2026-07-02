@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 //Names of the database tables that Veneer owns.
 //These are deliberately verbose so they do not clash with host application tables.
 export const CONTENT_TABLE = '__Content_Editable__';
