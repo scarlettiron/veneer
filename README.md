@@ -468,6 +468,7 @@ These are the settings you can put in `veneer.config.ts`.
 | `auth.tokenStorage`       | no       | `'cookie'` (default, a secure httpOnly cookie) or `'header'` (token in the browser, for a separate origin app). |
 | `auth.cookieSecure`       | no       | Whether cookies are marked Secure (https only). Defaults to true. Set false for local http dev. |
 | `auth.cookieSameSite`     | no       | `'lax'` (default), `'strict'`, or `'none'`. Use `'none'` with a separate origin app. |
+| `auth.csrfProtection`     | no       | Turns the csrf check on or off. Defaults to true. Set false only if it causes problems and you understand the risk. |
 | `editInView`              | no       | Turns the edit in place feature on. Defaults to off.             |
 | `apiBasePath`             | no       | Where the backend route lives. Defaults to `/api/veneer`.        |
 | `mode`                    | no       | `'embedded'` for adding to an existing site. This is the default. |
@@ -505,7 +506,9 @@ server sets a readable `veneer_csrf` cookie, and the client sends that value bac
 `X-Veneer-Csrf` header on every action that changes data. The server checks that the header matches
 the cookie. A site you did not build cannot read your cookie, so it cannot forge the header. Header
 mode does not need this, because the browser does not send the bearer token on its own. If you
-change `auth.csrfCookieName`, pass the same value as the provider's `csrfCookieName` prop.
+change `auth.csrfCookieName`, pass the same value as the provider's `csrfCookieName` prop. If the
+csrf check ever gets in your way, you can turn it off with `auth.csrfProtection: false`, though it
+is safer to leave it on.
 
 On top of this, the server rejects script tags and obvious database attacks in saved content,
 passwords are stored as bcrypt hashes (never plaintext), and every database query is parameterized.

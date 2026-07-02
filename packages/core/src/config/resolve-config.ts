@@ -66,6 +66,7 @@ export const resolveConfig = (input: VeneerUserConfig): VeneerConfig => {
       tokenStorage: input.auth.tokenStorage ?? 'cookie',
       cookieName: input.auth.cookieName ?? 'veneer_token',
       refreshCookieName: input.auth.refreshCookieName ?? 'veneer_refresh',
+      csrfProtection: input.auth.csrfProtection ?? true,
       csrfCookieName: input.auth.csrfCookieName ?? 'veneer_csrf',
       cookieSecure: input.auth.cookieSecure ?? true,
       cookieSameSite: input.auth.cookieSameSite ?? 'lax',

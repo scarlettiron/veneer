@@ -11,7 +11,7 @@ export const assertCsrf = (
   cookies: Record<string, string>,
   csrfHeader: string | undefined,
 ): void => {
-  if (auth.tokenStorage !== 'cookie' || !requiresCsrf(action)) {
+  if (!auth.csrfProtection || auth.tokenStorage !== 'cookie' || !requiresCsrf(action)) {
     return;
   }
 
