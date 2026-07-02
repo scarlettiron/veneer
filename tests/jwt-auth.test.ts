@@ -5,9 +5,10 @@
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { JwtAuthAdapter } from '@veneer/auth-jwt';
+import { conflict } from '@veneer/core';
 import type {
   CreateUserInput,
   RefreshTokenRecord,
@@ -33,6 +34,11 @@ class MemoryStore implements UserStore, RefreshTokenStore {
   }
 
   async createUser(input: CreateUserInput): Promise<StoredUser> {
+    //Mirror the real adapters, which reject a duplicate email with a conflict.
+    if (this.users.some((user) => user.email === input.email)) {
+      throw conflict(`A user with the email "${input.email}" already exists`);
+    }
+
     const user: StoredUser = {
       id: String(this.nextId),
       email: input.email,
@@ -177,5 +183,64 @@ describe('jwt auth adapter', () => {
     const actor = await adapter.verify('not-a-real-token');
 
     expect(actor).toBeNull();
+  });
+
+  it('hashes the password instead of storing it in plain text', async () => {
+    const { store, adapter } = buildAdapter();
+
+    await adapter.createUser('admin@example.com', 'supersecret', 'superuser');
+
+    const stored = await store.findUserByEmail('admin@example.com');
+
+    expect(stored).not.toBeNull();
+    expect(stored?.passwordHash).not.toBe('supersecret');
+    //bcrypt hashes start with a $2 version marker.
+    expect(stored?.passwordHash.startsWith('$2')).toBe(true);
+  });
+
+  it('rejects creating a second user with the same email', async () => {
+    const { adapter } = buildAdapter();
+
+    await adapter.createUser('admin@example.com', 'supersecret', 'superuser');
+
+    await expect(
+      adapter.createUser('admin@example.com', 'another', 'editor'),
+    ).rejects.toThrow();
+  });
+
+  describe('token expiry', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('rejects an access token once it has expired', async () => {
+      const { adapter } = buildAdapter();
+
+      await adapter.createUser('admin@example.com', 'supersecret', 'superuser');
+      const login = await adapter.login('admin@example.com', 'supersecret');
+
+      //It works right now.
+      expect(await adapter.verify(login.accessToken)).not.toBeNull();
+
+      //Jump past the 900 second access token lifetime.
+      const later = Date.now() + 901 * 1000;
+      vi.spyOn(Date, 'now').mockReturnValue(later);
+
+      expect(await adapter.verify(login.accessToken)).toBeNull();
+    });
+
+    it('rejects a refresh token once it has expired', async () => {
+      const { adapter } = buildAdapter();
+
+      await adapter.createUser('admin@example.com', 'supersecret', 'superuser');
+      const login = await adapter.login('admin@example.com', 'supersecret');
+
+      //Jump past the 604800 second refresh token lifetime, so the user is
+      //signed out and has to log in again.
+      const later = Date.now() + (604800 + 10) * 1000;
+      vi.spyOn(Date, 'now').mockReturnValue(later);
+
+      expect(await adapter.refresh(login.refreshToken)).toBeNull();
+    });
   });
 });

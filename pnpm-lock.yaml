@@ -23,6 +23,12 @@ importers:
       '@veneer/core':
         specifier: workspace:*
         version: link:packages/core
+      '@veneer/db-sqlite':
+        specifier: workspace:*
+        version: link:packages/db-sqlite
+      '@veneer/server':
+        specifier: workspace:*
+        version: link:packages/server
       eslint:
         specifier: ^9.14.0
         version: 9.39.4(jiti@2.7.0)
