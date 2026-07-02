@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 //Public surface of the Veneer core package.
 //Everything the other packages and host apps need comes from here.
 

@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 import Database from 'better-sqlite3';
 
 import {

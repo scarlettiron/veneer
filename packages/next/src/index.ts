@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 //The Next package gives you the route handler for the backend
 //and re-exports the React bindings so you can import everything from one place.
 

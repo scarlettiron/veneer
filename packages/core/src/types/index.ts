@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 import type { ACTIONS, ERROR_CODES, ROLES, TAG_TYPES } from '../constants/index.js';
 
 //A role is one of the values defined in the ROLES constant.

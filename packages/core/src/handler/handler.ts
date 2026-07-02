@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 import { ACTIONS, ROLES, TAG_TYPES } from '../constants/index.js';
 import type { AuthAdapter } from '../adapters/auth-adapter.js';
 import type { DbAdapter } from '../adapters/db-adapter.js';

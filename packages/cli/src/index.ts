@@ -1,3 +1,10 @@
+//Veneer
+//Licensed under the MIT License. See the LICENSE file in the project root.
+//Copyright (c) 2026 Scarlett A. Scott (codescarlett)
+//
+//Contributors:
+//Scarlett A. Scott (codescarlett)
+
 export { runCli } from './cli.js';
 export { runMigrate } from './commands/migrate.js';
 export { runCreateSuperuser } from './commands/create-superuser.js';
