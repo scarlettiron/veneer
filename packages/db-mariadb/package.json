@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/server",
+  "name": "@veneer/db-mariadb",
   "version": "0.1.0",
-  "description": "Framework agnostic Node backend handler for Veneer",
+  "description": "MariaDB database adapter for Veneer. A thin package that installs and re-exports @veneer/db-mysql, since MariaDB speaks the MySQL protocol.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,24 +26,9 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/auth-jwt": "workspace:*",
-    "@veneer/core": "workspace:*",
-    "@veneer/db-postgres": "workspace:*"
-  },
-  "peerDependencies": {
-    "@veneer/db-mysql": "workspace:*",
-    "@veneer/db-sqlite": "workspace:*"
-  },
-  "peerDependenciesMeta": {
-    "@veneer/db-mysql": {
-      "optional": true
-    },
-    "@veneer/db-sqlite": {
-      "optional": true
-    }
+    "@veneer/db-mysql": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
     "rimraf": "^6.0.1",
     "tsup": "^8.3.5",
     "typescript": "^5.6.3"
