@@ -118,6 +118,10 @@ class FakeDb implements DbAdapter {
 
   async revokeRefreshFamily(): Promise<void> {}
 
+  async isRefreshFamilyActive(): Promise<boolean> {
+    return true;
+  }
+
   async close(): Promise<void> {}
 }
 

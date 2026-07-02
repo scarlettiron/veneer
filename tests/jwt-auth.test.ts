@@ -66,6 +66,16 @@ class MemoryStore implements UserStore, RefreshTokenStore {
       }
     }
   }
+
+  async isRefreshFamilyActive(familyId: string): Promise<boolean> {
+    for (const record of this.refreshTokens.values()) {
+      if (record.familyId === familyId && !record.revoked) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }
 
 const buildAdapter = (): { store: MemoryStore; adapter: JwtAuthAdapter } => {
@@ -74,6 +84,7 @@ const buildAdapter = (): { store: MemoryStore; adapter: JwtAuthAdapter } => {
     secret: 'a-secret-that-is-long-enough',
     accessTtlSeconds: 900,
     refreshTtlSeconds: 604800,
+    strictRevocation: true,
   });
 
   return { store, adapter };
@@ -129,6 +140,20 @@ describe('jwt auth adapter', () => {
 
     //The reuse revoked the whole family, so the newer token no longer works either.
     expect(await adapter.refresh(rotated?.refreshToken ?? '')).toBeNull();
+  });
+
+  it('rejects an access token after logout when strict revocation is on', async () => {
+    const { adapter } = buildAdapter();
+
+    await adapter.createUser('admin@example.com', 'supersecret', 'superuser');
+    const login = await adapter.login('admin@example.com', 'supersecret');
+
+    //The access token works while the session is active.
+    expect(await adapter.verify(login.accessToken)).not.toBeNull();
+
+    //After logging out, the same access token is rejected right away.
+    await adapter.logout(login.refreshToken);
+    expect(await adapter.verify(login.accessToken)).toBeNull();
   });
 
   it('rejects a wrong password', async () => {
