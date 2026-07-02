@@ -1,5 +1,7 @@
 # Veneer
 
+**Documentation website: [scarlettiron.github.io/veneer](https://scarlettiron.github.io/veneer/)**
+
 Veneer is a lightweight way to make the text and images on your website editable, right on the
 page, without a separate admin dashboard. You mark the parts you want to edit, sign in, flip on
 edit mode, change the content in place, and it saves to your database.
