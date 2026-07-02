@@ -6,10 +6,11 @@
 //Scarlett A. Scott (codescarlett)
 
 //Names of the database tables that Veneer owns.
-//These are deliberately verbose so they do not clash with host application tables.
-export const CONTENT_TABLE = '__Content_Editable__';
-export const AUTH_TABLE = '__Auth__Static_Editor';
-export const REFRESH_TABLE = '__Veneer_Refresh_Tokens__';
+//They all start with __Veneer__ so they are easy to spot and do not clash
+//with host application tables.
+export const CONTENT_TABLE = '__Veneer__Content';
+export const AUTH_TABLE = '__Veneer__Users';
+export const REFRESH_TABLE = '__Veneer__Refresh_Tokens';
 
 //The two roles a user can have.
 //A superuser can create new tags and edit any content.

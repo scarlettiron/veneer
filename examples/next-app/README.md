@@ -57,5 +57,5 @@ These steps assume you run them from a WSL terminal where Node and pnpm work nat
 You can confirm the saved rows directly:
 
 ```sh
-docker exec -it veneer-pg psql -U veneer -d veneer -c 'SELECT tag, body FROM "__Content_Editable__";'
+docker exec -it veneer-pg psql -U veneer -d veneer -c 'SELECT tag, body FROM "__Veneer__Content";'
 ```

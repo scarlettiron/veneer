@@ -6,7 +6,7 @@
 //Scarlett A. Scott (codescarlett)
 
 //The table Veneer uses to remember which migrations have already run.
-export const MIGRATIONS_TABLE = '__Veneer_Migrations__';
+export const MIGRATIONS_TABLE = '__Veneer__Migrations';
 
 //MySQL and MariaDB error code for a duplicate unique value.
 //We use this to turn a duplicate insert into a friendly conflict error.
