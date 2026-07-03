@@ -25,8 +25,8 @@ const COLORS = {
   border: '#2b2d38',
   text: '#f3f4f6',
   muted: '#9aa0ac',
-  primary: '#3b82f6',
-  primaryHover: '#60a5fa',
+  primary: '#0a84ff',
+  primaryHover: '#3d9bff',
   danger: '#e5484d',
 };
 

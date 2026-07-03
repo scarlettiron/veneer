@@ -74,7 +74,7 @@ export const ConfirmDialog = ({
           </button>
           <button
             type="button"
-            style={{ ...buttonStyle, background: '#3b82f6' }}
+            style={{ ...buttonStyle, background: '#0a84ff' }}
             onClick={onConfirm}
           >
             {confirmLabel}

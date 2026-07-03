@@ -23,7 +23,7 @@ export const Spinner = ({ size = 32 }: { size?: number }): ReactElement => (
         height: `${size}px`,
         borderRadius: '50%',
         border: '3px solid #333',
-        borderTopColor: '#3b82f6',
+        borderTopColor: '#0a84ff',
         animation: 'tweaktags-spin 0.8s linear infinite',
       }}
     />
