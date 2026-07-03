@@ -681,6 +681,13 @@
             work happens on the server through a small handler and a CLI, and none of it ever reaches
             the browser.
           </p>
+          <p>
+            A tag can hold plain text, rich text, or <strong>media</strong>. For a media tag you just
+            save an image url. TweakTags puts it on the element for you: on an <code>&lt;img&gt;</code>
+            or <code>&lt;video&gt;</code> it sets the <code>src</code>, and on a container like a
+            <code>&lt;div&gt;</code> it sets it as a cover background image. No upload pipeline to set
+            up, just point at a url you already host.
+          </p>
         </section>
 
         <!-- INSTALL -->

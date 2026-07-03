@@ -40,7 +40,9 @@ this kind of thing before, that is fine. Follow each step in order and copy the 
   `hero-title` the attribute is `data-tweaktags-hero-title`.
 - When a page loads, TweakTags **crawls it for every `data-tweaktags-` attribute**, loads the saved
   content from your database, and shows it to **all visitors**. For text elements it fills in the
-  text. For an `<img>` it sets the image source.
+  text. For a **media** tag it uses the saved url: on an `<img>` (or anything with a `src`, like a
+  `<video>`) it sets the source, and on a container like a `<div>` it sets the url as a cover
+  background image.
 - It keeps watching the page, so content on pages you navigate to, and anything added later, is
   filled in automatically. You do not have to do anything special for routing.
 - When a **superuser** or **editor** signs in and turns on edit mode, those same spots become

@@ -14,21 +14,21 @@ importers:
       '@stylistic/eslint-plugin':
         specifier: ^2.10.1
         version: 2.13.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
+      '@tweaktags/auth-jwt':
+        specifier: workspace:*
+        version: link:packages/auth-jwt
+      '@tweaktags/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@tweaktags/db-sqlite':
+        specifier: workspace:*
+        version: link:packages/db-sqlite
+      '@tweaktags/server':
+        specifier: workspace:*
+        version: link:packages/server
       '@types/node':
         specifier: ^22.9.0
         version: 22.20.0
-      '@veneer/auth-jwt':
-        specifier: workspace:*
-        version: link:packages/auth-jwt
-      '@veneer/core':
-        specifier: workspace:*
-        version: link:packages/core
-      '@veneer/db-sqlite':
-        specifier: workspace:*
-        version: link:packages/db-sqlite
-      '@veneer/server':
-        specifier: workspace:*
-        version: link:packages/server
       eslint:
         specifier: ^9.14.0
         version: 9.39.4(jiti@2.7.0)
@@ -50,13 +50,13 @@ importers:
 
   examples/next-app:
     dependencies:
-      '@veneer/cli':
+      '@tweaktags/cli':
         specifier: workspace:*
         version: link:../../packages/cli
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@veneer/next':
+      '@tweaktags/next':
         specifier: workspace:*
         version: link:../../packages/next
       next:
@@ -84,7 +84,7 @@ importers:
 
   packages/auth-jwt:
     dependencies:
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../core
       bcryptjs:
@@ -115,10 +115,10 @@ importers:
 
   packages/cli:
     dependencies:
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../core
-      '@veneer/server':
+      '@tweaktags/server':
         specifier: workspace:*
         version: link:../server
       dotenv:
@@ -156,7 +156,7 @@ importers:
 
   packages/db-mariadb:
     dependencies:
-      '@veneer/db-mysql':
+      '@tweaktags/db-mysql':
         specifier: workspace:*
         version: link:../db-mysql
     devDependencies:
@@ -172,7 +172,7 @@ importers:
 
   packages/db-mysql:
     dependencies:
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../core
       mysql2:
@@ -191,7 +191,7 @@ importers:
 
   packages/db-postgres:
     dependencies:
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../core
       pg:
@@ -213,7 +213,7 @@ importers:
 
   packages/db-sqlite:
     dependencies:
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../core
       better-sqlite3:
@@ -235,13 +235,13 @@ importers:
 
   packages/next:
     dependencies:
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../core
-      '@veneer/react':
+      '@tweaktags/react':
         specifier: workspace:*
         version: link:../react
-      '@veneer/server':
+      '@tweaktags/server':
         specifier: workspace:*
         version: link:../server
       next:
@@ -263,7 +263,7 @@ importers:
 
   packages/react:
     dependencies:
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -285,19 +285,19 @@ importers:
 
   packages/server:
     dependencies:
-      '@veneer/auth-jwt':
+      '@tweaktags/auth-jwt':
         specifier: workspace:*
         version: link:../auth-jwt
-      '@veneer/core':
+      '@tweaktags/core':
         specifier: workspace:*
         version: link:../core
-      '@veneer/db-mysql':
+      '@tweaktags/db-mysql':
         specifier: workspace:*
         version: link:../db-mysql
-      '@veneer/db-postgres':
+      '@tweaktags/db-postgres':
         specifier: workspace:*
         version: link:../db-postgres
-      '@veneer/db-sqlite':
+      '@tweaktags/db-sqlite':
         specifier: workspace:*
         version: link:../db-sqlite
     devDependencies:

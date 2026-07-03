@@ -400,7 +400,7 @@ export const TweakTagsProvider = ({
   );
 
   //Puts the saved content into one element for display.
-  //Images get their source set, everything else gets its text set.
+  //Media tags set a url, rich tags set html, and everything else sets text.
   //We never overwrite an element the user is actively editing.
   const showContentInElement = useCallback(
     (element: HTMLElement, record: ContentRecord): void => {
@@ -409,12 +409,43 @@ export const TweakTagsProvider = ({
         return;
       }
 
-      //Media tags, and any image element, get their source set from the url.
+      //Media tags, and any element that natively takes a src like an image or a
+      //video, get their source set from the url. When a media tag sits on a
+      //container with no src, like a div, we set the url as a cover background
+      //image instead, so the same tag works on both.
       if (record.type === 'media' || element.tagName === 'IMG') {
         const url = record.mediaUrl ?? record.body;
 
-        if (url && element.getAttribute('src') !== url) {
-          element.setAttribute('src', url);
+        if (!url) {
+          return;
+        }
+
+        if ('src' in element) {
+          if (element.getAttribute('src') !== url) {
+            element.setAttribute('src', url);
+          }
+
+          return;
+        }
+
+        const cssUrl = `url("${url.replace(/"/g, '\\"')}")`;
+
+        if (element.style.backgroundImage !== cssUrl) {
+          element.style.backgroundImage = cssUrl;
+
+          //Give it sensible defaults so the image actually shows, unless the
+          //page has already chosen its own background sizing.
+          if (!element.style.backgroundSize) {
+            element.style.backgroundSize = 'cover';
+          }
+
+          if (!element.style.backgroundPosition) {
+            element.style.backgroundPosition = 'center';
+          }
+
+          if (!element.style.backgroundRepeat) {
+            element.style.backgroundRepeat = 'no-repeat';
+          }
         }
 
         return;
@@ -447,6 +478,13 @@ export const TweakTagsProvider = ({
     //Images cannot be typed into, so they are edited through the popup or the
     //Tags panel instead of in place.
     if (element.tagName === 'IMG') {
+      return;
+    }
+
+    //Media tags are edited by giving a url, not by typing, so we never make the
+    //element they sit on editable in place. This also covers a media background
+    //on a container like a div.
+    if (contentRef.current[tag]?.type === 'media') {
       return;
     }
 
