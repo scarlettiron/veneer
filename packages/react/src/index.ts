@@ -38,11 +38,23 @@ export { useIsEditing } from './hooks/use-is-editing.js';
 export { TweakTagsContext } from './context/tweaktags-context.js';
 export type { TweakTagsContextValue } from './context/tweaktags-context.js';
 
-export { findTweakTagsElements, MANAGED_ATTRIBUTE } from './dom/scanner.js';
-export type { ScannedElement } from './dom/scanner.js';
-
-export { createApiClient } from './utilities/api-client.js';
-export type { ApiClient, ApiClientOptions } from './utilities/api-client.js';
+//The browser engine and its helpers, re-exported so app code can reach them
+//from @tweaktags/react without a separate install.
+export {
+  TweakTagsEngine,
+  createTweakTagsEngine,
+  findTweakTagsElements,
+  tweaktagsTagOf,
+  MANAGED_ATTRIBUTE,
+  createApiClient,
+} from '@tweaktags/browser';
+export type {
+  EngineOptions,
+  EngineState,
+  ScannedElement,
+  ApiClient,
+  ApiClientOptions,
+} from '@tweaktags/browser';
 
 //Re-export every shared type so app code can import them straight from here,
 //for example: import type { TagType, ContentRecord, Role } from '@tweaktags/react'.

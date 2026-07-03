@@ -7,8 +7,8 @@
 
 import { DATA_ATTRIBUTE_PREFIX, tagFromDataAttribute } from '@tweaktags/core';
 
-//Marks elements that the Editable component already controls,
-//so the plain html crawler knows to leave them alone.
+//Marks elements that a component already controls, so the plain html crawler
+//knows to leave them alone.
 export const MANAGED_ATTRIBUTE = 'data-tweaktags-managed';
 
 //A plain html element on the page that carries a TweakTags tag.
@@ -18,8 +18,7 @@ export interface ScannedElement {
 }
 
 //Reads the TweakTags tag from a single element.
-//Returns null when the element has no TweakTags attribute or is controlled by the
-//Editable component.
+//Returns null when the element has no TweakTags attribute or is already managed.
 export const tweaktagsTagOf = (element: HTMLElement): string | null => {
   if (element.hasAttribute(MANAGED_ATTRIBUTE)) {
     return null;

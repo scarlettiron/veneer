@@ -9,9 +9,9 @@ import { createElement } from 'react';
 import type { ElementType, ReactElement, ReactNode } from 'react';
 
 import { dataAttributeForTag } from '@tweaktags/core';
+import { MANAGED_ATTRIBUTE } from '@tweaktags/browser';
 
 import { useEditableTag } from '../hooks/use-editable-tag.js';
-import { MANAGED_ATTRIBUTE } from '../dom/scanner.js';
 
 //The props for the Editable component.
 export interface EditableProps {

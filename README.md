@@ -785,6 +785,35 @@ import { TAG_TYPES, ROLES } from '@tweaktags/next';
 Adapter authors can also import the `DbAdapter` and `AuthAdapter` interfaces from `@tweaktags/core`
 to build a new database or auth backend.
 
+## Plain JavaScript, no framework
+
+You do not need React. `@tweaktags/vanillajs` gives you the same edit in place experience, the
+draggable and mobile friendly edit bar, the popup editor, and the full admin panel, on any site.
+The backend is set up exactly as above, with your `tweaktags.config`, the route, `migrate`, and
+`create-superuser`. Only the browser side changes.
+
+With a bundler:
+
+```js
+import { init } from '@tweaktags/vanillajs';
+
+init({ apiBasePath: '/api/tweaktags', richText: true });
+```
+
+Or with a plain script tag, no build step:
+
+```html
+<script src="https://unpkg.com/@tweaktags/vanillajs/dist/index.global.js"></script>
+<script>
+  TweakTags.init({ apiBasePath: '/api/tweaktags' });
+</script>
+```
+
+Then mark content the same way, with `data-tweaktags-{tag}` attributes on your HTML. To recolor
+everything, pass a `theme`, and for finer control pass a `css` string. For a full page dashboard
+on its own route, use `TweakTags.mountAdmin('#admin', { apiBasePath: '/api/tweaktags' })` instead
+of `init`.
+
 ## Packages
 
 | Package            | Runs on  | What it does                                                          |
@@ -797,7 +826,9 @@ to build a new database or auth backend.
 | `@tweaktags/db-sqlite`  | Server   | The SQLite database adapter and migrations                          |
 | `@tweaktags/auth-jwt`   | Server   | Email and password login that issues secure tokens                 |
 | `@tweaktags/cli`        | Terminal | The `tweaktags` command for migrations and creating users             |
+| `@tweaktags/browser`    | Browser  | The framework agnostic engine that crawls the page, loads content, and runs editing. Both the React and vanilla UIs sit on top of it |
 | `@tweaktags/react`      | Browser  | The provider and page scanner that power `data-tweaktags-*` editing, plus an optional `<Editable>` component and hooks |
+| `@tweaktags/vanillajs`  | Browser  | The full edit in place UI with no framework, for plain HTML and JavaScript sites |
 | `@tweaktags/next`       | Both     | The server side route handler plus the browser side React pieces, in one package |
 
 ## More

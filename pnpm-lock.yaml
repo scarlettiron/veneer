@@ -113,6 +113,22 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/browser:
+    dependencies:
+      '@tweaktags/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.1.3
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/cli:
     dependencies:
       '@tweaktags/core':
@@ -304,6 +320,25 @@ importers:
       '@types/node':
         specifier: ^22.9.0
         version: 22.20.0
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.1.3
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/vanillajs:
+    dependencies:
+      '@tweaktags/browser':
+        specifier: workspace:*
+        version: link:../browser
+      '@tweaktags/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
       rimraf:
         specifier: ^6.0.1
         version: 6.1.3
