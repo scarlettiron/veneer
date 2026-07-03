@@ -1,11 +1,11 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import type { ContentRecord, StoredUser, TagType } from '@veneer/core';
+import type { ContentRecord, StoredUser, TagType } from '@tweaktags/core';
 
 //The raw shape of a content row as it comes back from SQLite.
 interface ContentRow {
@@ -29,7 +29,7 @@ interface UserRow {
   role: string;
 }
 
-//Turns a database content row into the camel case shape the rest of Veneer uses.
+//Turns a database content row into the camel case shape the rest of TweakTags uses.
 //SQLite stores the timestamp as text, so it is passed through as is.
 export const mapContentRow = (row: ContentRow): ContentRecord => ({
   tag: row.tag,

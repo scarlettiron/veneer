@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -12,14 +12,14 @@ import {
   DEFAULT_MODE,
   DEFAULT_REFRESH_TTL_SECONDS,
 } from '../constants/index.js';
-import type { VeneerConfig, VeneerUserConfig } from '../types/index.js';
+import type { TweakTagsConfig, TweakTagsUserConfig } from '../types/index.js';
 import { badRequest } from '../utilities/errors.js';
 
 //Checks that the user config has everything it needs and fills in defaults.
 //Returns the fully resolved config the rest of the system relies on.
-export const resolveConfig = (input: VeneerUserConfig): VeneerConfig => {
+export const resolveConfig = (input: TweakTagsUserConfig): TweakTagsConfig => {
   if (typeof input !== 'object' || input === null) {
-    throw badRequest('The Veneer config must be an object');
+    throw badRequest('The TweakTags config must be an object');
   }
 
   if (!input.database) {
@@ -71,10 +71,10 @@ export const resolveConfig = (input: VeneerUserConfig): VeneerConfig => {
       refreshTtlSeconds: input.auth.refreshTtlSeconds ?? DEFAULT_REFRESH_TTL_SECONDS,
       strictRevocation: input.auth.strictRevocation ?? false,
       tokenStorage: input.auth.tokenStorage ?? 'cookie',
-      cookieName: input.auth.cookieName ?? 'veneer_token',
-      refreshCookieName: input.auth.refreshCookieName ?? 'veneer_refresh',
+      cookieName: input.auth.cookieName ?? 'tweaktags_token',
+      refreshCookieName: input.auth.refreshCookieName ?? 'tweaktags_refresh',
       csrfProtection: input.auth.csrfProtection ?? true,
-      csrfCookieName: input.auth.csrfCookieName ?? 'veneer_csrf',
+      csrfCookieName: input.auth.csrfCookieName ?? 'tweaktags_csrf',
       cookieSecure: input.auth.cookieSecure ?? true,
       cookieSameSite: input.auth.cookieSameSite ?? 'lax',
     },

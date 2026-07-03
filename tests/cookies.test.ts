@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,17 +7,17 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ACTIONS, resolveConfig } from '@veneer/core';
+import { ACTIONS, resolveConfig } from '@tweaktags/core';
 import {
   buildClearCookies,
   buildTokenCookies,
   parseCookies,
   resolveAuthCookie,
-} from '@veneer/server';
+} from '@tweaktags/server';
 
 //A fully resolved auth config in the default cookie mode.
 const auth = resolveConfig({
-  database: { provider: 'postgres', connectionString: 'postgres://localhost/veneer' },
+  database: { provider: 'postgres', connectionString: 'postgres://localhost/tweaktags' },
   auth: { provider: 'jwt', jwtSecret: 'a-secret-that-is-long-enough' },
 }).auth;
 
@@ -40,13 +40,13 @@ describe('buildTokenCookies', () => {
   it('builds secure httpOnly cookies for both tokens', () => {
     const [access, refresh] = buildTokenCookies(auth, 'access-value', 'refresh-value');
 
-    expect(access).toContain('veneer_token=access-value');
+    expect(access).toContain('tweaktags_token=access-value');
     expect(access).toContain('HttpOnly');
     expect(access).toContain('SameSite=lax');
     expect(access).toContain('Max-Age=900');
     expect(access).toContain('Secure');
 
-    expect(refresh).toContain('veneer_refresh=refresh-value');
+    expect(refresh).toContain('tweaktags_refresh=refresh-value');
     expect(refresh).toContain('Max-Age=604800');
   });
 

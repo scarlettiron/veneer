@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -19,7 +19,7 @@ import {
   type Role,
   type StoredUser,
   type UserStore,
-} from '@veneer/core';
+} from '@tweaktags/core';
 
 import { SALT_ROUNDS } from './constants/index.js';
 
@@ -39,7 +39,7 @@ type AuthStore = UserStore & RefreshTokenStore;
 //Reads a role value safely, falling back to the editor role.
 const toRole = (value: unknown): Role => (value === 'superuser' ? 'superuser' : 'editor');
 
-//The jwt implementation of the Veneer auth adapter.
+//The jwt implementation of the TweakTags auth adapter.
 //It checks passwords with bcrypt and hands out a short lived access token and a
 //longer lived refresh token. Refresh tokens are rotated on every use and are
 //tracked in a store, so a stolen token that gets reused is caught and the whole

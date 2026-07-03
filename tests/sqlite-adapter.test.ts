@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,18 +7,18 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { Actor, RefreshTokenRecord } from '@veneer/core';
+import type { Actor, RefreshTokenRecord } from '@tweaktags/core';
 
 //Load the adapter and probe the native better-sqlite3 binding. The binding only
 //loads when a database is opened, not when the module is imported, so we open a
 //throwaway in memory database here. If it is missing, the whole suite skips
 //cleanly instead of failing every test. Run "pnpm rebuild better-sqlite3" to
 //build the binding and turn these tests on.
-let SqliteAdapter: (typeof import('@veneer/db-sqlite'))['SqliteAdapter'] | undefined;
+let SqliteAdapter: (typeof import('@tweaktags/db-sqlite'))['SqliteAdapter'] | undefined;
 let available = false;
 
 try {
-  ({ SqliteAdapter } = await import('@veneer/db-sqlite'));
+  ({ SqliteAdapter } = await import('@tweaktags/db-sqlite'));
   const probe = new SqliteAdapter({ provider: 'sqlite', filename: ':memory:' });
   await probe.close();
   available = true;
@@ -32,7 +32,7 @@ const describeSqlite = available ? describe : describe.skip;
 const actor: Actor = { userId: '7', role: 'superuser' };
 
 //This runs the real adapter and the real migrations against an in memory SQLite
-//database, so it exercises the actual SQL and the renamed __Veneer__ tables
+//database, so it exercises the actual SQL and the renamed __TweakTags__ tables
 //without needing any external database.
 describeSqlite('sqlite adapter', () => {
   let db: InstanceType<NonNullable<typeof SqliteAdapter>>;

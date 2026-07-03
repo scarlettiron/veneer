@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/db-postgres",
-  "version": "0.1.0",
-  "description": "Postgres database adapter and migrations for Veneer",
+  "name": "@tweaktags/db-postgres",
+  "version": "1.0.0",
+  "description": "Postgres database adapter and migrations for TweakTags",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,7 +26,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/core": "workspace:*",
+    "@tweaktags/core": "workspace:*",
     "pg": "^8.13.1"
   },
   "devDependencies": {

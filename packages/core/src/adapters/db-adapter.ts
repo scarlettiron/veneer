@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -52,7 +52,7 @@ export interface RefreshTokenStore {
 //The full database adapter.
 //A concrete adapter, like the Postgres one, implements every method here.
 export interface DbAdapter extends UserStore, RefreshTokenStore {
-  //Create the Veneer tables if they do not exist yet.
+  //Create the TweakTags tables if they do not exist yet.
   runMigrations(): Promise<void>;
 
   //Read the content rows for a set of tags.

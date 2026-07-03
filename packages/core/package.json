@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/core",
-  "version": "0.1.0",
-  "description": "Core types, config loader, adapter interfaces, and request handler for Veneer",
+  "name": "@tweaktags/core",
+  "version": "1.0.0",
+  "description": "Core types, config loader, adapter interfaces, and request handler for TweakTags",
   "license": "MIT",
   "type": "module",
   "engines": {

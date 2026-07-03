@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -13,7 +13,7 @@ import {
   isValidTag,
   normalizeTag,
   tagFromDataAttribute,
-} from '@veneer/core';
+} from '@tweaktags/core';
 
 describe('tag utilities', () => {
   it('accepts lowercase, numbers, and hyphens', () => {
@@ -50,7 +50,7 @@ describe('tag utilities', () => {
   it('builds and reads the data attribute', () => {
     const attribute = dataAttributeForTag('hero-title');
 
-    expect(attribute).toBe('data-veneer-hero-title');
+    expect(attribute).toBe('data-tweak-hero-title');
     expect(tagFromDataAttribute(attribute)).toBe('hero-title');
     expect(tagFromDataAttribute('class')).toBeNull();
     expect(tagFromDataAttribute('data-other-thing')).toBeNull();

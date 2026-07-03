@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Veneer &mdash; edit in place content for React and Next</title>
+    <title>TweakTags &mdash; edit in place content for React and Next</title>
     <meta
       name="description"
-      content="Veneer is a lightweight, npm installable edit in place content layer for otherwise static React and Next sites."
+      content="TweakTags is a lightweight, npm installable edit in place content layer for otherwise static React and Next sites."
     />
     <style>
       :root {
@@ -329,7 +329,7 @@
         color: var(--muted);
       }
 
-      /* Shared Veneer widget styles, matching the real components */
+      /* Shared TweakTags widget styles, matching the real components */
       .v-font {
         font-family: var(--font);
         font-size: 14px;
@@ -626,11 +626,11 @@
   </head>
   <body>
     <header class="site">
-      <span class="brand"><span class="dot"></span> Veneer</span>
+      <span class="brand"><span class="dot"></span> TweakTags</span>
       <span class="links">
         <a class="hide-sm" href="#install">Install</a>
         <a class="hide-sm" href="#quickstart">Quick start</a>
-        <a href="https://github.com/scarlettiron/veneer">GitHub</a>
+        <a href="https://github.com/scarlettiron/tweaktags">GitHub</a>
       </span>
     </header>
 
@@ -656,9 +656,9 @@
         <section id="overview">
           <h1>Edit your site, right on the page.</h1>
           <p class="lede">
-            Veneer is a lightweight, npm installable <strong>edit in place content layer</strong> for
+            TweakTags is a lightweight, npm installable <strong>edit in place content layer</strong> for
             otherwise static React and Next sites. Mark any HTML with a
-            <code>data-veneer-*</code> attribute, and signed in editors can change that content
+            <code>data-tweak-*</code> attribute, and signed in editors can change that content
             directly on the live page. Everyone else just sees the saved content.
           </p>
 
@@ -674,7 +674,7 @@
 
           <h3>How it works</h3>
           <p>
-            A small browser crawler finds every element with a <code>data-veneer-</code> attribute,
+            A small browser crawler finds every element with a <code>data-tweak-</code> attribute,
             fills it with the content saved in your database, and shows it to all visitors. When a
             signed in editor turns on edit mode, those same elements become editable in place, or
             through a form, or through a full admin panel. A framework agnostic server handler and a
@@ -690,23 +690,23 @@
           <div class="code" data-lang="bash">
             <div class="bar"><span>terminal</span><button class="copy">Copy</button></div>
             <pre><span class="tok-c"># the client bindings, server handler, and Postgres adapter</span>
-npm install @veneer/next
+npm install @tweaktags/next
 <span class="tok-c"># the command line tool, for migrations and users</span>
-npm install -D @veneer/cli</pre>
+npm install -D @tweaktags/cli</pre>
           </div>
 
           <p>Using a different database? Add its adapter package alongside the above:</p>
 
           <div class="code" data-lang="bash">
             <div class="bar"><span>terminal</span><button class="copy">Copy</button></div>
-            <pre>npm install @veneer/db-mysql      <span class="tok-c"># MySQL</span>
-npm install @veneer/db-mariadb    <span class="tok-c"># MariaDB</span>
-npm install @veneer/db-sqlite     <span class="tok-c"># SQLite</span></pre>
+            <pre>npm install @tweaktags/db-mysql      <span class="tok-c"># MySQL</span>
+npm install @tweaktags/db-mariadb    <span class="tok-c"># MariaDB</span>
+npm install @tweaktags/db-sqlite     <span class="tok-c"># SQLite</span></pre>
           </div>
 
           <div class="callout">
-            <strong>Plain React, not Next?</strong> Install <code>@veneer/react</code> and
-            <code>@veneer/server</code> instead of <code>@veneer/next</code>, and mount the server
+            <strong>Plain React, not Next?</strong> Install <code>@tweaktags/react</code> and
+            <code>@tweaktags/server</code> instead of <code>@tweaktags/next</code>, and mount the server
             handler on any Node route.
           </div>
         </section>
@@ -715,26 +715,26 @@ npm install @veneer/db-sqlite     <span class="tok-c"># SQLite</span></pre>
         <section id="quickstart">
           <h2>Quick start</h2>
 
-          <h3>1. Configure Veneer</h3>
+          <h3>1. Configure TweakTags</h3>
           <p>
-            Create a <code>veneer.config.ts</code> at the root of your app. It is the single source
+            Create a <code>tweaktags.config.ts</code> at the root of your app. It is the single source
             of truth for your database and auth. Secrets come from the environment, so nothing
             sensitive is committed.
           </p>
           <div class="code" data-lang="ts">
-            <div class="bar"><span>veneer.config.ts</span><button class="copy">Copy</button></div>
-            <pre><span class="tok-k">import</span> { <span class="tok-f">defineConfig</span> } <span class="tok-k">from</span> <span class="tok-s">'@veneer/next'</span>;
+            <div class="bar"><span>tweaktags.config.ts</span><button class="copy">Copy</button></div>
+            <pre><span class="tok-k">import</span> { <span class="tok-f">defineConfig</span> } <span class="tok-k">from</span> <span class="tok-s">'@tweaktags/next'</span>;
 
 <span class="tok-k">export default</span> <span class="tok-f">defineConfig</span>({
   editInView: <span class="tok-k">true</span>,
-  apiBasePath: <span class="tok-s">'/api/veneer'</span>,
+  apiBasePath: <span class="tok-s">'/api/tweaktags'</span>,
   database: {
     provider: <span class="tok-s">'postgres'</span>,
     connectionString: process.env.<span class="tok-f">DATABASE_URL</span>,
   },
   auth: {
     provider: <span class="tok-s">'jwt'</span>,
-    jwtSecret: process.env.<span class="tok-f">VENEER_JWT_SECRET</span>,
+    jwtSecret: process.env.<span class="tok-f">TWEAKTAGS_JWT_SECRET</span>,
     cookieSecure: process.env.<span class="tok-f">NODE_ENV</span> === <span class="tok-s">'production'</span>,
   },
 });</pre>
@@ -743,11 +743,11 @@ npm install @veneer/db-sqlite     <span class="tok-c"># SQLite</span></pre>
           <h3>2. Add the API route</h3>
           <p>Mount the handler once. It reads your config and wires up the database for you.</p>
           <div class="code" data-lang="ts">
-            <div class="bar"><span>app/api/veneer/route.ts</span><button class="copy">Copy</button></div>
-            <pre><span class="tok-k">import</span> { <span class="tok-f">createVeneerRouteHandler</span> } <span class="tok-k">from</span> <span class="tok-s">'@veneer/next'</span>;
-<span class="tok-k">import</span> veneerConfig <span class="tok-k">from</span> <span class="tok-s">'../../../veneer.config.js'</span>;
+            <div class="bar"><span>app/api/tweaktags/route.ts</span><button class="copy">Copy</button></div>
+            <pre><span class="tok-k">import</span> { <span class="tok-f">createTweakTagsRouteHandler</span> } <span class="tok-k">from</span> <span class="tok-s">'@tweaktags/next'</span>;
+<span class="tok-k">import</span> tweaktagsConfig <span class="tok-k">from</span> <span class="tok-s">'../../../tweaktags.config.js'</span>;
 
-<span class="tok-k">const</span> { POST } = <span class="tok-f">createVeneerRouteHandler</span>(veneerConfig);
+<span class="tok-k">const</span> { POST } = <span class="tok-f">createTweakTagsRouteHandler</span>(tweaktagsConfig);
 
 <span class="tok-k">export const</span> runtime = <span class="tok-s">'nodejs'</span>;
 <span class="tok-k">export</span> { POST };</pre>
@@ -757,16 +757,16 @@ npm install @veneer/db-sqlite     <span class="tok-c"># SQLite</span></pre>
           <p>Add the provider and the edit bar to your root layout.</p>
           <div class="code" data-lang="tsx">
             <div class="bar"><span>app/layout.tsx</span><button class="copy">Copy</button></div>
-            <pre><span class="tok-k">import</span> { <span class="tok-f">VeneerProvider</span>, <span class="tok-f">VeneerEditBar</span> } <span class="tok-k">from</span> <span class="tok-s">'@veneer/next'</span>;
+            <pre><span class="tok-k">import</span> { <span class="tok-f">TweakTagsProvider</span>, <span class="tok-f">TweakTagsEditBar</span> } <span class="tok-k">from</span> <span class="tok-s">'@tweaktags/next'</span>;
 
 <span class="tok-k">export default function</span> <span class="tok-f">RootLayout</span>({ children }) {
   <span class="tok-k">return</span> (
     &lt;html&gt;
       &lt;body&gt;
-        &lt;<span class="tok-f">VeneerProvider</span> apiBasePath=<span class="tok-s">"/api/veneer"</span>&gt;
+        &lt;<span class="tok-f">TweakTagsProvider</span> apiBasePath=<span class="tok-s">"/api/tweaktags"</span>&gt;
           {children}
-          &lt;<span class="tok-f">VeneerEditBar</span> /&gt;
-        &lt;/<span class="tok-f">VeneerProvider</span>&gt;
+          &lt;<span class="tok-f">TweakTagsEditBar</span> /&gt;
+        &lt;/<span class="tok-f">TweakTagsProvider</span>&gt;
       &lt;/body&gt;
     &lt;/html&gt;
   );
@@ -776,16 +776,16 @@ npm install @veneer/db-sqlite     <span class="tok-c"># SQLite</span></pre>
           <h3>4. Set up the database and your first user</h3>
           <div class="code" data-lang="bash">
             <div class="bar"><span>terminal</span><button class="copy">Copy</button></div>
-            <pre>npx veneer migrate
-npx veneer create-superuser --email you@example.com --password a-strong-password</pre>
+            <pre>npx tweaktags migrate
+npx tweaktags create-superuser --email you@example.com --password a-strong-password</pre>
           </div>
 
           <h3>5. Mark content as editable</h3>
-          <p>Add a <code>data-veneer-{tag}</code> attribute to any element. That is it.</p>
+          <p>Add a <code>data-tweak-{tag}</code> attribute to any element. That is it.</p>
           <div class="code" data-lang="tsx">
             <div class="bar"><span>anywhere in your app</span><button class="copy">Copy</button></div>
-            <pre>&lt;h1 data-veneer-hero-title&gt;Welcome to my site&lt;/h1&gt;
-&lt;p data-veneer-hero-subtitle&gt;The default text lives right here&lt;/p&gt;</pre>
+            <pre>&lt;h1 data-tweak-hero-title&gt;Welcome to my site&lt;/h1&gt;
+&lt;p data-tweak-hero-subtitle&gt;The default text lives right here&lt;/p&gt;</pre>
           </div>
           <p>
             Sign in through the edit bar, turn on <strong>Edit page</strong>, and change the text in
@@ -818,7 +818,7 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
               </tr>
               <tr>
                 <td><strong>Admin panel</strong></td>
-                <td>Render <code>&lt;VeneerAdminPanel /&gt;</code> on a route</td>
+                <td>Render <code>&lt;TweakTagsAdminPanel /&gt;</code> on a route</td>
                 <td>A traditional dashboard on its own page.</td>
               </tr>
             </tbody>
@@ -829,7 +829,7 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
         <section id="toolbar">
           <h2>The edit bar &amp; toolbar</h2>
           <p>
-            The <code>VeneerEditBar</code> floats in the corner. Signed out it is a small login card.
+            The <code>TweakTagsEditBar</code> floats in the corner. Signed out it is a small login card.
             Signed in it becomes a toolbar to save, close, manage tags, and get help. You can drag it
             anywhere by the grip. When you edit a rich text tag, a formatting toolbar floats above it.
           </p>
@@ -924,7 +924,7 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
         <section id="admin">
           <h2>The full page admin panel</h2>
           <p>
-            Render <code>&lt;VeneerAdminPanel /&gt;</code> on a dedicated route for a traditional
+            Render <code>&lt;TweakTagsAdminPanel /&gt;</code> on a dedicated route for a traditional
             dashboard. It has a full page login, and tabs to view, create, and edit tags. Both the
             view and edit lists have their own search and pagination.
           </p>
@@ -932,13 +932,13 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
           <div class="code" data-lang="tsx">
             <div class="bar"><span>app/admin/page.tsx</span><button class="copy">Copy</button></div>
             <pre><span class="tok-s">'use client'</span>;
-<span class="tok-k">import</span> { <span class="tok-f">VeneerProvider</span>, <span class="tok-f">VeneerAdminPanel</span> } <span class="tok-k">from</span> <span class="tok-s">'@veneer/next'</span>;
+<span class="tok-k">import</span> { <span class="tok-f">TweakTagsProvider</span>, <span class="tok-f">TweakTagsAdminPanel</span> } <span class="tok-k">from</span> <span class="tok-s">'@tweaktags/next'</span>;
 
 <span class="tok-k">export default function</span> <span class="tok-f">AdminPage</span>() {
   <span class="tok-k">return</span> (
-    &lt;<span class="tok-f">VeneerProvider</span> apiBasePath=<span class="tok-s">"/api/veneer"</span> richText&gt;
-      &lt;<span class="tok-f">VeneerAdminPanel</span> /&gt;
-    &lt;/<span class="tok-f">VeneerProvider</span>&gt;
+    &lt;<span class="tok-f">TweakTagsProvider</span> apiBasePath=<span class="tok-s">"/api/tweaktags"</span> richText&gt;
+      &lt;<span class="tok-f">TweakTagsAdminPanel</span> /&gt;
+    &lt;/<span class="tok-f">TweakTagsProvider</span>&gt;
   );
 }</pre>
           </div>
@@ -948,7 +948,7 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
             <div class="canvas" style="padding: 1.25rem">
               <div class="v-admin v-font">
                 <div class="top">
-                  <strong style="font-size: 1.1rem">Veneer admin</strong>
+                  <strong style="font-size: 1.1rem">TweakTags admin</strong>
                   <span style="display: flex; gap: 0.6rem; align-items: center">
                     <span style="color: var(--muted)">you@example.com</span>
                     <button class="v-btn subtle">Sign out</button>
@@ -1007,22 +1007,22 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
               <tr>
                 <td>MySQL</td>
                 <td><code>mysql</code></td>
-                <td><code>@veneer/db-mysql</code></td>
+                <td><code>@tweaktags/db-mysql</code></td>
               </tr>
               <tr>
                 <td>MariaDB</td>
                 <td><code>mariadb</code></td>
-                <td><code>@veneer/db-mariadb</code></td>
+                <td><code>@tweaktags/db-mariadb</code></td>
               </tr>
               <tr>
                 <td>SQLite</td>
                 <td><code>sqlite</code></td>
-                <td><code>@veneer/db-sqlite</code></td>
+                <td><code>@tweaktags/db-sqlite</code></td>
               </tr>
             </tbody>
           </table>
           <p>
-            Veneer owns a small set of tables that all start with <code>__Veneer__</code>, so they
+            TweakTags owns a small set of tables that all start with <code>__TweakTags__</code>, so they
             never clash with your own tables.
           </p>
         </section>
@@ -1030,7 +1030,7 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
         <!-- CLI -->
         <section id="cli">
           <h2>CLI commands</h2>
-          <p>Run these from the root of your app. Each one reads the same <code>veneer.config</code>.</p>
+          <p>Run these from the root of your app. Each one reads the same <code>tweaktags.config</code>.</p>
           <table>
             <thead>
               <tr>
@@ -1040,27 +1040,27 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
             </thead>
             <tbody>
               <tr>
-                <td><code>veneer migrate</code></td>
+                <td><code>tweaktags migrate</code></td>
                 <td>Creates or updates the database tables.</td>
               </tr>
               <tr>
-                <td><code>veneer create-superuser --email E --password P</code></td>
+                <td><code>tweaktags create-superuser --email E --password P</code></td>
                 <td>Creates an admin who can create, retype, and delete tags.</td>
               </tr>
               <tr>
-                <td><code>veneer create-user --email E --password P</code></td>
+                <td><code>tweaktags create-user --email E --password P</code></td>
                 <td>Creates a regular editor who can only change existing content.</td>
               </tr>
               <tr>
-                <td><code>veneer update-password --email E --password P</code></td>
+                <td><code>tweaktags update-password --email E --password P</code></td>
                 <td>Sets a new password for an existing user.</td>
               </tr>
               <tr>
-                <td><code>veneer list-tags</code></td>
+                <td><code>tweaktags list-tags</code></td>
                 <td>Lists every tag in the database.</td>
               </tr>
               <tr>
-                <td><code>veneer list-users</code></td>
+                <td><code>tweaktags list-users</code></td>
                 <td>Lists every user and their role.</td>
               </tr>
             </tbody>
@@ -1070,7 +1070,7 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
         <!-- SECURITY -->
         <section id="security">
           <h2>Security</h2>
-          <p>Veneer takes auth seriously out of the box:</p>
+          <p>TweakTags takes auth seriously out of the box:</p>
           <ul style="max-width: 46rem; color: var(--muted)">
             <li>Passwords are hashed with bcrypt before they are stored.</li>
             <li>
@@ -1094,10 +1094,10 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
             </li>
           </ul>
           <div class="code" data-lang="ts">
-            <div class="bar"><span>veneer.config.ts &middot; auth options</span><button class="copy">Copy</button></div>
+            <div class="bar"><span>tweaktags.config.ts &middot; auth options</span><button class="copy">Copy</button></div>
             <pre>auth: {
   provider: <span class="tok-s">'jwt'</span>,
-  jwtSecret: process.env.<span class="tok-f">VENEER_JWT_SECRET</span>,
+  jwtSecret: process.env.<span class="tok-f">TWEAKTAGS_JWT_SECRET</span>,
   accessTtlSeconds: <span class="tok-f">60</span> * <span class="tok-f">15</span>,        <span class="tok-c">// 15 minutes</span>
   refreshTtlSeconds: <span class="tok-f">60</span> * <span class="tok-f">60</span> * <span class="tok-f">24</span> * <span class="tok-f">7</span>, <span class="tok-c">// 7 days</span>
   tokenStorage: <span class="tok-s">'cookie'</span>,       <span class="tok-c">// or 'header' for a separate origin app</span>
@@ -1110,7 +1110,7 @@ npx veneer create-superuser --email you@example.com --password a-strong-password
     </div>
 
     <footer>
-      Veneer is open source under the MIT License. Built by Scarlett A. Scott (codescarlett).
+      TweakTags is open source under the MIT License. Built by Scarlett A. Scott (codescarlett).
     </footer>
 
     <script>

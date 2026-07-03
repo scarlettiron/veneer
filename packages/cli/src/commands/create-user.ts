@@ -1,12 +1,12 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import { ROLES, assertNoSqlInjection } from '@veneer/core';
-import { createVeneerServerFromConfig } from '@veneer/server';
+import { ROLES, assertNoSqlInjection } from '@tweaktags/core';
+import { createTweakTagsServerFromConfig } from '@tweaktags/server';
 
 //Creates a regular user with the editor role.
 //An editor can only change the content of tags that already exist. They cannot
@@ -24,7 +24,7 @@ export const runCreateUser = async (flags: Record<string, string>): Promise<numb
   //A second layer of defense on top of the parameterized query.
   assertNoSqlInjection(email, 'email');
 
-  const server = await createVeneerServerFromConfig({ path: flags.config });
+  const server = await createTweakTagsServerFromConfig({ path: flags.config });
 
   try {
     const actor = await server.auth.createUser(email, password, ROLES.EDITOR);

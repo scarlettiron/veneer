@@ -1,8 +1,8 @@
-# Veneer
+# TweakTags
 
-**Documentation website: [scarlettiron.github.io/veneer](https://scarlettiron.github.io/veneer/)**
+**Documentation website: [scarlettiron.github.io/tweaktags](https://scarlettiron.github.io/tweaktags/)**
 
-Veneer is a lightweight way to make the text and images on your website editable, right on the
+TweakTags is a lightweight way to make the text and images on your website editable, right on the
 page, without a separate admin dashboard. You mark the parts you want to edit, sign in, flip on
 edit mode, change the content in place, and it saves to your database.
 
@@ -14,7 +14,7 @@ this kind of thing before, that is fine. Follow each step in order and copy the 
 1. [How it works in plain words](#how-it-works-in-plain-words)
 2. [Client side and server side](#client-side-and-server-side)
 3. [Before you start](#before-you-start)
-4. [Step 1, install Veneer](#step-1-install-veneer)
+4. [Step 1, install TweakTags](#step-1-install-tweaktags)
 5. [Step 2, get a database](#step-2-get-a-database)
 6. [Step 3, add your secrets](#step-3-add-your-secrets)
 7. [Step 4, create the config file](#step-4-create-the-config-file)
@@ -30,15 +30,15 @@ this kind of thing before, that is fine. Follow each step in order and copy the 
 17. [Command reference](#command-reference)
 18. [Troubleshooting](#troubleshooting)
 19. [App Router or Pages Router](#app-router-or-pages-router)
-20. [Using Veneer without Next](#using-veneer-without-next)
+20. [Using TweakTags without Next](#using-tweaktags-without-next)
 21. [Packages](#packages)
 
 ## How it works in plain words
 
 - A **tag** is a name for one managed spot on your site, like `hero-title` or `footer-note`.
-- You put a tag on an HTML element using an attribute named `data-veneer-{tag}`. For a tag called
-  `hero-title` the attribute is `data-veneer-hero-title`.
-- When a page loads, Veneer **crawls it for every `data-veneer-` attribute**, loads the saved
+- You put a tag on an HTML element using an attribute named `data-tweak-{tag}`. For a tag called
+  `hero-title` the attribute is `data-tweak-hero-title`.
+- When a page loads, TweakTags **crawls it for every `data-tweak-` attribute**, loads the saved
   content from your database, and shows it to **all visitors**. For text elements it fills in the
   text. For an `<img>` it sets the image source.
 - It keeps watching the page, so content on pages you navigate to, and anything added later, is
@@ -46,35 +46,35 @@ this kind of thing before, that is fine. Follow each step in order and copy the 
 - When a **superuser** or **editor** signs in and turns on edit mode, those same spots become
   editable in place. You change as many as you like, then click **Save** to store them all. A
   popup confirms the result.
-- The `<Editable>` component is **optional**. The attribute alone is all Veneer needs, whether it
+- The `<Editable>` component is **optional**. The attribute alone is all TweakTags needs, whether it
   is on plain HTML or produced by the component.
 - There are two kinds of users. A **superuser** can create new tags and edit everything. An
   **editor** can only change tags that already exist.
 
 ## Client side and server side
 
-Veneer has two halves. Knowing which half a file belongs to tells you where it runs and why your
+TweakTags has two halves. Knowing which half a file belongs to tells you where it runs and why your
 secrets stay safe. The browser never touches your database and never sees your secrets.
 
 **Server side.** This runs in Node, on your machine while developing or on your host in
 production. It can reach the database and it holds your secrets.
 
-- Files: your `veneer.config.ts`, your `.env.local` secrets, and the backend route at
-  `app/api/veneer/route.ts`.
-- Packages: `@veneer/server` (the handler), `@veneer/db-postgres` (the database), `@veneer/auth-jwt`
-  (login and tokens), and `@veneer/cli` (the terminal command).
+- Files: your `tweaktags.config.ts`, your `.env.local` secrets, and the backend route at
+  `app/api/tweaktags/route.ts`.
+- Packages: `@tweaktags/server` (the handler), `@tweaktags/db-postgres` (the database), `@tweaktags/auth-jwt`
+  (login and tokens), and `@tweaktags/cli` (the terminal command).
 
 **Client side.** This runs in the browser, on the page your visitors see. It has no database
 access and no secrets.
 
-- Files: your pages and layout, the `data-veneer-` attributes, the provider, and the edit bar.
-- Package: `@veneer/react` (the provider, the page scanner, the `<Editable>` component, the hooks).
+- Files: your pages and layout, the `data-tweak-` attributes, the provider, and the edit bar.
+- Package: `@tweaktags/react` (the provider, the page scanner, the `<Editable>` component, the hooks).
 
 **Both sides.**
 
-- `@veneer/core` holds shared types and the request handling rules. The types are used on both
+- `@tweaktags/core` holds shared types and the request handling rules. The types are used on both
   sides. The handler itself only runs on the server.
-- `@veneer/next` is a convenience bundle. The route handler it gives you is server side, and the
+- `@tweaktags/next` is a convenience bundle. The route handler it gives you is server side, and the
   React pieces it re-exports are client side. You import from one package, but each piece still
   runs on its proper side.
 
@@ -85,7 +85,7 @@ itself, it asks the server, and the server decides who is allowed to do each one
 **How a save travels, end to end.**
 
 1. In the browser you edit a spot and click away. (client)
-2. The client sends the new text as a save action to the backend route at `/api/veneer`. (client
+2. The client sends the new text as a save action to the backend route at `/api/tweaktags`. (client
    to server)
 3. The route checks your login and your role, then writes to the database. (server)
 4. The route sends the saved content back, and the page shows it. (server to client)
@@ -97,13 +97,13 @@ This is why the browser never needs your database password. Only the server side
 You need these things ready first.
 
 - **Node.js version 16 or newer.** Check your version by running `node --version` in a terminal.
-- **A Next.js app** to add Veneer to. If you do not have one yet, create one with
+- **A Next.js app** to add TweakTags to. If you do not have one yet, create one with
   `npx create-next-app@latest` and choose the App Router and TypeScript when it asks.
 - **A Postgres database.** Step 2 shows the easiest way to get one if you do not have one.
 - **A terminal** open in the root folder of your Next.js app. The root folder is the one that
   has your `package.json` file in it.
 
-## Step 1, install Veneer
+## Step 1, install TweakTags
 
 In your terminal, in the root of your Next.js app, run one of these depending on which package
 manager you use.
@@ -111,46 +111,46 @@ manager you use.
 Using npm:
 
 ```sh
-npm install @veneer/next @veneer/core @veneer/cli
+npm install @tweaktags/next @tweaktags/core @tweaktags/cli
 ```
 
 Using pnpm:
 
 ```sh
-pnpm add @veneer/next @veneer/core @veneer/cli
+pnpm add @tweaktags/next @tweaktags/core @tweaktags/cli
 ```
 
 Using yarn:
 
 ```sh
-yarn add @veneer/next @veneer/core @veneer/cli
+yarn add @tweaktags/next @tweaktags/core @tweaktags/cli
 ```
 
 What these are:
 
-- `@veneer/next` is the main package for Next.js. It includes the backend handler and the React
+- `@tweaktags/next` is the main package for Next.js. It includes the backend handler and the React
   pieces you put on the page.
-- `@veneer/core` gives you a small helper for writing your config file.
-- `@veneer/cli` gives you the `veneer` command you use to set up the database.
+- `@tweaktags/core` gives you a small helper for writing your config file.
+- `@tweaktags/cli` gives you the `tweaktags` command you use to set up the database.
 
 ## Step 2, get a database
 
-Veneer stores your editable content in Postgres. If you already have a Postgres database, skip to
+TweakTags stores your editable content in Postgres. If you already have a Postgres database, skip to
 the next step and use its connection details.
 
 The quickest way to get one on your own machine is Docker. If you have Docker installed, run this
-single command. It starts a database named `veneer` with the username and password both set to
-`veneer`.
+single command. It starts a database named `tweaktags` with the username and password both set to
+`tweaktags`.
 
 ```sh
-docker run --name veneer-pg -e POSTGRES_USER=veneer -e POSTGRES_PASSWORD=veneer \
-  -e POSTGRES_DB=veneer -p 5432:5432 -d postgres:16
+docker run --name tweaktags-pg -e POSTGRES_USER=tweaktags -e POSTGRES_PASSWORD=tweaktags \
+  -e POSTGRES_DB=tweaktags -p 5432:5432 -d postgres:16
 ```
 
 Your connection string for this database is:
 
 ```
-postgres://veneer:veneer@localhost:5432/veneer
+postgres://tweaktags:tweaktags@localhost:5432/tweaktags
 ```
 
 A connection string is just one line that holds the username, password, address, and database
@@ -166,11 +166,11 @@ Create a file named `.env.local` and put these two lines in it. Change the datab
 database is different, and change the secret to a long random string of your own.
 
 ```
-DATABASE_URL=postgres://veneer:veneer@localhost:5432/veneer
-VENEER_JWT_SECRET=replace-this-with-a-long-random-secret-string
+DATABASE_URL=postgres://tweaktags:tweaktags@localhost:5432/tweaktags
+TWEAKTAGS_JWT_SECRET=replace-this-with-a-long-random-secret-string
 ```
 
-The `VENEER_JWT_SECRET` is used to keep logins secure. It must be at least 16 characters. A good
+The `TWEAKTAGS_JWT_SECRET` is used to keep logins secure. It must be at least 16 characters. A good
 way to make a random one is to run this command and paste the result:
 
 ```sh
@@ -185,18 +185,18 @@ Next.js apps already ignore it by default.
 _This is server side. It holds your database details and secret, and is never sent to the
 browser._
 
-This one file tells Veneer how to reach your database and how logins work. Create a file named
-`veneer.config.ts` in the root of your app with exactly this content.
+This one file tells TweakTags how to reach your database and how logins work. Create a file named
+`tweaktags.config.ts` in the root of your app with exactly this content.
 
 ```ts
-import { defineConfig } from '@veneer/core';
+import { defineConfig } from '@tweaktags/core';
 
 export default defineConfig({
   //Turn the edit in place feature on.
   editInView: true,
 
   //Where the backend route lives. Keep this as is unless you change Step 5.
-  apiBasePath: '/api/veneer',
+  apiBasePath: '/api/tweaktags',
 
   //Your database. The connection string is read from your .env.local file.
   database: {
@@ -207,7 +207,7 @@ export default defineConfig({
   //Login settings. The secret is read from your .env.local file.
   auth: {
     provider: 'jwt',
-    jwtSecret: process.env.VENEER_JWT_SECRET ?? '',
+    jwtSecret: process.env.TWEAKTAGS_JWT_SECRET ?? '',
   },
 });
 ```
@@ -219,17 +219,17 @@ _This is server side. It is the only part that talks to your database._
 The browser cannot talk to your database directly, that would not be safe. Instead it talks to a
 small backend route, and the route talks to the database. Next.js calls these route handlers.
 
-Create a file at this exact path: `app/api/veneer/route.ts`. Put this in it.
+Create a file at this exact path: `app/api/tweaktags/route.ts`. Put this in it.
 
 ```ts
-import { createVeneerRouteHandler } from '@veneer/next';
+import { createTweakTagsRouteHandler } from '@tweaktags/next';
 
-import veneerConfig from '../../../veneer.config';
+import tweaktagsConfig from '../../../tweaktags.config';
 
 //This builds the backend handler from your config file.
-const { POST } = createVeneerRouteHandler(veneerConfig);
+const { POST } = createTweakTagsRouteHandler(tweaktagsConfig);
 
-//Veneer needs the Node runtime because it connects to Postgres.
+//TweakTags needs the Node runtime because it connects to Postgres.
 export const runtime = 'nodejs';
 
 export { POST };
@@ -239,11 +239,11 @@ export { POST };
 
 _This runs in your terminal, on the server side, and reaches the database directly._
 
-Veneer needs a couple of tables in your database to store content and users. The cli creates them
+TweakTags needs a couple of tables in your database to store content and users. The cli creates them
 for you. Run this in your terminal from the root of your app.
 
 ```sh
-npx veneer migrate
+npx tweaktags migrate
 ```
 
 You should see a message that says the migrations are up to date. The cli reads your database
@@ -258,7 +258,7 @@ Now create your first user. Make this one a superuser so you can create tags. Re
 and password with your own.
 
 ```sh
-npx veneer create-superuser --email you@example.com --password choose-a-strong-password
+npx tweaktags create-superuser --email you@example.com --password choose-a-strong-password
 ```
 
 You will use this email and password to sign in on the page in a moment.
@@ -267,39 +267,39 @@ To add a regular editor later, who can change existing content but cannot create
 tags, use `create-user` instead:
 
 ```sh
-npx veneer create-user --email editor@example.com --password choose-a-strong-password
+npx tweaktags create-user --email editor@example.com --password choose-a-strong-password
 ```
 
 ## Step 8, wrap your app
 
 _This is client side. It runs in the browser._
 
-Veneer needs to wrap your app so it can load content and manage edit mode. Open your root layout
+TweakTags needs to wrap your app so it can load content and manage edit mode. Open your root layout
 file at `app/layout.tsx` and wrap your content with the provider, and add the edit bar.
 
 ```tsx
 import type { ReactNode } from 'react';
 
-import { VeneerProvider, VeneerEditBar } from '@veneer/next';
+import { TweakTagsProvider, TweakTagsEditBar } from '@tweaktags/next';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <VeneerProvider apiBasePath="/api/veneer">
+        <TweakTagsProvider apiBasePath="/api/tweaktags">
           {children}
-          <VeneerEditBar />
-        </VeneerProvider>
+          <TweakTagsEditBar />
+        </TweakTagsProvider>
       </body>
     </html>
   );
 }
 ```
 
-The `VeneerEditBar` is a small bar in the corner of the page where you sign in and turn edit mode
+The `TweakTagsEditBar` is a small bar in the corner of the page where you sign in and turn edit mode
 on and off. You can remove it later and build your own controls, but it is the easy way to start.
 
-**Three ways to edit.** Veneer gives you three editing styles, so you can pick the one that fits
+**Three ways to edit.** TweakTags gives you three editing styles, so you can pick the one that fits
 your site.
 
 1. **Edit in place (default).** Editing happens right on the page, where you click a spot and type.
@@ -308,7 +308,7 @@ your site.
 2. **Popup form.** Pass `editInView={false}` to the provider to edit through a form instead:
 
    ```tsx
-   <VeneerProvider apiBasePath="/api/veneer" editInView={false}>
+   <TweakTagsProvider apiBasePath="/api/tweaktags" editInView={false}>
    ```
 
    Clicking **Edit page** opens a full screen, scrollable popup that lists every tag with its own
@@ -317,7 +317,7 @@ your site.
    hard to click on the page, or when you want to edit many tags at once.
 
 3. **Full page admin panel.** For a traditional admin panel on its own page, render
-   `VeneerAdminPanel` on a dedicated route instead of the `VeneerEditBar`. See
+   `TweakTagsAdminPanel` on a dedicated route instead of the `TweakTagsEditBar`. See
    [Full page admin panel](#full-page-admin-panel) below.
 
 **Reacting to edit mode in your own code.** If you want your own components to know when someone is
@@ -325,7 +325,7 @@ editing, read it from the context. The `useIsEditing` hook returns a single bool
 only while edit mode is on:
 
 ```tsx
-import { useIsEditing } from '@veneer/react';
+import { useIsEditing } from '@tweaktags/react';
 
 function Banner() {
   const isEditing = useIsEditing();
@@ -334,28 +334,28 @@ function Banner() {
 }
 ```
 
-The full context is also available through `useVeneer()`, which includes `isEditing`, `canEdit`,
+The full context is also available through `useTweakTags()`, which includes `isEditing`, `canEdit`,
 the current `user`, and the actions.
 
 ### Full page admin panel
 
 If you would rather manage your content from a traditional admin panel, instead of on top of your
-live site, render `VeneerAdminPanel` on its own route. It is a full page view that does not need
-the `VeneerEditBar`. Give it a route your visitors will not stumble onto, like `/admin`, and wrap
-it in the same `VeneerProvider`.
+live site, render `TweakTagsAdminPanel` on its own route. It is a full page view that does not need
+the `TweakTagsEditBar`. Give it a route your visitors will not stumble onto, like `/admin`, and wrap
+it in the same `TweakTagsProvider`.
 
 For the Next.js app router, create `app/admin/page.tsx`:
 
 ```tsx
 'use client';
 
-import { VeneerProvider, VeneerAdminPanel } from '@veneer/next';
+import { TweakTagsProvider, TweakTagsAdminPanel } from '@tweaktags/next';
 
 export default function AdminPage() {
   return (
-    <VeneerProvider apiBasePath="/api/veneer" richText>
-      <VeneerAdminPanel />
-    </VeneerProvider>
+    <TweakTagsProvider apiBasePath="/api/tweaktags" richText>
+      <TweakTagsAdminPanel />
+    </TweakTagsProvider>
   );
 }
 ```
@@ -380,19 +380,19 @@ page itself. You can use it on its own, or alongside the in place editor on your
 
 _This is client side. These are the elements in your pages._
 
-Pick the spots on your site you want Veneer to manage and give each one a tag. You do this by
-adding a `data-veneer-{tag}` attribute to any normal HTML element. That is all that is needed.
-Veneer will show the saved content there to everyone, and make it editable for signed in editors.
+Pick the spots on your site you want TweakTags to manage and give each one a tag. You do this by
+adding a `data-tweak-{tag}` attribute to any normal HTML element. That is all that is needed.
+TweakTags will show the saved content there to everyone, and make it editable for signed in editors.
 
 ```tsx
 export default function HomePage() {
   return (
     <main>
-      <h1 data-veneer-hero-title>Welcome to my site</h1>
-      <p data-veneer-hero-body>This text can be edited right on the page.</p>
+      <h1 data-tweak-hero-title>Welcome to my site</h1>
+      <p data-tweak-hero-body>This text can be edited right on the page.</p>
 
-      {/* On an image, Veneer sets the src from the saved content. */}
-      <img data-veneer-hero-image src="/placeholder.png" alt="Hero" />
+      {/* On an image, TweakTags sets the src from the saved content. */}
+      <img data-tweak-hero-image src="/placeholder.png" alt="Hero" />
     </main>
   );
 }
@@ -401,16 +401,16 @@ export default function HomePage() {
 A few things worth knowing:
 
 - **The content inside the element is the fallback.** It shows until something is saved for that
-  tag. Once content is saved, Veneer shows the saved content to every visitor.
-- **You do not need a component.** Plain HTML with the attribute is the main way to use Veneer.
-- **It works on pages you navigate to.** Because Veneer watches the page, tags on other routes are
+  tag. Once content is saved, TweakTags shows the saved content to every visitor.
+- **You do not need a component.** Plain HTML with the attribute is the main way to use TweakTags.
+- **It works on pages you navigate to.** Because TweakTags watches the page, tags on other routes are
   filled in automatically as you move around the site.
 
 If you would rather write a component than a raw attribute, the optional `<Editable>` component
 produces the same attribute for you:
 
 ```tsx
-import { Editable } from '@veneer/next';
+import { Editable } from '@tweaktags/next';
 
 export default function HomePage() {
   return (
@@ -461,7 +461,7 @@ Only a superuser can create tags. An editor can only change tags that already ex
 ways for a superuser to create one.
 
 **By editing (the simple way).** When you are signed in as a superuser and you edit a
-`data-veneer-` spot that has never been saved before, that first save creates the tag in the
+`data-tweak-` spot that has never been saved before, that first save creates the tag in the
 database. After that, editors can change it too. So for most cases you do not need to do anything
 special, just edit and save.
 
@@ -474,7 +474,7 @@ Click it to open a panel where you can:
   and cannot be undone.
 
 This is useful when you want to set up a tag ahead of time so an editor can fill it in later. Keep
-in mind a tag only appears on a page where an element actually has that `data-veneer-{tag}`
+in mind a tag only appears on a page where an element actually has that `data-tweak-{tag}`
 attribute, so creating a tag here does not put anything on a page by itself. It just registers the
 tag so it exists and can be edited.
 
@@ -493,25 +493,25 @@ So `hero-title` and `section-2` are fine. `HeroTitle`, `hero title`, and `hero_t
 
 ## Databases
 
-Veneer supports Postgres, MySQL, MariaDB, and SQLite. Postgres comes built in. For the others,
+TweakTags supports Postgres, MySQL, MariaDB, and SQLite. Postgres comes built in. For the others,
 install the matching adapter package so you only pull in the driver you actually use.
 
 | Database        | Install                          | Example config                                                        |
 | --------------- | -------------------------------- | --------------------------------------------------------------------- |
 | Postgres        | nothing extra                    | `{ provider: 'postgres', connectionString: process.env.DATABASE_URL }` |
-| MySQL           | `npm install @veneer/db-mysql`   | `{ provider: 'mysql', connectionString: process.env.DATABASE_URL }`    |
-| MariaDB         | `npm install @veneer/db-mariadb` | `{ provider: 'mariadb', connectionString: process.env.DATABASE_URL }`  |
-| SQLite          | `npm install @veneer/db-sqlite`  | `{ provider: 'sqlite', filename: './veneer.db' }`                      |
+| MySQL           | `npm install @tweaktags/db-mysql`   | `{ provider: 'mysql', connectionString: process.env.DATABASE_URL }`    |
+| MariaDB         | `npm install @tweaktags/db-mariadb` | `{ provider: 'mariadb', connectionString: process.env.DATABASE_URL }`  |
+| SQLite          | `npm install @tweaktags/db-sqlite`  | `{ provider: 'sqlite', filename: './tweaktags.db' }`                      |
 
-MariaDB uses the MySQL protocol, so `@veneer/db-mariadb` is a thin package that just installs and
-re-exports `@veneer/db-mysql` for you. You can install either one for MariaDB, but the MariaDB
+MariaDB uses the MySQL protocol, so `@tweaktags/db-mariadb` is a thin package that just installs and
+re-exports `@tweaktags/db-mysql` for you. You can install either one for MariaDB, but the MariaDB
 named package saves you the confusion of installing something called MySQL. SQLite stores
 everything in a single file, which is handy for small sites and local development. The
-`veneer migrate` and `veneer create-superuser` commands work the same no matter which one you use.
+`tweaktags migrate` and `tweaktags create-superuser` commands work the same no matter which one you use.
 
 ## Settings reference
 
-These are the settings you can put in `veneer.config.ts`.
+These are the settings you can put in `tweaktags.config.ts`.
 
 | Setting                   | Required | What it does                                                       |
 | ------------------------- | -------- | ----------------------------------------------------------------- |
@@ -529,23 +529,23 @@ These are the settings you can put in `veneer.config.ts`.
 | `auth.cookieSameSite`     | no       | `'lax'` (default), `'strict'`, or `'none'`. Use `'none'` with a separate origin app. |
 | `auth.csrfProtection`     | no       | Turns the csrf check on or off. Defaults to true. Set false only if it causes problems and you understand the risk. |
 | `editInView`              | no       | Turns the edit in place feature on. Defaults to off.             |
-| `apiBasePath`             | no       | Where the backend route lives. Defaults to `/api/veneer`.        |
+| `apiBasePath`             | no       | Where the backend route lives. Defaults to `/api/tweaktags`.        |
 | `mode`                    | no       | `'embedded'` for adding to an existing site. This is the default. |
 | `cors.origins`            | no       | Allowed origins when the server runs separately. A list of urls, or `'*'`. |
 
 ## Sessions and security
 
-Veneer uses two tokens. A short lived **access token** authenticates each request, and a longer
+TweakTags uses two tokens. A short lived **access token** authenticates each request, and a longer
 lived **refresh token** quietly gets a new access token when it expires. When the refresh token
 itself expires, the user is signed out and simply logs back in. Both lifetimes are set with
 `auth.accessTtlSeconds` and `auth.refreshTtlSeconds`.
 
 ### Token blocking and revocation, step by step
 
-This is how Veneer stops old or stolen tokens from being used.
+This is how TweakTags stops old or stolen tokens from being used.
 
 1. **On login**, the server starts a token family. It signs an access token and a refresh token,
-   and saves a row for the refresh token in the `__Veneer__Refresh_Tokens` table with a family id
+   and saves a row for the refresh token in the `__TweakTags__Refresh_Tokens` table with a family id
    and `revoked = false`.
 2. **On a normal request**, the server verifies the access token by its signature and expiry. This
    is fast and needs no database read.
@@ -579,16 +579,16 @@ two choices:
 ### CSRF protection, step by step
 
 Cross site request forgery is when another website tricks a visitor's browser into making a request
-to your site using their logged in cookie. Veneer blocks this with a double submit token.
+to your site using their logged in cookie. TweakTags blocks this with a double submit token.
 
-1. **On login and refresh**, the server sets a second cookie named `veneer_csrf` with a random
+1. **On login and refresh**, the server sets a second cookie named `tweaktags_csrf` with a random
    value. Unlike the token cookies, this one is **readable** by JavaScript on your own page.
 2. **On every action that changes data** (create tag, save content, change a tag type, delete a
-   tag, and logout), the Veneer client reads that cookie and sends the value back in an
-   `X-Veneer-Csrf` header.
+   tag, and logout), the TweakTags client reads that cookie and sends the value back in an
+   `X-TweakTags-Csrf` header.
 3. **The server checks** that the header value matches the cookie value. If they do not match, or
    the header is missing, it rejects the request.
-4. **Why this works:** another website cannot read your `veneer_csrf` cookie, because browsers only
+4. **Why this works:** another website cannot read your `tweaktags_csrf` cookie, because browsers only
    let a page read cookies from its own site. So an attacker cannot put the right value in the
    header, and their forged request is rejected. Requiring a custom header also forces the browser
    to ask permission first for cross origin requests, which blocks the simple ones outright.
@@ -613,63 +613,63 @@ Run these from the root of your app.
 
 | Command                                                       | What it does                          |
 | ------------------------------------------------------------ | ------------------------------------- |
-| `npx veneer migrate`                                         | Creates or updates the database tables. |
-| `npx veneer create-superuser --email EMAIL --password PASS` | Creates a superuser who can make tags.  |
-| `npx veneer create-user --email EMAIL --password PASS`      | Creates a regular editor who can only change existing content. |
-| `npx veneer update-password --email EMAIL --password PASS`  | Sets a new password for an existing user. |
-| `npx veneer list-tags`                                      | Lists every tag in the database.        |
-| `npx veneer list-users`                                     | Lists every user and their role.        |
-| `npx veneer help`                                           | Shows the available commands.          |
+| `npx tweaktags migrate`                                         | Creates or updates the database tables. |
+| `npx tweaktags create-superuser --email EMAIL --password PASS` | Creates a superuser who can make tags.  |
+| `npx tweaktags create-user --email EMAIL --password PASS`      | Creates a regular editor who can only change existing content. |
+| `npx tweaktags update-password --email EMAIL --password PASS`  | Sets a new password for an existing user. |
+| `npx tweaktags list-tags`                                      | Lists every tag in the database.        |
+| `npx tweaktags list-users`                                     | Lists every user and their role.        |
+| `npx tweaktags help`                                           | Shows the available commands.          |
 
 ## Troubleshooting
 
-**`npx veneer migrate` cannot connect to the database.**
+**`npx tweaktags migrate` cannot connect to the database.**
 Check that your database is running and that `DATABASE_URL` in `.env.local` is correct. If you
 used the Docker command in Step 2, make sure the container is still running with `docker ps`.
 
 **The cli says it cannot find a config file.**
-Run the command from the root folder of your app, the folder that has `veneer.config.ts` in it.
+Run the command from the root folder of your app, the folder that has `tweaktags.config.ts` in it.
 
 **I signed in but nothing is editable.**
 Make sure you clicked **Edit page** in the bar, and that the user you signed in with exists. Also
-check that your elements have a `data-veneer-` attribute with a valid tag name.
+check that your elements have a `data-tweak-` attribute with a valid tag name.
 
 **The secret is too short error.**
-`VENEER_JWT_SECRET` must be at least 16 characters. Make a longer one with the command in Step 3.
+`TWEAKTAGS_JWT_SECRET` must be at least 16 characters. Make a longer one with the command in Step 3.
 
 **My content does not save.**
 Open your browser developer tools and look at the Network tab while you edit. The request to
-`/api/veneer` will show the error message from the backend.
+`/api/tweaktags` will show the error message from the backend.
 
 **My saved content is not showing to visitors.**
-Check that the element's `data-veneer-` tag exactly matches the tag you saved, that the
-`/api/veneer` route is reachable (look for its request in the Network tab), and that the content
+Check that the element's `data-tweak-` tag exactly matches the tag you saved, that the
+`/api/tweaktags` route is reachable (look for its request in the Network tab), and that the content
 was actually saved. Remember the text inside the element is only the fallback until something is
 saved for that tag.
 
 ## App Router or Pages Router
 
-Veneer works with both. The client side is identical, only the backend route and the wrapper
+TweakTags works with both. The client side is identical, only the backend route and the wrapper
 file differ.
 
 The main guide above uses the **App Router**. If your app uses the **Pages Router**, change two
 things.
 
-**1. The API route.** Instead of `app/api/veneer/route.ts`, create `pages/api/veneer.ts`:
+**1. The API route.** Instead of `app/api/tweaktags/route.ts`, create `pages/api/tweaktags.ts`:
 
 ```ts
-import { createVeneerPagesApiRoute } from '@veneer/next';
+import { createTweakTagsPagesApiRoute } from '@tweaktags/next';
 
-import veneerConfig from '../../veneer.config';
+import tweaktagsConfig from '../../tweaktags.config';
 
-//Veneer reads the raw request body, so turn off Next's body parser here.
+//TweakTags reads the raw request body, so turn off Next's body parser here.
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-export default createVeneerPagesApiRoute(veneerConfig);
+export default createTweakTagsPagesApiRoute(tweaktagsConfig);
 ```
 
 **2. The wrapper.** Instead of `app/layout.tsx`, wrap your app in `pages/_app.tsx`:
@@ -677,57 +677,57 @@ export default createVeneerPagesApiRoute(veneerConfig);
 ```tsx
 import type { AppProps } from 'next/app';
 
-import { VeneerProvider, VeneerEditBar } from '@veneer/next';
+import { TweakTagsProvider, TweakTagsEditBar } from '@tweaktags/next';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <VeneerProvider apiBasePath="/api/veneer">
+    <TweakTagsProvider apiBasePath="/api/tweaktags">
       <Component {...pageProps} />
-      <VeneerEditBar />
-    </VeneerProvider>
+      <TweakTagsEditBar />
+    </TweakTagsProvider>
   );
 }
 ```
 
-Everything else, the config file, the `data-veneer-{tag}` attributes, the cli commands, and the
+Everything else, the config file, the `data-tweak-{tag}` attributes, the cli commands, and the
 edit bar, is exactly the same. The crawler also keeps working as you move between pages in either
 router.
 
-## Using Veneer without Next
+## Using TweakTags without Next
 
 You do not have to use Next. A plain React app, like one made with Vite, works too. The client
-side is exactly the same. The only difference is that you run the Veneer backend as its own small
+side is exactly the same. The only difference is that you run the TweakTags backend as its own small
 server, and point your app at it.
 
-Veneer's React support works with **React 16.14 and up**, including 17, 18, and 19. It uses only
+TweakTags's React support works with **React 16.14 and up**, including 17, 18, and 19. It uses only
 basic hooks and does not depend on react-dom, so it fits into old and new React apps alike. React
-older than 16.8 is not supported, because Veneer uses hooks.
+older than 16.8 is not supported, because TweakTags uses hooks.
 
 For plain React, install these:
 
 ```sh
-npm install @veneer/react @veneer/server @veneer/core @veneer/cli
+npm install @tweaktags/react @tweaktags/server @tweaktags/core @tweaktags/cli
 ```
 
-**1. Run a standalone Veneer server.** Create a file, for example `veneer-server.ts`, and start
-the server. It reads your `veneer.config` just like the Next route did.
+**1. Run a standalone TweakTags server.** Create a file, for example `tweaktags-server.ts`, and start
+the server. It reads your `tweaktags.config` just like the Next route did.
 
 ```ts
-import { startStandaloneServer } from '@veneer/server';
+import { startStandaloneServer } from '@tweaktags/server';
 
-import veneerConfig from './veneer.config';
+import tweaktagsConfig from './tweaktags.config';
 
-startStandaloneServer(veneerConfig, { port: 4000 }).then(() => {
-  console.log('Veneer API running on http://localhost:4000');
+startStandaloneServer(tweaktagsConfig, { port: 4000 }).then(() => {
+  console.log('TweakTags API running on http://localhost:4000');
 });
 ```
 
-Run it with a TypeScript runner such as `npx tsx veneer-server.ts`. Use the same `veneer migrate`
-and `veneer create-superuser` commands as before to set up the database.
+Run it with a TypeScript runner such as `npx tsx tweaktags-server.ts`. Use the same `tweaktags migrate`
+and `tweaktags create-superuser` commands as before to set up the database.
 
 **2. Allow your app's origin.** If your React app and this server run on different addresses, for
 example the app on `http://localhost:5173` and the server on `http://localhost:4000`, the browser
-will block the calls unless you allow them. Add a `cors` section to your `veneer.config`:
+will block the calls unless you allow them. Add a `cors` section to your `tweaktags.config`:
 
 ```ts
 cors: {
@@ -741,29 +741,29 @@ If they run on the same address, through a dev proxy or a reverse proxy, you do 
 provider and set `apiBasePath` to the server's url.
 
 ```tsx
-import { VeneerProvider, VeneerEditBar } from '@veneer/react';
+import { TweakTagsProvider, TweakTagsEditBar } from '@tweaktags/react';
 
 export function Root() {
   return (
-    <VeneerProvider apiBasePath="http://localhost:4000">
+    <TweakTagsProvider apiBasePath="http://localhost:4000">
       <App />
-      <VeneerEditBar />
-    </VeneerProvider>
+      <TweakTagsEditBar />
+    </TweakTagsProvider>
   );
 }
 ```
 
-Everything else is the same. Add `data-veneer-{tag}` attributes to your HTML, and content is
+Everything else is the same. Add `data-tweak-{tag}` attributes to your HTML, and content is
 displayed and made editable exactly as it is in Next.
 
 If you already have your own Node backend, like Express, you can skip the standalone server and
-mount `@veneer/server`'s handler yourself. `createVeneerServer(config).nodeHandler` is a plain
+mount `@tweaktags/server`'s handler yourself. `createTweakTagsServer(config).nodeHandler` is a plain
 `(req, res)` handler you can attach to any route.
 
 ## Types for TypeScript
 
-All of Veneer's shared types are exported so you can use them in your own code. They come from
-`@veneer/core`, and are also re-exported from `@veneer/react` and `@veneer/next` so you can import
+All of TweakTags's shared types are exported so you can use them in your own code. They come from
+`@tweaktags/core`, and are also re-exported from `@tweaktags/react` and `@tweaktags/next` so you can import
 them from whichever package you already use.
 
 ```ts
@@ -772,34 +772,34 @@ import type {
   ContentRecord, // a saved tag and its content
   Role, // 'superuser' | 'editor'
   AuthUser,
-  VeneerUserConfig,
+  TweakTagsUserConfig,
   DatabaseConfig,
-} from '@veneer/next';
+} from '@tweaktags/next';
 
 //The enums are exported as values too, for comparisons.
-import { TAG_TYPES, ROLES } from '@veneer/next';
+import { TAG_TYPES, ROLES } from '@tweaktags/next';
 ```
 
-Adapter authors can also import the `DbAdapter` and `AuthAdapter` interfaces from `@veneer/core`
+Adapter authors can also import the `DbAdapter` and `AuthAdapter` interfaces from `@tweaktags/core`
 to build a new database or auth backend.
 
 ## Packages
 
 | Package            | Runs on  | What it does                                                          |
 | ------------------ | -------- | -------------------------------------------------------------------- |
-| `@veneer/core`       | Both     | Shared types, the config helper and loader, the adapter interfaces, and the request handler |
-| `@veneer/server`     | Server   | A framework agnostic Node backend handler you mount in your own backend |
-| `@veneer/db-postgres` | Server  | The Postgres database adapter and migrations                        |
-| `@veneer/db-mysql`   | Server   | The MySQL and MariaDB database adapter and migrations               |
-| `@veneer/db-mariadb` | Server   | A thin alias that installs and re-exports `@veneer/db-mysql` for MariaDB |
-| `@veneer/db-sqlite`  | Server   | The SQLite database adapter and migrations                          |
-| `@veneer/auth-jwt`   | Server   | Email and password login that issues secure tokens                 |
-| `@veneer/cli`        | Terminal | The `veneer` command for migrations and creating users             |
-| `@veneer/react`      | Browser  | The provider and page scanner that power `data-veneer-*` editing, plus an optional `<Editable>` component and hooks |
-| `@veneer/next`       | Both     | The server side route handler plus the browser side React pieces, in one package |
+| `@tweaktags/core`       | Both     | Shared types, the config helper and loader, the adapter interfaces, and the request handler |
+| `@tweaktags/server`     | Server   | A framework agnostic Node backend handler you mount in your own backend |
+| `@tweaktags/db-postgres` | Server  | The Postgres database adapter and migrations                        |
+| `@tweaktags/db-mysql`   | Server   | The MySQL and MariaDB database adapter and migrations               |
+| `@tweaktags/db-mariadb` | Server   | A thin alias that installs and re-exports `@tweaktags/db-mysql` for MariaDB |
+| `@tweaktags/db-sqlite`  | Server   | The SQLite database adapter and migrations                          |
+| `@tweaktags/auth-jwt`   | Server   | Email and password login that issues secure tokens                 |
+| `@tweaktags/cli`        | Terminal | The `tweaktags` command for migrations and creating users             |
+| `@tweaktags/react`      | Browser  | The provider and page scanner that power `data-tweak-*` editing, plus an optional `<Editable>` component and hooks |
+| `@tweaktags/next`       | Both     | The server side route handler plus the browser side React pieces, in one package |
 
 ## More
 
-- The full plan for this project is in [plans/veneer-plan-v1.md](plans/veneer-plan-v1.md).
-- Code conventions for working on Veneer itself are in [CONTRIBUTING.md](CONTRIBUTING.md).
+- The full plan for this project is in [plans/tweaktags-plan-v1.md](plans/tweaktags-plan-v1.md).
+- Code conventions for working on TweakTags itself are in [CONTRIBUTING.md](CONTRIBUTING.md).
 - A working example app is in [examples/next-app](examples/next-app).

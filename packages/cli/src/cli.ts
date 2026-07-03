@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -18,17 +18,17 @@ import { loadEnv } from './utilities/env.js';
 const printHelp = (): void => {
   console.log(
     [
-      'Veneer command line',
+      'TweakTags command line',
       '',
       'Usage:',
-      '  veneer migrate [--config path]',
-      '  veneer create-superuser --email you@example.com --password secret [--role superuser|editor] [--config path]',
-      '  veneer create-user --email you@example.com --password secret [--config path]',
-      '  veneer update-password --email you@example.com --password newsecret [--config path]',
-      '  veneer list-tags [--config path]',
-      '  veneer list-users [--config path]',
+      '  tweaktags migrate [--config path]',
+      '  tweaktags create-superuser --email you@example.com --password secret [--role superuser|editor] [--config path]',
+      '  tweaktags create-user --email you@example.com --password secret [--config path]',
+      '  tweaktags update-password --email you@example.com --password newsecret [--config path]',
+      '  tweaktags list-tags [--config path]',
+      '  tweaktags list-users [--config path]',
       '',
-      'The config path is optional. When left out, Veneer looks for a veneer.config file',
+      'The config path is optional. When left out, TweakTags looks for a tweaktags.config file',
       'in the current folder.',
     ].join('\n'),
   );

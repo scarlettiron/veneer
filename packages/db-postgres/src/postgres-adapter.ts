@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -24,7 +24,7 @@ import {
   AUTH_TABLE,
   CONTENT_TABLE,
   REFRESH_TABLE,
-} from '@veneer/core';
+} from '@tweaktags/core';
 
 import { MIGRATIONS_TABLE, UNIQUE_VIOLATION } from './constants/index.js';
 import { MIGRATIONS } from './migrations/migrations.js';
@@ -59,7 +59,7 @@ const errorCode = (error: unknown): string | undefined => {
   return undefined;
 };
 
-//The Postgres implementation of the Veneer database adapter.
+//The Postgres implementation of the TweakTags database adapter.
 //It owns a connection pool and knows how to run migrations,
 //read and write content, and read and write users.
 export class PostgresAdapter implements DbAdapter {

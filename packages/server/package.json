@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/server",
-  "version": "0.1.0",
-  "description": "Framework agnostic Node backend handler for Veneer",
+  "name": "@tweaktags/server",
+  "version": "1.0.0",
+  "description": "Framework agnostic Node backend handler for TweakTags",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,19 +26,19 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/auth-jwt": "workspace:*",
-    "@veneer/core": "workspace:*",
-    "@veneer/db-postgres": "workspace:*"
+    "@tweaktags/auth-jwt": "workspace:*",
+    "@tweaktags/core": "workspace:*",
+    "@tweaktags/db-postgres": "workspace:*"
   },
   "peerDependencies": {
-    "@veneer/db-mysql": "workspace:*",
-    "@veneer/db-sqlite": "workspace:*"
+    "@tweaktags/db-mysql": "workspace:*",
+    "@tweaktags/db-sqlite": "workspace:*"
   },
   "peerDependenciesMeta": {
-    "@veneer/db-mysql": {
+    "@tweaktags/db-mysql": {
       "optional": true
     },
-    "@veneer/db-sqlite": {
+    "@tweaktags/db-sqlite": {
       "optional": true
     }
   },

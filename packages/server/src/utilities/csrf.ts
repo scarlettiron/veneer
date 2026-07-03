@@ -1,11 +1,11 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import { forbidden, requiresCsrf, type ResolvedAuthConfig, type VeneerAction } from '@veneer/core';
+import { forbidden, requiresCsrf, type ResolvedAuthConfig, type TweakTagsAction } from '@tweaktags/core';
 
 //Checks the double submit csrf token for actions that change data.
 //The client sends a header that must match the readable csrf cookie. A cross
@@ -14,7 +14,7 @@ import { forbidden, requiresCsrf, type ResolvedAuthConfig, type VeneerAction } f
 //stops cross site forgery, because the browser does not send it on its own.
 export const assertCsrf = (
   auth: ResolvedAuthConfig,
-  action: VeneerAction,
+  action: TweakTagsAction,
   cookies: Record<string, string>,
   csrfHeader: string | undefined,
 ): void => {

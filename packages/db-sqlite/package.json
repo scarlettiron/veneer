@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/db-sqlite",
-  "version": "0.1.0",
-  "description": "SQLite database adapter and migrations for Veneer",
+  "name": "@tweaktags/db-sqlite",
+  "version": "1.0.0",
+  "description": "SQLite database adapter and migrations for TweakTags",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,7 +26,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/core": "workspace:*",
+    "@tweaktags/core": "workspace:*",
     "better-sqlite3": "^11.5.0"
   },
   "devDependencies": {

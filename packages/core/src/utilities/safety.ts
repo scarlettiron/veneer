@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -8,7 +8,7 @@
 import { badRequest } from './errors.js';
 
 //Patterns that look like an attempt at SQL injection.
-//Veneer already uses parameterized queries, so these are a second layer of
+//TweakTags already uses parameterized queries, so these are a second layer of
 //defense, and they also stop obviously bad input from being stored at all.
 //The patterns are kept specific so normal writing, like an apostrophe in a
 //word, does not trip them.

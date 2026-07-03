@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -11,12 +11,12 @@ import type { DbAdapter } from '../adapters/db-adapter.js';
 import type {
   Actor,
   TagType,
-  VeneerConfig,
-  VeneerRequest,
-  VeneerResponse,
+  TweakTagsConfig,
+  TweakTagsRequest,
+  TweakTagsResponse,
 } from '../types/index.js';
 import {
-  VeneerError,
+  TweakTagsError,
   badRequest,
   forbidden,
   unauthorized,
@@ -49,16 +49,16 @@ const readTagType = (payload: unknown): TagType => {
 export interface HandlerDependencies {
   db: DbAdapter;
   auth: AuthAdapter;
-  config: VeneerConfig;
+  config: TweakTagsConfig;
 }
 
 //A function that takes a normalized request and returns a normalized response.
-export type VeneerHandler = (request: VeneerRequest) => Promise<VeneerResponse>;
+export type TweakTagsHandler = (request: TweakTagsRequest) => Promise<TweakTagsResponse>;
 
 //Turns any thrown value into a clean response.
-//Known Veneer errors keep their status and code, anything else becomes a 500.
-const toErrorResponse = (error: unknown): VeneerResponse => {
-  if (error instanceof VeneerError) {
+//Known TweakTags errors keep their status and code, anything else becomes a 500.
+const toErrorResponse = (error: unknown): TweakTagsResponse => {
+  if (error instanceof TweakTagsError) {
     return {
       status: error.status,
       body: { error: error.code, message: error.message },
@@ -75,12 +75,12 @@ const toErrorResponse = (error: unknown): VeneerResponse => {
 
 //Builds the request handler from its dependencies.
 //This is where the auth and role rules live.
-export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
+export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
   const { db, auth } = deps;
 
   //Verifies the token on the request and returns the actor.
   //Throws when there is no token or the token is not valid.
-  const requireActor = async (request: VeneerRequest): Promise<Actor> => {
+  const requireActor = async (request: TweakTagsRequest): Promise<Actor> => {
     if (!request.authToken) {
       throw unauthorized('You must be signed in to do this');
     }
@@ -94,7 +94,7 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     return actor;
   };
 
-  const handleLogin = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleLogin = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const email = requireString(request.payload, 'email');
     const password = requireString(request.payload, 'password');
     const result = await auth.login(email, password);
@@ -109,7 +109,7 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     };
   };
 
-  const handleRefresh = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleRefresh = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     //The refresh token comes from its cookie, or from the body in header mode.
     const refreshToken = request.refreshToken ?? optionalString(request.payload, 'refreshToken');
 
@@ -133,7 +133,7 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     };
   };
 
-  const handleLogout = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleLogout = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     //Prefer the refresh token so the whole session family can be revoked.
     const token = request.refreshToken ?? request.authToken;
 
@@ -144,7 +144,7 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     return { status: 200, body: { ok: true } };
   };
 
-  const handleMe = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleMe = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const actor = await requireActor(request);
     const user = await db.findUserById(actor.userId);
 
@@ -158,21 +158,21 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     };
   };
 
-  const handleGetContent = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleGetContent = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const tags = requireStringArray(request.payload, 'tags');
     const content = await db.getContentByTags(tags);
 
     return { status: 200, body: { content } };
   };
 
-  const handleListTags = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleListTags = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     await requireActor(request);
     const tags = await db.listTags();
 
     return { status: 200, body: { tags } };
   };
 
-  const handleCreateTag = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleCreateTag = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const actor = await requireActor(request);
 
     if (actor.role !== ROLES.SUPERUSER) {
@@ -186,7 +186,7 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     return { status: 201, body: { content } };
   };
 
-  const handleUpdateContent = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleUpdateContent = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const actor = await requireActor(request);
     const tag = assertValidTag(requireString(request.payload, 'tag'));
     const body = requireString(request.payload, 'body');
@@ -215,7 +215,7 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     return { status: 200, body: { content } };
   };
 
-  const handleUpdateTagType = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleUpdateTagType = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const actor = await requireActor(request);
 
     if (actor.role !== ROLES.SUPERUSER) {
@@ -229,7 +229,7 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
     return { status: 200, body: { content } };
   };
 
-  const handleDeleteTag = async (request: VeneerRequest): Promise<VeneerResponse> => {
+  const handleDeleteTag = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const actor = await requireActor(request);
 
     if (actor.role !== ROLES.SUPERUSER) {
@@ -243,7 +243,7 @@ export const createHandler = (deps: HandlerDependencies): VeneerHandler => {
   };
 
   //Routes each action to the function that handles it.
-  return async (request: VeneerRequest): Promise<VeneerResponse> => {
+  return async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     try {
       switch (request.action) {
         case ACTIONS.LOGIN:

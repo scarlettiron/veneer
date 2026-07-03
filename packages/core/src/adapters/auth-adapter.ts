@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -11,7 +11,7 @@ import type { Actor, AuthResult, Role } from '../types/index.js';
 //The jwt adapter is one implementation, and other providers can be added later.
 export interface AuthAdapter {
   //Check an email and password and return access and refresh tokens plus the
-  //public user. Throws a VeneerError when the details are wrong.
+  //public user. Throws a TweakTagsError when the details are wrong.
   login(email: string, password: string): Promise<AuthResult>;
 
   //Turn an access token back into an actor, or return null when it is invalid

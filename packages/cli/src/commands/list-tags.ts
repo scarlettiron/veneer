@@ -1,15 +1,15 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import { createVeneerServerFromConfig } from '@veneer/server';
+import { createTweakTagsServerFromConfig } from '@tweaktags/server';
 
 //Prints every tag in the database.
 export const runListTags = async (flags: Record<string, string>): Promise<number> => {
-  const server = await createVeneerServerFromConfig({ path: flags.config });
+  const server = await createTweakTagsServerFromConfig({ path: flags.config });
 
   try {
     const tags = await server.db.listTags();

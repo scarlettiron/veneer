@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,12 +7,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ACTIONS, CSRF_HEADER, requiresCsrf, resolveConfig } from '@veneer/core';
-import { assertCsrf } from '@veneer/server';
+import { ACTIONS, CSRF_HEADER, requiresCsrf, resolveConfig } from '@tweaktags/core';
+import { assertCsrf } from '@tweaktags/server';
 
 //A fully resolved auth config with the default cookie mode and csrf on.
 const auth = resolveConfig({
-  database: { provider: 'postgres', connectionString: 'postgres://localhost/veneer' },
+  database: { provider: 'postgres', connectionString: 'postgres://localhost/tweaktags' },
   auth: { provider: 'jwt', jwtSecret: 'a-secret-that-is-long-enough' },
 }).auth;
 
@@ -37,7 +37,7 @@ describe('requiresCsrf', () => {
   });
 
   it('exposes the header name the client must send', () => {
-    expect(CSRF_HEADER).toBe('x-veneer-csrf');
+    expect(CSRF_HEADER).toBe('x-tweaktags-csrf');
   });
 });
 

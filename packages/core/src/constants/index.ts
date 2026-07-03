@@ -1,16 +1,16 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-//Names of the database tables that Veneer owns.
-//They all start with __Veneer__ so they are easy to spot and do not clash
+//Names of the database tables that TweakTags owns.
+//They all start with __TweakTags__ so they are easy to spot and do not clash
 //with host application tables.
-export const CONTENT_TABLE = '__Veneer__Content';
-export const AUTH_TABLE = '__Veneer__Users';
-export const REFRESH_TABLE = '__Veneer__Refresh_Tokens';
+export const CONTENT_TABLE = '__TweakTags__Content';
+export const AUTH_TABLE = '__TweakTags__Users';
+export const REFRESH_TABLE = '__TweakTags__Refresh_Tokens';
 
 //The two roles a user can have.
 //A superuser can create new tags and edit any content.
@@ -54,8 +54,8 @@ export const ERROR_CODES = {
 } as const;
 
 //Editable elements carry an attribute that bakes the tag name into the name itself.
-//A tag named "hero-title" becomes the attribute "data-veneer-hero-title".
-export const DATA_ATTRIBUTE_PREFIX = 'data-veneer-';
+//A tag named "hero-title" becomes the attribute "data-tweak-hero-title".
+export const DATA_ATTRIBUTE_PREFIX = 'data-tweak-';
 
 //Tag names live inside an html attribute name, so they may only use
 //lowercase letters, numbers, and single hyphens between groups.
@@ -63,7 +63,7 @@ export const TAG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 //Default values used when the user config leaves a field out.
 export const DEFAULT_MODE = 'embedded';
-export const DEFAULT_API_BASE_PATH = '/api/veneer';
+export const DEFAULT_API_BASE_PATH = '/api/tweaktags';
 export const DEFAULT_EDIT_IN_VIEW = false;
 //The access token is short lived, the refresh token lasts longer.
 //When the access token expires, the refresh token quietly gets a new one.
@@ -73,9 +73,9 @@ export const DEFAULT_REFRESH_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 //File names the config loader will look for, in order.
 export const CONFIG_FILE_NAMES = [
-  'veneer.config.ts',
-  'veneer.config.mts',
-  'veneer.config.js',
-  'veneer.config.mjs',
-  'veneer.config.cjs',
+  'tweaktags.config.ts',
+  'tweaktags.config.mts',
+  'tweaktags.config.js',
+  'tweaktags.config.mjs',
+  'tweaktags.config.cjs',
 ];

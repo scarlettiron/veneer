@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -24,7 +24,7 @@ import {
   AUTH_TABLE,
   CONTENT_TABLE,
   REFRESH_TABLE,
-} from '@veneer/core';
+} from '@tweaktags/core';
 
 import { DUPLICATE_ENTRY, MIGRATIONS_TABLE } from './constants/index.js';
 import { MIGRATIONS } from './migrations/migrations.js';
@@ -49,7 +49,7 @@ const errorCode = (error: unknown): string | undefined => {
   return undefined;
 };
 
-//The MySQL and MariaDB implementation of the Veneer database adapter.
+//The MySQL and MariaDB implementation of the TweakTags database adapter.
 //MariaDB speaks the MySQL protocol, so the same code serves both.
 export class MysqlAdapter implements DbAdapter {
   private readonly pool: Pool;

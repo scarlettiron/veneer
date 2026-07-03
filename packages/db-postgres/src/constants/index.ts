@@ -1,12 +1,12 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-//The table Veneer uses to remember which migrations have already run.
-export const MIGRATIONS_TABLE = '__Veneer__Migrations';
+//The table TweakTags uses to remember which migrations have already run.
+export const MIGRATIONS_TABLE = '__TweakTags__Migrations';
 
 //Postgres error code for a unique constraint violation.
 //We use this to turn a duplicate insert into a friendly conflict error.

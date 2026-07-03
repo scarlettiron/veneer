@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,11 +7,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { defineConfig, resolveConfig, type VeneerUserConfig } from '@veneer/core';
+import { defineConfig, resolveConfig, type TweakTagsUserConfig } from '@tweaktags/core';
 
 //A valid base config the tests can tweak.
-const baseConfig: VeneerUserConfig = {
-  database: { provider: 'postgres', connectionString: 'postgres://localhost/veneer' },
+const baseConfig: TweakTagsUserConfig = {
+  database: { provider: 'postgres', connectionString: 'postgres://localhost/tweaktags' },
   auth: { provider: 'jwt', jwtSecret: 'a-secret-that-is-long-enough' },
 };
 
@@ -20,7 +20,7 @@ describe('resolveConfig defaults', () => {
     const resolved = resolveConfig(baseConfig);
 
     expect(resolved.mode).toBe('embedded');
-    expect(resolved.apiBasePath).toBe('/api/veneer');
+    expect(resolved.apiBasePath).toBe('/api/tweaktags');
     expect(resolved.editInView).toBe(false);
     expect(resolved.richText).toBe(false);
   });
@@ -33,10 +33,10 @@ describe('resolveConfig defaults', () => {
     expect(auth.refreshTtlSeconds).toBeGreaterThan(auth.accessTtlSeconds);
     expect(auth.strictRevocation).toBe(false);
     expect(auth.tokenStorage).toBe('cookie');
-    expect(auth.cookieName).toBe('veneer_token');
-    expect(auth.refreshCookieName).toBe('veneer_refresh');
+    expect(auth.cookieName).toBe('tweaktags_token');
+    expect(auth.refreshCookieName).toBe('tweaktags_refresh');
     expect(auth.csrfProtection).toBe(true);
-    expect(auth.csrfCookieName).toBe('veneer_csrf');
+    expect(auth.csrfCookieName).toBe('tweaktags_csrf');
     expect(auth.cookieSecure).toBe(true);
     expect(auth.cookieSameSite).toBe('lax');
   });
@@ -84,8 +84,8 @@ describe('resolveConfig database providers', () => {
       database: {
         provider: 'postgres',
         host: 'localhost',
-        database: 'veneer',
-        user: 'veneer',
+        database: 'tweaktags',
+        user: 'tweaktags',
         password: 'secret',
       },
     });
@@ -97,14 +97,14 @@ describe('resolveConfig database providers', () => {
     expect(() =>
       resolveConfig({
         ...baseConfig,
-        database: { provider: 'mysql', connectionString: 'mysql://localhost/veneer' },
+        database: { provider: 'mysql', connectionString: 'mysql://localhost/tweaktags' },
       }),
     ).not.toThrow();
 
     expect(() =>
       resolveConfig({
         ...baseConfig,
-        database: { provider: 'mariadb', connectionString: 'mysql://localhost/veneer' },
+        database: { provider: 'mariadb', connectionString: 'mysql://localhost/tweaktags' },
       }),
     ).not.toThrow();
   });
@@ -112,7 +112,7 @@ describe('resolveConfig database providers', () => {
   it('accepts sqlite with a filename', () => {
     const resolved = resolveConfig({
       ...baseConfig,
-      database: { provider: 'sqlite', filename: './veneer.db' },
+      database: { provider: 'sqlite', filename: './tweaktags.db' },
     });
 
     expect(resolved.database.provider).toBe('sqlite');
@@ -130,7 +130,7 @@ describe('resolveConfig database providers', () => {
     expect(() =>
       resolveConfig({
         ...baseConfig,
-        //A provider Veneer does not support.
+        //A provider TweakTags does not support.
         database: { provider: 'mongo' as 'postgres', connectionString: 'mongo://localhost' },
       }),
     ).toThrow();
@@ -145,7 +145,7 @@ describe('resolveConfig auth validation', () => {
   });
 
   it('rejects a missing auth section', () => {
-    expect(() => resolveConfig({ database: baseConfig.database } as VeneerUserConfig)).toThrow();
+    expect(() => resolveConfig({ database: baseConfig.database } as TweakTagsUserConfig)).toThrow();
   });
 
   it('rejects an auth provider that is not jwt', () => {

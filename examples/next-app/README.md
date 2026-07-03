@@ -1,13 +1,13 @@
-# Veneer example, Next.js app
+# TweakTags example, Next.js app
 
-This small app shows Veneer working end to end with Next.js and Postgres.
+This small app shows TweakTags working end to end with Next.js and Postgres.
 
 ## What it shows
 
-- A backend handler mounted at `app/api/veneer/route.ts`.
+- A backend handler mounted at `app/api/tweaktags/route.ts`.
 - The provider and edit bar wired up in `app/layout.tsx`.
 - Two editable spots using the `<Editable>` component and one plain HTML element that only has a
-  `data-veneer-plain-note` attribute, in `app/page.tsx`.
+  `data-tweak-plain-note` attribute, in `app/page.tsx`.
 
 ## Run it
 
@@ -16,8 +16,8 @@ These steps assume you run them from a WSL terminal where Node and pnpm work nat
 1. Start a local Postgres, for example with Docker:
 
    ```sh
-   docker run --name veneer-pg -e POSTGRES_USER=veneer -e POSTGRES_PASSWORD=veneer \
-     -e POSTGRES_DB=veneer -p 5432:5432 -d postgres:16
+   docker run --name tweaktags-pg -e POSTGRES_USER=tweaktags -e POSTGRES_PASSWORD=tweaktags \
+     -e POSTGRES_DB=tweaktags -p 5432:5432 -d postgres:16
    ```
 
 2. From the repo root, install and build the packages:
@@ -38,8 +38,8 @@ These steps assume you run them from a WSL terminal where Node and pnpm work nat
 
    ```sh
    cd examples/next-app
-   pnpm veneer migrate
-   pnpm veneer create-superuser --email you@example.com --password supersecret
+   pnpm tweaktags migrate
+   pnpm tweaktags create-superuser --email you@example.com --password supersecret
    ```
 
 5. Start the app:
@@ -57,5 +57,5 @@ These steps assume you run them from a WSL terminal where Node and pnpm work nat
 You can confirm the saved rows directly:
 
 ```sh
-docker exec -it veneer-pg psql -U veneer -d veneer -c 'SELECT tag, body FROM "__Veneer__Content";'
+docker exec -it tweaktags-pg psql -U tweaktags -d tweaktags -c 'SELECT tag, body FROM "__TweakTags__Content";'
 ```

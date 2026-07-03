@@ -1,4 +1,4 @@
-# Contributing to Veneer
+# Contributing to TweakTags
 
 ## Code conventions
 
@@ -19,13 +19,13 @@ These rules are partly enforced by ESLint and Prettier, and partly by review.
 
 ## License watermark
 
-Veneer is published under the MIT License. See the [LICENSE](LICENSE) file for the full text.
+TweakTags is published under the MIT License. See the [LICENSE](LICENSE) file for the full text.
 
 Every source file must start with the license watermark. It names the license and lists the
 people who have worked on the project. The watermark looks like this:
 
 ```ts
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //

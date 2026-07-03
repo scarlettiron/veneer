@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,7 +7,7 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { ACTIONS, type ResolvedAuthConfig, type VeneerAction, type VeneerResponse } from '@veneer/core';
+import { ACTIONS, type ResolvedAuthConfig, type TweakTagsAction, type TweakTagsResponse } from '@tweaktags/core';
 
 //Reads the cookies from a Cookie header into a simple name to value map.
 export const parseCookies = (header: string | undefined): Record<string, string> => {
@@ -97,8 +97,8 @@ export const buildClearCookies = (auth: ResolvedAuthConfig): string[] => [
 //header mode nothing changes, and the tokens stay in the body for the client.
 export const resolveAuthCookie = (
   auth: ResolvedAuthConfig,
-  action: VeneerAction,
-  response: VeneerResponse,
+  action: TweakTagsAction,
+  response: TweakTagsResponse,
 ): { setCookies: string[]; body: Record<string, unknown> } => {
   if (auth.tokenStorage !== 'cookie') {
     return { setCookies: [], body: response.body };

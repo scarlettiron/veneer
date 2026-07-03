@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -8,9 +8,9 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties, ReactElement } from 'react';
 
-import type { TagType } from '@veneer/core';
+import type { TagType } from '@tweaktags/core';
 
-import { useVeneer } from '../hooks/use-veneer.js';
+import { useTweakTags } from '../hooks/use-tweaktags.js';
 import { Spinner } from './spinner.js';
 import { RichTextEditor } from './rich-text-editor.js';
 
@@ -21,8 +21,8 @@ interface Draft {
   mediaUrl: string;
 }
 
-//A themed scrollbar for the scrolling body, matching the rest of Veneer.
-const SCROLLBAR_CLASS = 'veneer-editor-scroll';
+//A themed scrollbar for the scrolling body, matching the rest of TweakTags.
+const SCROLLBAR_CLASS = 'tweaktags-editor-scroll';
 
 const scrollbarCss = `
 .${SCROLLBAR_CLASS}::-webkit-scrollbar { width: 10px; }
@@ -121,7 +121,7 @@ const closeButtonStyle: CSSProperties = {
 //It lists every tag with labeled inputs, prefilled with the saved content, and
 //shows a spinner while the content loads.
 export const TagEditorModal = (): ReactElement => {
-  const { listTags, loadContent, saveContent, confirm, notify, setEditing, richText } = useVeneer();
+  const { listTags, loadContent, saveContent, confirm, notify, setEditing, richText } = useTweakTags();
 
   const [loading, setLoading] = useState(true);
   const [tags, setTags] = useState<string[]>([]);

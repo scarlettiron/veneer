@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -8,9 +8,9 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties, ReactElement } from 'react';
 
-import { ROLES, isValidTag, type ContentRecord, type TagType } from '@veneer/core';
+import { ROLES, isValidTag, type ContentRecord, type TagType } from '@tweaktags/core';
 
-import { useVeneer } from '../hooks/use-veneer.js';
+import { useTweakTags } from '../hooks/use-tweaktags.js';
 import { Spinner } from './spinner.js';
 import { RichTextEditor } from './rich-text-editor.js';
 
@@ -18,7 +18,7 @@ import { RichTextEditor } from './rich-text-editor.js';
 const PAGE_SIZE = 10;
 
 //Shared colors, kept in one place for a consistent look. These match the rest
-//of Veneer so the admin panel feels like part of the same product.
+//of TweakTags so the admin panel feels like part of the same product.
 const COLORS = {
   bg: '#0e0f13',
   surface: '#14151a',
@@ -294,7 +294,7 @@ const previewOf = (record: ContentRecord | null): string => {
 
 //The full page login shown when nobody is signed in.
 const AdminLogin = (): ReactElement => {
-  const { login } = useVeneer();
+  const { login } = useTweakTags();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -323,7 +323,7 @@ const AdminLogin = (): ReactElement => {
           void handleLogin();
         }}
       >
-        <strong style={{ fontSize: '1.25rem' }}>Veneer admin</strong>
+        <strong style={{ fontSize: '1.25rem' }}>TweakTags admin</strong>
         <span style={{ opacity: 0.7 }}>Sign in to manage your content.</span>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -360,7 +360,7 @@ const AdminLogin = (): ReactElement => {
 
 //The create tag tab. Only a superuser can reach this.
 const CreateTab = ({ onCreated }: { onCreated: () => Promise<void> }): ReactElement => {
-  const { createTag, notify, richText } = useVeneer();
+  const { createTag, notify, richText } = useTweakTags();
 
   const [newTag, setNewTag] = useState('');
   const [newContent, setNewContent] = useState('');
@@ -449,7 +449,7 @@ const CreateTab = ({ onCreated }: { onCreated: () => Promise<void> }): ReactElem
       {error ? <span style={{ color: '#ff9a9a' }}>{error}</span> : null}
 
       <span style={{ opacity: 0.6, fontSize: '12px' }}>
-        A tag only shows on a page where an element has its data-veneer attribute.
+        A tag only shows on a page where an element has its data-tweaktags attribute.
       </span>
     </div>
   );
@@ -457,7 +457,7 @@ const CreateTab = ({ onCreated }: { onCreated: () => Promise<void> }): ReactElem
 
 //The view tab. A read only, searchable, paged list of every tag.
 const ViewTab = ({ entries }: { entries: Entry[] }): ReactElement => {
-  const { richText } = useVeneer();
+  const { richText } = useTweakTags();
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
@@ -511,7 +511,7 @@ const EditTab = ({
   entries: Entry[];
   onChanged: (entries: Entry[]) => void;
 }): ReactElement => {
-  const { saveContent, setTagType, deleteTag, confirm, notify, user, richText } = useVeneer();
+  const { saveContent, setTagType, deleteTag, confirm, notify, user, richText } = useTweakTags();
 
   const isSuperuser = user?.role === ROLES.SUPERUSER;
 
@@ -749,7 +749,7 @@ const EditTab = ({
 //The dashboard shown once a user is signed in. It loads the tags once, then
 //lets the user move between viewing, creating, and editing tags.
 const AdminDashboard = (): ReactElement => {
-  const { user, logout, listTags, loadContent, notify } = useVeneer();
+  const { user, logout, listTags, loadContent, notify } = useTweakTags();
 
   const isSuperuser = user?.role === ROLES.SUPERUSER;
 
@@ -794,7 +794,7 @@ const AdminDashboard = (): ReactElement => {
     <div style={pageStyle}>
       <div style={shellStyle}>
         <div style={topbarStyle}>
-          <strong style={{ fontSize: '1.3rem' }}>Veneer admin</strong>
+          <strong style={{ fontSize: '1.3rem' }}>TweakTags admin</strong>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{ opacity: 0.7 }}>{user?.email}</span>
@@ -836,13 +836,13 @@ const AdminDashboard = (): ReactElement => {
   );
 };
 
-//A full page, traditional admin panel for managing Veneer content. Render it on
-//a dedicated route inside a VeneerProvider, as an alternative to the in page
-//VeneerEditBar. It shows a full page login when signed out, and a dashboard with
+//A full page, traditional admin panel for managing TweakTags content. Render it on
+//a dedicated route inside a TweakTagsProvider, as an alternative to the in page
+//TweakTagsEditBar. It shows a full page login when signed out, and a dashboard with
 //nav tabs for viewing, creating, and editing tags when signed in. Both the view
 //and edit lists have their own search and pagination.
-export const VeneerAdminPanel = (): ReactElement => {
-  const { user } = useVeneer();
+export const TweakTagsAdminPanel = (): ReactElement => {
+  const { user } = useTweakTags();
 
   return user ? <AdminDashboard /> : <AdminLogin />;
 };

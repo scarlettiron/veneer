@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -11,7 +11,7 @@ import { badRequest } from './errors.js';
 //Checks whether a tag name has a shape that is safe to put in an attribute name.
 export const isValidTag = (tag: string): boolean => TAG_PATTERN.test(tag);
 
-//Cleans up a raw tag name into the lowercase hyphen form Veneer expects.
+//Cleans up a raw tag name into the lowercase hyphen form TweakTags expects.
 //This does not guarantee the result is valid, so callers should still check.
 export const normalizeTag = (raw: string): string =>
   raw
@@ -32,7 +32,7 @@ export const assertValidTag = (tag: string): string => {
   return tag;
 };
 
-//Builds the html attribute name for a tag, like "data-veneer-hero-title".
+//Builds the html attribute name for a tag, like "data-tweak-hero-title".
 export const dataAttributeForTag = (tag: string): string => `${DATA_ATTRIBUTE_PREFIX}${tag}`;
 
 //Reads the tag name back out of a data attribute name.

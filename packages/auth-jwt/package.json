@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/auth-jwt",
-  "version": "0.1.0",
-  "description": "Email and password auth that issues JSON Web Tokens for Veneer",
+  "name": "@tweaktags/auth-jwt",
+  "version": "1.0.0",
+  "description": "Email and password auth that issues JSON Web Tokens for TweakTags",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,7 +26,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/core": "workspace:*",
+    "@tweaktags/core": "workspace:*",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2"
   },

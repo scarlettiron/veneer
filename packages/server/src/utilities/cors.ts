@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,7 +7,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-import type { CorsConfig } from '@veneer/core';
+import type { CorsConfig } from '@tweaktags/core';
 
 //Adds the cross origin headers when cors is configured, and answers the
 //browser's preflight request. Returns true when the request was a preflight
@@ -37,7 +37,7 @@ export const applyCors = (
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Veneer-Csrf');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-TweakTags-Csrf');
   }
 
   //The browser sends an OPTIONS request first to check permission.

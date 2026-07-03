@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -6,13 +6,13 @@
 //Scarlett A. Scott (codescarlett)
 
 export {
-  createVeneerServer,
-  createVeneerServerFromConfig,
+  createTweakTagsServer,
+  createTweakTagsServerFromConfig,
   startStandaloneServer,
 } from './server.js';
-export type { VeneerServer, NodeRequestHandler, StandaloneServer } from './server.js';
+export type { TweakTagsServer, NodeRequestHandler, StandaloneServer } from './server.js';
 export { buildDbAdapter, buildAuthAdapter } from './adapters/select-adapters.js';
-export { readJsonBody, readBearerToken, toVeneerRequest } from './utilities/http.js';
+export { readJsonBody, readBearerToken, toTweakTagsRequest } from './utilities/http.js';
 export { applyCors } from './utilities/cors.js';
 export { assertCsrf } from './utilities/csrf.js';
 export {

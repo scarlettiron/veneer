@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { assertNoDangerousHtml, assertNoSqlInjection, assertSafeInput } from '@veneer/core';
+import { assertNoDangerousHtml, assertNoSqlInjection, assertSafeInput } from '@tweaktags/core';
 
 describe('assertNoSqlInjection', () => {
   it('rejects classic injection attempts', () => {

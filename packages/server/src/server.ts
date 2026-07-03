@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -9,19 +9,19 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 
 import {
   CSRF_HEADER,
-  VeneerError,
+  TweakTagsError,
   createHandler,
   resolveConfig,
   type AuthAdapter,
   type DbAdapter,
-  type VeneerConfig,
-  type VeneerHandler,
-  type VeneerUserConfig,
-} from '@veneer/core';
-import { loadConfig, type LoadConfigOptions } from '@veneer/core/loader';
+  type TweakTagsConfig,
+  type TweakTagsHandler,
+  type TweakTagsUserConfig,
+} from '@tweaktags/core';
+import { loadConfig, type LoadConfigOptions } from '@tweaktags/core/loader';
 
 import { buildAuthAdapter, buildDbAdapter } from './adapters/select-adapters.js';
-import { readBearerToken, readJsonBody, toVeneerRequest } from './utilities/http.js';
+import { readBearerToken, readJsonBody, toTweakTagsRequest } from './utilities/http.js';
 import { applyCors } from './utilities/cors.js';
 import { parseCookies, resolveAuthCookie } from './utilities/cookies.js';
 import { assertCsrf } from './utilities/csrf.js';
@@ -34,12 +34,12 @@ export type NodeRequestHandler = (
 
 //Everything the server factory hands back.
 //Most hosts only need nodeHandler, but the lower level pieces are here too.
-export interface VeneerServer {
-  config: VeneerConfig;
+export interface TweakTagsServer {
+  config: TweakTagsConfig;
   db: DbAdapter;
   auth: AuthAdapter;
   //Works with already normalized requests, useful for Next route handlers.
-  handle: VeneerHandler;
+  handle: TweakTagsHandler;
   //Works with raw Node request and response objects.
   nodeHandler: NodeRequestHandler;
   //Closes the database connections.
@@ -55,9 +55,9 @@ const sendJson = (res: ServerResponse, status: number, body: unknown): void => {
   res.end(payload);
 };
 
-//Builds a Veneer server from a fully resolved config.
+//Builds a TweakTags server from a fully resolved config.
 //This wires the database and auth adapters into the core request handler.
-export const createVeneerServer = (config: VeneerConfig): VeneerServer => {
+export const createTweakTagsServer = (config: TweakTagsConfig): TweakTagsServer => {
   const db = buildDbAdapter(config);
   const auth = buildAuthAdapter(config, db);
   const handle = createHandler({ db, auth, config });
@@ -69,7 +69,7 @@ export const createVeneerServer = (config: VeneerConfig): VeneerServer => {
       return;
     }
 
-    //Every Veneer action arrives as a POST with a JSON body.
+    //Every TweakTags action arrives as a POST with a JSON body.
     if (req.method !== 'POST') {
       sendJson(res, 405, { error: 'bad_request', message: 'Use a POST request' });
       return;
@@ -83,7 +83,7 @@ export const createVeneerServer = (config: VeneerConfig): VeneerServer => {
       const cookies = parseCookies(req.headers.cookie);
       const accessToken = readBearerToken(req) ?? cookies[config.auth.cookieName];
       const refreshToken = cookies[config.auth.refreshCookieName];
-      const request = toVeneerRequest(body, accessToken, refreshToken);
+      const request = toTweakTagsRequest(body, accessToken, refreshToken);
 
       //Block cross site request forgery on the actions that change data.
       const csrfHeaderRaw = req.headers[CSRF_HEADER];
@@ -106,7 +106,7 @@ export const createVeneerServer = (config: VeneerConfig): VeneerServer => {
 
       sendJson(res, response.status, responseBody);
     } catch (error) {
-      if (error instanceof VeneerError) {
+      if (error instanceof TweakTagsError) {
         sendJson(res, error.status, { error: error.code, message: error.message });
         return;
       }
@@ -128,34 +128,34 @@ export const createVeneerServer = (config: VeneerConfig): VeneerServer => {
 
 //Loads the config from disk and then builds the server.
 //This is the easiest entry point for most backends.
-export const createVeneerServerFromConfig = async (
+export const createTweakTagsServerFromConfig = async (
   options?: LoadConfigOptions,
-): Promise<VeneerServer> => {
+): Promise<TweakTagsServer> => {
   const config = await loadConfig(options);
 
-  return createVeneerServer(config);
+  return createTweakTagsServer(config);
 };
 
-//A standalone Veneer server that runs on its own, for apps like a plain React
+//A standalone TweakTags server that runs on its own, for apps like a plain React
 //SPA that have no backend of their own.
 export interface StandaloneServer {
-  veneer: VeneerServer;
+  tweaktags: TweakTagsServer;
   http: Server;
   //Stops the http server and closes the database connections.
   close(): Promise<void>;
 }
 
-//Starts a small http server that serves only the Veneer api.
+//Starts a small http server that serves only the TweakTags api.
 //Point your React app's apiBasePath at this server's url. When the app runs on
 //a different origin, set cors in your config so the browser allows the calls.
 export const startStandaloneServer = async (
-  config: VeneerUserConfig | VeneerConfig,
+  config: TweakTagsUserConfig | TweakTagsConfig,
   options: { port: number },
 ): Promise<StandaloneServer> => {
-  const veneer = createVeneerServer(resolveConfig(config as VeneerUserConfig));
+  const tweaktags = createTweakTagsServer(resolveConfig(config as TweakTagsUserConfig));
 
   const httpServer = createServer((req, res) => {
-    void veneer.nodeHandler(req, res);
+    void tweaktags.nodeHandler(req, res);
   });
 
   await new Promise<void>((resolve) => {
@@ -163,7 +163,7 @@ export const startStandaloneServer = async (
   });
 
   return {
-    veneer,
+    tweaktags,
     http: httpServer,
     close: () =>
       new Promise<void>((resolve, reject) => {
@@ -174,7 +174,7 @@ export const startStandaloneServer = async (
             return;
           }
 
-          void veneer.close().then(resolve, reject);
+          void tweaktags.close().then(resolve, reject);
         });
       }),
   };

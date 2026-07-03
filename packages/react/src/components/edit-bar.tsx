@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -8,9 +8,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactElement } from 'react';
 
-import { ROLES, isValidTag, type TagType } from '@veneer/core';
+import { ROLES, isValidTag, type TagType } from '@tweaktags/core';
 
-import { useVeneer } from '../hooks/use-veneer.js';
+import { useTweakTags } from '../hooks/use-tweaktags.js';
 
 //The top layer, so the bar and its popups sit over the whole page.
 const TOP_LAYER = 2147483647;
@@ -196,7 +196,7 @@ const closeButtonStyle: CSSProperties = {
 };
 
 //A themed scrollbar for the tag list.
-const SCROLLBAR_CLASS = 'veneer-scroll';
+const SCROLLBAR_CLASS = 'tweaktags-scroll';
 
 const scrollbarCss = `
 .${SCROLLBAR_CLASS}::-webkit-scrollbar { width: 8px; }
@@ -224,7 +224,7 @@ interface TagEntry {
 //The panel where a superuser creates tags, changes their type, and deletes them.
 const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
   const { createTag, deleteTag, setTagType, listTags, loadContent, notify, confirm, richText } =
-    useVeneer();
+    useTweakTags();
 
   const [newTag, setNewTag] = useState('');
   const [newContent, setNewContent] = useState('');
@@ -481,7 +481,7 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
       )}
 
       <span style={{ opacity: 0.6, fontSize: '12px' }}>
-        A tag only shows on a page where an element has its data-veneer attribute.
+        A tag only shows on a page where an element has its data-tweaktags attribute.
       </span>
     </div>
   );
@@ -517,7 +517,7 @@ const HelpPanel = ({
     </HelpItem>
 
     <HelpItem title="Close the editor">
-      Click Close to leave edit mode. If you have changes you have not saved, Veneer warns you first
+      Click Close to leave edit mode. If you have changes you have not saved, TweakTags warns you first
       so nothing is lost by accident.
     </HelpItem>
 
@@ -539,7 +539,7 @@ const HelpPanel = ({
 
 //The floating admin bar. It shows a login form when signed out, a horizontal
 //toolbar on wider screens, and a collapsible menu on small screens.
-export const VeneerEditBar = (): ReactElement => {
+export const TweakTagsEditBar = (): ReactElement => {
   const {
     user,
     isEditing,
@@ -552,7 +552,7 @@ export const VeneerEditBar = (): ReactElement => {
     saveEdits,
     discardEdits,
     confirm,
-  } = useVeneer();
+  } = useTweakTags();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

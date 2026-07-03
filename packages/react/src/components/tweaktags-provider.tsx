@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -15,12 +15,12 @@ import {
   type AuthUser,
   type ContentRecord,
   type TagType,
-} from '@veneer/core';
+} from '@tweaktags/core';
 
-import { VeneerContext, type VeneerContextValue } from '../context/veneer-context.js';
+import { TweakTagsContext, type TweakTagsContextValue } from '../context/tweaktags-context.js';
 import { createApiClient } from '../utilities/api-client.js';
 import { readCookie, readStoredTokens, writeStoredTokens } from '../utilities/token-storage.js';
-import { findVeneerElements, veneerTagOf } from '../dom/scanner.js';
+import { findTweakTagsElements, tweaktagsTagOf } from '../dom/scanner.js';
 import { DefaultLoader } from './default-loader.js';
 import { ToastHost, type Toast } from './toast-host.js';
 import { ConfirmDialog } from './confirm-dialog.js';
@@ -50,10 +50,10 @@ interface GetContentResponse {
 }
 
 //The props for the provider that wraps the host app.
-export interface VeneerProviderProps {
+export interface TweakTagsProviderProps {
   children: ReactNode;
 
-  //Where the backend handler is mounted. Defaults to /api/veneer.
+  //Where the backend handler is mounted. Defaults to /api/tweaktags.
   apiBasePath?: string;
 
   //When true, editing happens in place on the page. When false, editing happens
@@ -70,25 +70,25 @@ export interface VeneerProviderProps {
   //'cookie'.
   tokenStorage?: 'cookie' | 'header';
 
-  //The csrf cookie name, must match the server config. Defaults to 'veneer_csrf'.
+  //The csrf cookie name, must match the server config. Defaults to 'tweaktags_csrf'.
   csrfCookieName?: string;
 
   //A custom loading component to show while content loads.
   loadingComponent?: ReactNode;
 }
 
-//The provider holds all of the shared state for Veneer.
-//It crawls the page for data-veneer attributes, shows the saved content to
+//The provider holds all of the shared state for TweakTags.
+//It crawls the page for data-tweaktags attributes, shows the saved content to
 //everyone, tracks the signed in user, and turns on editing for editors.
-export const VeneerProvider = ({
+export const TweakTagsProvider = ({
   children,
   apiBasePath = DEFAULT_API_BASE_PATH,
   editInView = true,
   richText = false,
   tokenStorage = 'cookie',
-  csrfCookieName = 'veneer_csrf',
+  csrfCookieName = 'tweaktags_csrf',
   loadingComponent,
-}: VeneerProviderProps): ReactElement => {
+}: TweakTagsProviderProps): ReactElement => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [contentByTag, setContentByTag] = useState<Record<string, ContentRecord | null>>({});
@@ -638,13 +638,13 @@ export const VeneerProvider = ({
   //so the cost is proportional to the change, not the size of the page.
   const registerTree = useCallback(
     (root: HTMLElement): void => {
-      const rootTag = veneerTagOf(root);
+      const rootTag = tweaktagsTagOf(root);
 
       if (rootTag) {
         registerElement(root, rootTag);
       }
 
-      for (const { element, tag } of findVeneerElements(root)) {
+      for (const { element, tag } of findTweakTagsElements(root)) {
         registerElement(element, tag);
       }
     },
@@ -862,7 +862,7 @@ export const VeneerProvider = ({
     };
   }, [toolbarActive]);
 
-  const value = useMemo<VeneerContextValue>(
+  const value = useMemo<TweakTagsContextValue>(
     () => ({
       apiBasePath,
       user,
@@ -916,7 +916,7 @@ export const VeneerProvider = ({
   );
 
   return (
-    <VeneerContext.Provider value={value}>
+    <TweakTagsContext.Provider value={value}>
       {children}
       <ToastHost toasts={toasts} />
       {!editInView && isEditing && canEdit ? <TagEditorModal /> : null}
@@ -940,6 +940,6 @@ export const VeneerProvider = ({
           onCancel={() => answerConfirm(false)}
         />
       ) : null}
-    </VeneerContext.Provider>
+    </TweakTagsContext.Provider>
   );
 };

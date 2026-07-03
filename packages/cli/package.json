@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/cli",
-  "version": "0.1.0",
-  "description": "Command line tools for Veneer, migrate the database and create a superuser",
+  "name": "@tweaktags/cli",
+  "version": "1.0.0",
+  "description": "Command line tools for TweakTags, migrate the database and create a superuser",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -14,7 +14,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "veneer": "./dist/bin.cjs"
+    "tweaktags": "./dist/bin.cjs"
   },
   "exports": {
     ".": {
@@ -29,8 +29,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/core": "workspace:*",
-    "@veneer/server": "workspace:*",
+    "@tweaktags/core": "workspace:*",
+    "@tweaktags/server": "workspace:*",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {

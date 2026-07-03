@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -14,7 +14,7 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 export type TagType = (typeof TAG_TYPES)[keyof typeof TAG_TYPES];
 
 //An action is one of the values defined in the ACTIONS constant.
-export type VeneerAction = (typeof ACTIONS)[keyof typeof ACTIONS];
+export type TweakTagsAction = (typeof ACTIONS)[keyof typeof ACTIONS];
 
 //An error code is one of the values defined in the ERROR_CODES constant.
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -63,7 +63,7 @@ export interface ContentInput {
   mediaUrl?: string | null;
 }
 
-//Which databases Veneer can talk to.
+//Which databases TweakTags can talk to.
 //mysql and mariadb use the same driver, since MariaDB speaks the MySQL protocol.
 export type DatabaseProvider = 'postgres' | 'mysql' | 'mariadb' | 'sqlite';
 
@@ -112,10 +112,10 @@ export interface AuthConfig {
   //How the browser holds the tokens. Defaults to 'cookie'.
   tokenStorage?: TokenStorage;
 
-  //The access cookie name, defaults to 'veneer_token'.
+  //The access cookie name, defaults to 'tweaktags_token'.
   cookieName?: string;
 
-  //The refresh cookie name, defaults to 'veneer_refresh'.
+  //The refresh cookie name, defaults to 'tweaktags_refresh'.
   refreshCookieName?: string;
 
   //Whether to protect against cross site request forgery. Defaults to true.
@@ -123,7 +123,7 @@ export interface AuthConfig {
   //the risk. It has no effect in header mode, which is already safe from csrf.
   csrfProtection?: boolean;
 
-  //The csrf cookie name, defaults to 'veneer_csrf'. This cookie is readable by
+  //The csrf cookie name, defaults to 'tweaktags_csrf'. This cookie is readable by
   //the client so it can echo the value back in a header.
   csrfCookieName?: string;
 
@@ -152,7 +152,7 @@ export interface ResolvedAuthConfig {
   cookieSameSite: 'strict' | 'lax' | 'none';
 }
 
-//Cross origin settings, needed when the Veneer server runs on a different
+//Cross origin settings, needed when the TweakTags server runs on a different
 //origin than the site that calls it, like a separate React app.
 export interface CorsConfig {
   //Which origins may call the api.
@@ -161,9 +161,9 @@ export interface CorsConfig {
   origins: string[] | '*';
 }
 
-//The config shape the user writes in veneer.config.ts.
+//The config shape the user writes in tweaktags.config.ts.
 //Most fields are optional because the loader fills in sensible defaults.
-export interface VeneerUserConfig {
+export interface TweakTagsUserConfig {
   mode?: 'embedded' | 'standalone';
   editInView?: boolean;
   //Turns on the rich text editor and lets tags be created with a type.
@@ -176,7 +176,7 @@ export interface VeneerUserConfig {
 
 //The fully resolved config, after defaults have been applied.
 //This is what the rest of the system actually uses.
-export interface VeneerConfig {
+export interface TweakTagsConfig {
   mode: 'embedded' | 'standalone';
   editInView: boolean;
   richText: boolean;
@@ -213,8 +213,8 @@ export interface AuthResult {
 }
 
 //A request that has been normalized away from any specific web framework.
-export interface VeneerRequest {
-  action: VeneerAction;
+export interface TweakTagsRequest {
+  action: TweakTagsAction;
   payload?: unknown;
   //The access token, from the access cookie or a bearer header.
   authToken?: string;
@@ -223,7 +223,7 @@ export interface VeneerRequest {
 }
 
 //A response that has been normalized away from any specific web framework.
-export interface VeneerResponse {
+export interface TweakTagsResponse {
   status: number;
   body: Record<string, unknown>;
 }

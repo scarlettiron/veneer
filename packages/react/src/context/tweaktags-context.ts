@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -8,11 +8,11 @@
 import { createContext } from 'react';
 import type { ReactNode } from 'react';
 
-import type { AuthUser, ContentRecord, TagType } from '@veneer/core';
+import type { AuthUser, ContentRecord, TagType } from '@tweaktags/core';
 
 //Everything the provider shares with the rest of the app.
-//Components and hooks read this through the useVeneer hook.
-export interface VeneerContextValue {
+//Components and hooks read this through the useTweakTags hook.
+export interface TweakTagsContextValue {
   //Where the backend handler is mounted.
   apiBasePath: string;
 
@@ -91,4 +91,4 @@ export interface VeneerContextValue {
 
 //The context starts as null so we can tell when a component is used
 //outside of the provider and give a clear error.
-export const VeneerContext = createContext<VeneerContextValue | null>(null);
+export const TweakTagsContext = createContext<TweakTagsContextValue | null>(null);

@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,15 +7,15 @@
 
 import { useContext } from 'react';
 
-import { VeneerContext, type VeneerContextValue } from '../context/veneer-context.js';
+import { TweakTagsContext, type TweakTagsContextValue } from '../context/tweaktags-context.js';
 
-//Reads the Veneer context.
+//Reads the TweakTags context.
 //Throws a clear error when used outside of the provider.
-export const useVeneer = (): VeneerContextValue => {
-  const context = useContext(VeneerContext);
+export const useTweakTags = (): TweakTagsContextValue => {
+  const context = useContext(TweakTagsContext);
 
   if (!context) {
-    throw new Error('useVeneer must be used inside a VeneerProvider');
+    throw new Error('useTweakTags must be used inside a TweakTagsProvider');
   }
 
   return context;

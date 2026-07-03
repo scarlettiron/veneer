@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,28 +7,28 @@
 
 import {
   CSRF_HEADER,
-  VeneerError,
+  TweakTagsError,
   resolveConfig,
-  type VeneerConfig,
-  type VeneerUserConfig,
-} from '@veneer/core';
+  type TweakTagsConfig,
+  type TweakTagsUserConfig,
+} from '@tweaktags/core';
 import {
   assertCsrf,
-  createVeneerServer,
+  createTweakTagsServer,
   parseCookies,
   resolveAuthCookie,
-  toVeneerRequest,
+  toTweakTagsRequest,
   type NodeRequestHandler,
-  type VeneerServer,
-} from '@veneer/server';
+  type TweakTagsServer,
+} from '@tweaktags/server';
 
 //The functions Next expects to export from a route handler file.
-//Mount POST in your app/api/veneer/route.ts file.
-export interface VeneerRouteHandlers {
+//Mount POST in your app/api/tweaktags/route.ts file.
+export interface TweakTagsRouteHandlers {
   POST: (request: Request) => Promise<Response>;
 
   //The underlying server, in case you need the adapters or want to close them.
-  server: VeneerServer;
+  server: TweakTagsServer;
 }
 
 //Reads the bearer token from a web Request.
@@ -52,13 +52,13 @@ const toJsonResponse = (status: number, body: unknown): Response =>
   });
 
 //Builds a Next route handler from your config.
-//You can pass the config object straight from your veneer.config file.
+//You can pass the config object straight from your tweaktags.config file.
 //It fills in defaults, checks the config, and creates the server once.
-export const createVeneerRouteHandler = (
-  config: VeneerUserConfig | VeneerConfig,
-): VeneerRouteHandlers => {
-  const resolved = resolveConfig(config as VeneerUserConfig);
-  const server = createVeneerServer(resolved);
+export const createTweakTagsRouteHandler = (
+  config: TweakTagsUserConfig | TweakTagsConfig,
+): TweakTagsRouteHandlers => {
+  const resolved = resolveConfig(config as TweakTagsUserConfig);
+  const server = createTweakTagsServer(resolved);
 
   const POST = async (request: Request): Promise<Response> => {
     let body: unknown = {};
@@ -75,23 +75,23 @@ export const createVeneerRouteHandler = (
       const cookies = parseCookies(request.headers.get('cookie') ?? undefined);
       const accessToken = readToken(request) ?? cookies[resolved.auth.cookieName];
       const refreshToken = cookies[resolved.auth.refreshCookieName];
-      const veneerRequest = toVeneerRequest(body, accessToken, refreshToken);
+      const tweaktagsRequest = toTweakTagsRequest(body, accessToken, refreshToken);
 
       //Block cross site request forgery on the actions that change data.
       assertCsrf(
         resolved.auth,
-        veneerRequest.action,
+        tweaktagsRequest.action,
         cookies,
         request.headers.get(CSRF_HEADER) ?? undefined,
       );
 
-      const response = await server.handle(veneerRequest);
+      const response = await server.handle(tweaktagsRequest);
 
       //In cookie mode this sets or clears the httpOnly cookies and keeps the
       //tokens out of the response body.
       const { setCookies, body: responseBody } = resolveAuthCookie(
         resolved.auth,
-        veneerRequest.action,
+        tweaktagsRequest.action,
         response,
       );
 
@@ -106,7 +106,7 @@ export const createVeneerRouteHandler = (
         headers: responseHeaders,
       });
     } catch (error) {
-      if (error instanceof VeneerError) {
+      if (error instanceof TweakTagsError) {
         return toJsonResponse(error.status, { error: error.code, message: error.message });
       }
 
@@ -122,16 +122,16 @@ export const createVeneerRouteHandler = (
 //Builds a Pages Router API handler from your config.
 //Use this in a pages/api file. It returns a Node style (req, res) handler,
 //which is what the Pages Router expects, unlike the App Router web handler above.
-//Remember to turn off Next's body parser in that file so Veneer can read the
+//Remember to turn off Next's body parser in that file so TweakTags can read the
 //raw request body:
 //
 //  export const config = { api: { bodyParser: false } };
 //
-export const createVeneerPagesApiRoute = (
-  config: VeneerUserConfig | VeneerConfig,
+export const createTweakTagsPagesApiRoute = (
+  config: TweakTagsUserConfig | TweakTagsConfig,
 ): NodeRequestHandler => {
-  const resolved = resolveConfig(config as VeneerUserConfig);
-  const server = createVeneerServer(resolved);
+  const resolved = resolveConfig(config as TweakTagsUserConfig);
+  const server = createTweakTagsServer(resolved);
 
   return server.nodeHandler;
 };

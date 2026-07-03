@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,7 +7,7 @@
 
 import type { IncomingMessage } from 'node:http';
 
-import { type VeneerAction, type VeneerRequest, badRequest } from '@veneer/core';
+import { type TweakTagsAction, type TweakTagsRequest, badRequest } from '@tweaktags/core';
 
 //The most a request body is allowed to be, to avoid runaway memory use.
 const MAX_BODY_BYTES = 1_000_000;
@@ -59,13 +59,13 @@ export const readBearerToken = (req: IncomingMessage): string | undefined => {
   return token === '' ? undefined : token;
 };
 
-//Turns a parsed JSON body into a normalized Veneer request.
+//Turns a parsed JSON body into a normalized TweakTags request.
 //The body must contain an action, and may contain a payload.
-export const toVeneerRequest = (
+export const toTweakTagsRequest = (
   body: unknown,
   authToken: string | undefined,
   refreshToken?: string | undefined,
-): VeneerRequest => {
+): TweakTagsRequest => {
   if (typeof body !== 'object' || body === null) {
     throw badRequest('The request body must be an object with an action');
   }
@@ -77,7 +77,7 @@ export const toVeneerRequest = (
   }
 
   return {
-    action: action as VeneerAction,
+    action: action as TweakTagsAction,
     payload: (body as Record<string, unknown>).payload,
     authToken,
     refreshToken,

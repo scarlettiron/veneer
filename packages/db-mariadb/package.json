@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/db-mariadb",
-  "version": "0.1.0",
-  "description": "MariaDB database adapter for Veneer. A thin package that installs and re-exports @veneer/db-mysql, since MariaDB speaks the MySQL protocol.",
+  "name": "@tweaktags/db-mariadb",
+  "version": "1.0.0",
+  "description": "MariaDB database adapter for TweakTags. A thin package that installs and re-exports @tweaktags/db-mysql, since MariaDB speaks the MySQL protocol.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,7 +26,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/db-mysql": "workspace:*"
+    "@tweaktags/db-mysql": "workspace:*"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/react",
-  "version": "0.1.0",
-  "description": "React provider, Editable component, and hooks for Veneer",
+  "name": "@tweaktags/react",
+  "version": "1.0.0",
+  "description": "React provider, Editable component, and hooks for TweakTags",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,7 +26,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/core": "workspace:*"
+    "@tweaktags/core": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=16.14.0"

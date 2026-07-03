@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/db-mysql",
-  "version": "0.1.0",
-  "description": "MySQL and MariaDB database adapter and migrations for Veneer",
+  "name": "@tweaktags/db-mysql",
+  "version": "1.0.0",
+  "description": "MySQL and MariaDB database adapter and migrations for TweakTags",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,7 +26,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/core": "workspace:*",
+    "@tweaktags/core": "workspace:*",
     "mysql2": "^3.11.4"
   },
   "devDependencies": {

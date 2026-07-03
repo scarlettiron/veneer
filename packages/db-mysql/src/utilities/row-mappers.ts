@@ -1,11 +1,11 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import type { ContentRecord, StoredUser, TagType } from '@veneer/core';
+import type { ContentRecord, StoredUser, TagType } from '@tweaktags/core';
 
 //The raw shape of a content row as it comes back from MySQL.
 interface ContentRow {
@@ -38,7 +38,7 @@ const toIso = (value: Date | string | null): string | null => {
   return value instanceof Date ? value.toISOString() : String(value);
 };
 
-//Turns a database content row into the camel case shape the rest of Veneer uses.
+//Turns a database content row into the camel case shape the rest of TweakTags uses.
 export const mapContentRow = (row: ContentRow): ContentRecord => ({
   tag: row.tag,
   type: toTagType(row.type),

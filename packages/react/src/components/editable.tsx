@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -8,7 +8,7 @@
 import { createElement } from 'react';
 import type { ElementType, ReactElement, ReactNode } from 'react';
 
-import { dataAttributeForTag } from '@veneer/core';
+import { dataAttributeForTag } from '@tweaktags/core';
 
 import { useEditableTag } from '../hooks/use-editable-tag.js';
 import { MANAGED_ATTRIBUTE } from '../dom/scanner.js';
@@ -29,7 +29,7 @@ export interface EditableProps {
 }
 
 //A convenient way to mark a piece of content as editable in React.
-//It renders your element with a data-veneer-{tag} attribute, shows the saved
+//It renders your element with a data-tweak-{tag} attribute, shows the saved
 //content, and turns into a small editor when edit mode is on.
 export const Editable = ({ tag, as, children, className }: EditableProps): ReactElement => {
   const { value, mediaUrl, loading, editable, save } = useEditableTag(tag);

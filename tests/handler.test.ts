@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -22,9 +22,9 @@ import {
   type RefreshTokenRecord,
   type StoredUser,
   type TagType,
-  type VeneerConfig,
-  type VeneerHandler,
-} from '@veneer/core';
+  type TweakTagsConfig,
+  type TweakTagsHandler,
+} from '@tweaktags/core';
 
 //A superuser actor used to seed content in the tests.
 const superActor: Actor = { userId: '1', role: 'superuser' };
@@ -192,11 +192,11 @@ const fakeAuth: AuthAdapter = {
 
 describe('request handler', () => {
   let db: FakeDb;
-  let handle: VeneerHandler;
+  let handle: TweakTagsHandler;
 
   beforeEach(() => {
     db = new FakeDb();
-    handle = createHandler({ db, auth: fakeAuth, config: {} as VeneerConfig });
+    handle = createHandler({ db, auth: fakeAuth, config: {} as TweakTagsConfig });
     logoutSpy.mockClear();
   });
 

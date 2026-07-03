@@ -1,12 +1,12 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import { assertNoSqlInjection } from '@veneer/core';
-import { createVeneerServerFromConfig } from '@veneer/server';
+import { assertNoSqlInjection } from '@tweaktags/core';
+import { createTweakTagsServerFromConfig } from '@tweaktags/server';
 
 //Updates the password for an existing user.
 //The email goes into a parameterized query, and is also checked for injection.
@@ -23,7 +23,7 @@ export const runUpdatePassword = async (flags: Record<string, string>): Promise<
   //A second layer of defense on top of the parameterized query.
   assertNoSqlInjection(email, 'email');
 
-  const server = await createVeneerServerFromConfig({ path: flags.config });
+  const server = await createTweakTagsServerFromConfig({ path: flags.config });
 
   try {
     const user = await server.db.findUserByEmail(email);

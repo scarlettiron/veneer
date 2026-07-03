@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -23,7 +23,7 @@ import {
   AUTH_TABLE,
   CONTENT_TABLE,
   REFRESH_TABLE,
-} from '@veneer/core';
+} from '@tweaktags/core';
 
 import { CONSTRAINT_ERROR_PREFIX, MIGRATIONS_TABLE } from './constants/index.js';
 import { MIGRATIONS, type Migration } from './migrations/migrations.js';
@@ -54,7 +54,7 @@ const errorCode = (error: unknown): string | undefined => {
 const isConstraintError = (error: unknown): boolean =>
   (errorCode(error) ?? '').startsWith(CONSTRAINT_ERROR_PREFIX);
 
-//The SQLite implementation of the Veneer database adapter.
+//The SQLite implementation of the TweakTags database adapter.
 //better-sqlite3 is synchronous, so each method wraps a quick synchronous call.
 export class SqliteAdapter implements DbAdapter {
   private readonly db: Database.Database;

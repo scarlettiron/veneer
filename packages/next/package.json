@@ -1,7 +1,7 @@
 {
-  "name": "@veneer/next",
-  "version": "0.1.0",
-  "description": "Next.js route handler and React bindings for Veneer",
+  "name": "@tweaktags/next",
+  "version": "1.0.0",
+  "description": "Next.js route handler and React bindings for TweakTags",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,9 +26,9 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@veneer/core": "workspace:*",
-    "@veneer/react": "workspace:*",
-    "@veneer/server": "workspace:*"
+    "@tweaktags/core": "workspace:*",
+    "@tweaktags/react": "workspace:*",
+    "@tweaktags/server": "workspace:*"
   },
   "peerDependencies": {
     "next": ">=13",

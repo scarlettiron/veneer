@@ -1,11 +1,11 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import { AUTH_TABLE, CONTENT_TABLE, REFRESH_TABLE } from '@veneer/core';
+import { AUTH_TABLE, CONTENT_TABLE, REFRESH_TABLE } from '@tweaktags/core';
 
 //A single migration step.
 //The id must never change once it has shipped, because it is how we
@@ -60,7 +60,7 @@ export const MIGRATIONS: Migration[] = [
         expires_at TEXT NOT NULL,
         revoked BOOLEAN NOT NULL DEFAULT false
       );
-      CREATE INDEX IF NOT EXISTS idx_veneer_refresh_family
+      CREATE INDEX IF NOT EXISTS idx_tweaktags_refresh_family
         ON "${REFRESH_TABLE}" (family_id);
     `,
   },

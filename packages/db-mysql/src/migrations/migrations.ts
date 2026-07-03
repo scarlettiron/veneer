@@ -1,11 +1,11 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import { AUTH_TABLE, CONTENT_TABLE, REFRESH_TABLE } from '@veneer/core';
+import { AUTH_TABLE, CONTENT_TABLE, REFRESH_TABLE } from '@tweaktags/core';
 
 //A single migration step.
 //The id must never change once it has shipped, because it is how we
@@ -40,7 +40,7 @@ export const MIGRATIONS: Migration[] = [
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(32) NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT chk_veneer_role CHECK (role IN ('superuser', 'editor'))
+        CONSTRAINT chk_tweaktags_role CHECK (role IN ('superuser', 'editor'))
       );
     `,
   },
@@ -60,7 +60,7 @@ export const MIGRATIONS: Migration[] = [
         user_id VARCHAR(255) NOT NULL,
         expires_at VARCHAR(32) NOT NULL,
         revoked TINYINT(1) NOT NULL DEFAULT 0,
-        INDEX idx_veneer_refresh_family (family_id)
+        INDEX idx_tweaktags_refresh_family (family_id)
       );
     `,
   },

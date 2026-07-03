@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -21,12 +21,12 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
 //A single error type used across the whole system.
 //It carries a stable code so the handler can pick the right status
 //and the client can branch on the reason.
-export class VeneerError extends Error {
+export class TweakTagsError extends Error {
   public readonly code: ErrorCode;
 
   constructor(code: ErrorCode, message: string) {
     super(message);
-    this.name = 'VeneerError';
+    this.name = 'TweakTagsError';
     this.code = code;
   }
 
@@ -37,17 +37,17 @@ export class VeneerError extends Error {
 }
 
 //Small helpers so call sites read clearly.
-export const badRequest = (message: string): VeneerError =>
-  new VeneerError(ERROR_CODES.BAD_REQUEST, message);
+export const badRequest = (message: string): TweakTagsError =>
+  new TweakTagsError(ERROR_CODES.BAD_REQUEST, message);
 
-export const unauthorized = (message: string): VeneerError =>
-  new VeneerError(ERROR_CODES.UNAUTHORIZED, message);
+export const unauthorized = (message: string): TweakTagsError =>
+  new TweakTagsError(ERROR_CODES.UNAUTHORIZED, message);
 
-export const forbidden = (message: string): VeneerError =>
-  new VeneerError(ERROR_CODES.FORBIDDEN, message);
+export const forbidden = (message: string): TweakTagsError =>
+  new TweakTagsError(ERROR_CODES.FORBIDDEN, message);
 
-export const notFound = (message: string): VeneerError =>
-  new VeneerError(ERROR_CODES.NOT_FOUND, message);
+export const notFound = (message: string): TweakTagsError =>
+  new TweakTagsError(ERROR_CODES.NOT_FOUND, message);
 
-export const conflict = (message: string): VeneerError =>
-  new VeneerError(ERROR_CODES.CONFLICT, message);
+export const conflict = (message: string): TweakTagsError =>
+  new TweakTagsError(ERROR_CODES.CONFLICT, message);

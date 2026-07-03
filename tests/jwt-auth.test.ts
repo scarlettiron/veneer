@@ -1,4 +1,4 @@
-//Veneer
+//TweakTags
 //Licensed under the MIT License. See the LICENSE file in the project root.
 //Copyright (c) 2026 Scarlett A. Scott (codescarlett)
 //
@@ -7,15 +7,15 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { JwtAuthAdapter } from '@veneer/auth-jwt';
-import { conflict } from '@veneer/core';
+import { JwtAuthAdapter } from '@tweaktags/auth-jwt';
+import { conflict } from '@tweaktags/core';
 import type {
   CreateUserInput,
   RefreshTokenRecord,
   RefreshTokenStore,
   StoredUser,
   UserStore,
-} from '@veneer/core';
+} from '@tweaktags/core';
 
 //A simple in memory store for the auth tests, holding users and refresh tokens.
 class MemoryStore implements UserStore, RefreshTokenStore {
