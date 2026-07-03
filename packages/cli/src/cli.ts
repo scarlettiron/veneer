@@ -25,7 +25,7 @@ const printHelp = (): void => {
       '  tweaktags create-superuser --email you@example.com --password secret [--role superuser|editor] [--config path]',
       '  tweaktags create-user --email you@example.com --password secret [--config path]',
       '  tweaktags update-password --email you@example.com --password newsecret [--config path]',
-      '  tweaktags list-tags [--config path]',
+      '  tweaktags list-tags [--tenant name] [--config path]',
       '  tweaktags list-users [--config path]',
       '',
       'The config path is optional. When left out, TweakTags looks for a tweaktags.config file',

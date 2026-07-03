@@ -98,7 +98,7 @@ export class MysqlAdapter implements DbAdapter {
     }
   }
 
-  public async getContentByTags(tags: string[]): Promise<ContentRecord[]> {
+  public async getContentByTags(tenant: string, tags: string[]): Promise<ContentRecord[]> {
     if (tags.length === 0) {
       return [];
     }
@@ -108,19 +108,24 @@ export class MysqlAdapter implements DbAdapter {
     const [rows] = await this.pool.query<RowDataPacket[]>(
       `SELECT tag, type, body, media_url, updated_at, updated_by
        FROM \`${CONTENT_TABLE}\`
-       WHERE tag IN (${placeholders});`,
-      tags,
+       WHERE tenant = ? AND tag IN (${placeholders});`,
+      [tenant, ...tags],
     );
 
     return rows.map((row) => mapContentRow(row as never));
   }
 
-  public async createTag(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+  public async createTag(
+    tenant: string,
+    tag: string,
+    type: TagType,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     try {
       await this.pool.execute(
-        `INSERT INTO \`${CONTENT_TABLE}\` (tag, type, body, media_url, updated_by)
-         VALUES (?, ?, '', NULL, ?);`,
-        [tag, type, actor.userId],
+        `INSERT INTO \`${CONTENT_TABLE}\` (tenant, tag, type, body, media_url, updated_by)
+         VALUES (?, ?, ?, '', NULL, ?);`,
+        [tenant, tag, type, actor.userId],
       );
     } catch (error) {
       if (errorCode(error) === DUPLICATE_ENTRY) {
@@ -130,7 +135,7 @@ export class MysqlAdapter implements DbAdapter {
       throw error;
     }
 
-    const [record] = await this.getContentByTags([tag]);
+    const [record] = await this.getContentByTags(tenant, [tag]);
 
     if (!record) {
       throw new Error('The tag could not be read back after it was created');
@@ -139,19 +144,23 @@ export class MysqlAdapter implements DbAdapter {
     return record;
   }
 
-  public async upsertContent(input: ContentInput, actor: Actor): Promise<ContentRecord> {
+  public async upsertContent(
+    tenant: string,
+    input: ContentInput,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     await this.pool.execute(
-      `INSERT INTO \`${CONTENT_TABLE}\` (tag, body, media_url, updated_by)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO \`${CONTENT_TABLE}\` (tenant, tag, body, media_url, updated_by)
+       VALUES (?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
          body = VALUES(body),
          media_url = VALUES(media_url),
          updated_at = CURRENT_TIMESTAMP,
          updated_by = VALUES(updated_by);`,
-      [input.tag, input.body, input.mediaUrl ?? null, actor.userId],
+      [tenant, input.tag, input.body, input.mediaUrl ?? null, actor.userId],
     );
 
-    const [record] = await this.getContentByTags([input.tag]);
+    const [record] = await this.getContentByTags(tenant, [input.tag]);
 
     if (!record) {
       throw new Error('The content could not be read back after it was saved');
@@ -160,16 +169,21 @@ export class MysqlAdapter implements DbAdapter {
     return record;
   }
 
-  public async setTagType(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+  public async setTagType(
+    tenant: string,
+    tag: string,
+    type: TagType,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     await this.pool.execute(
       `UPDATE \`${CONTENT_TABLE}\`
        SET type = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
-       WHERE tag = ?;`,
-      [type, actor.userId, tag],
+       WHERE tenant = ? AND tag = ?;`,
+      [type, actor.userId, tenant, tag],
     );
 
     //Read the row back to confirm it exists and return the new values.
-    const [record] = await this.getContentByTags([tag]);
+    const [record] = await this.getContentByTags(tenant, [tag]);
 
     if (!record) {
       throw notFound(`The tag "${tag}" does not exist`);
@@ -178,10 +192,10 @@ export class MysqlAdapter implements DbAdapter {
     return record;
   }
 
-  public async deleteTag(tag: string): Promise<void> {
+  public async deleteTag(tenant: string, tag: string): Promise<void> {
     const [result] = await this.pool.execute<ResultSetHeader>(
-      `DELETE FROM \`${CONTENT_TABLE}\` WHERE tag = ?;`,
-      [tag],
+      `DELETE FROM \`${CONTENT_TABLE}\` WHERE tenant = ? AND tag = ?;`,
+      [tenant, tag],
     );
 
     if (result.affectedRows === 0) {
@@ -189,9 +203,10 @@ export class MysqlAdapter implements DbAdapter {
     }
   }
 
-  public async listTags(): Promise<string[]> {
+  public async listTags(tenant: string): Promise<string[]> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT tag FROM \`${CONTENT_TABLE}\` ORDER BY tag ASC;`,
+      `SELECT tag FROM \`${CONTENT_TABLE}\` WHERE tenant = ? ORDER BY tag ASC;`,
+      [tenant],
     );
 
     return rows.map((row) => String(row.tag));

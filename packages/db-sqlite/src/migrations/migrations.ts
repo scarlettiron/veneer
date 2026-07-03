@@ -62,4 +62,28 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    //Adds tenant support so one database can serve several sites. SQLite cannot
+    //drop a column level UNIQUE, so we rebuild the table with a unique on the
+    //pair of tenant and tag, copying every row into the default tenant.
+    id: '0005_add_content_tenant',
+    sql: `
+      CREATE TABLE "${CONTENT_TABLE}_new" (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tenant TEXT NOT NULL DEFAULT 'default',
+        tag TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'plain',
+        body TEXT NOT NULL DEFAULT '',
+        media_url TEXT,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_by TEXT,
+        UNIQUE (tenant, tag)
+      );
+      INSERT INTO "${CONTENT_TABLE}_new" (id, tenant, tag, type, body, media_url, updated_at, updated_by)
+        SELECT id, 'default', tag, type, body, media_url, updated_at, updated_by
+        FROM "${CONTENT_TABLE}";
+      DROP TABLE "${CONTENT_TABLE}";
+      ALTER TABLE "${CONTENT_TABLE}_new" RENAME TO "${CONTENT_TABLE}";
+    `,
+  },
 ];

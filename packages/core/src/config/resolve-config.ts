@@ -11,9 +11,11 @@ import {
   DEFAULT_EDIT_IN_VIEW,
   DEFAULT_MODE,
   DEFAULT_REFRESH_TTL_SECONDS,
+  DEFAULT_TENANT,
 } from '../constants/index.js';
 import type { TweakTagsConfig, TweakTagsUserConfig } from '../types/index.js';
 import { badRequest } from '../utilities/errors.js';
+import { assertValidTenant } from '../utilities/tenant.js';
 
 //Checks that the user config has everything it needs and fills in defaults.
 //Returns the fully resolved config the rest of the system relies on.
@@ -79,5 +81,8 @@ export const resolveConfig = (input: TweakTagsUserConfig): TweakTagsConfig => {
       cookieSameSite: input.auth.cookieSameSite ?? 'lax',
     },
     cors: input.cors,
+    //The tenant is validated now so a bad value fails at startup, not per request.
+    tenant: assertValidTenant(input.tenant ?? DEFAULT_TENANT),
+    resolveTenant: input.resolveTenant,
   };
 };

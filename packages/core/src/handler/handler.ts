@@ -5,7 +5,7 @@
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-import { ACTIONS, ROLES, TAG_TYPES } from '../constants/index.js';
+import { ACTIONS, DEFAULT_TENANT, ROLES, TAG_TYPES } from '../constants/index.js';
 import type { AuthAdapter } from '../adapters/auth-adapter.js';
 import type { DbAdapter } from '../adapters/db-adapter.js';
 import type {
@@ -77,6 +77,12 @@ const toErrorResponse = (error: unknown): TweakTagsResponse => {
 //This is where the auth and role rules live.
 export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
   const { db, auth } = deps;
+
+  //The tenant is set by the server from the config, never by the client, so
+  //scoping cannot be spoofed. It falls back to the config default, then to the
+  //shared default, which keeps single tenant installs working.
+  const tenantOf = (request: TweakTagsRequest): string =>
+    request.tenant ?? deps.config.tenant ?? DEFAULT_TENANT;
 
   //Verifies the token on the request and returns the actor.
   //Throws when there is no token or the token is not valid.
@@ -160,14 +166,14 @@ export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
 
   const handleGetContent = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const tags = requireStringArray(request.payload, 'tags');
-    const content = await db.getContentByTags(tags);
+    const content = await db.getContentByTags(tenantOf(request), tags);
 
     return { status: 200, body: { content } };
   };
 
   const handleListTags = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     await requireActor(request);
-    const tags = await db.listTags();
+    const tags = await db.listTags(tenantOf(request));
 
     return { status: 200, body: { tags } };
   };
@@ -181,13 +187,14 @@ export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
 
     const tag = assertValidTag(requireString(request.payload, 'tag'));
     const type = readTagType(request.payload);
-    const content = await db.createTag(tag, type, actor);
+    const content = await db.createTag(tenantOf(request), tag, type, actor);
 
     return { status: 201, body: { content } };
   };
 
   const handleUpdateContent = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     const actor = await requireActor(request);
+    const tenant = tenantOf(request);
     const tag = assertValidTag(requireString(request.payload, 'tag'));
     const body = requireString(request.payload, 'body');
     const mediaUrl = optionalString(request.payload, 'mediaUrl');
@@ -200,17 +207,17 @@ export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
       assertNoDangerousHtml(mediaUrl, 'media url');
     }
 
-    //An editor is only allowed to change tags that already exist.
+    //An editor is only allowed to change tags that already exist in this tenant.
     //A superuser may create the row as part of the update.
     if (actor.role !== ROLES.SUPERUSER) {
-      const existing = await db.getContentByTags([tag]);
+      const existing = await db.getContentByTags(tenant, [tag]);
 
       if (existing.length === 0) {
         throw forbidden('Editors can only change tags that already exist');
       }
     }
 
-    const content = await db.upsertContent({ tag, body, mediaUrl }, actor);
+    const content = await db.upsertContent(tenant, { tag, body, mediaUrl }, actor);
 
     return { status: 200, body: { content } };
   };
@@ -224,7 +231,7 @@ export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
 
     const tag = assertValidTag(requireString(request.payload, 'tag'));
     const type = readTagType(request.payload);
-    const content = await db.setTagType(tag, type, actor);
+    const content = await db.setTagType(tenantOf(request), tag, type, actor);
 
     return { status: 200, body: { content } };
   };
@@ -237,7 +244,7 @@ export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
     }
 
     const tag = assertValidTag(requireString(request.payload, 'tag'));
-    await db.deleteTag(tag, actor);
+    await db.deleteTag(tenantOf(request), tag, actor);
 
     return { status: 200, body: { ok: true, tag } };
   };

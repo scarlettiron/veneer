@@ -55,27 +55,27 @@ export interface DbAdapter extends UserStore, RefreshTokenStore {
   //Create the TweakTags tables if they do not exist yet.
   runMigrations(): Promise<void>;
 
-  //Read the content rows for a set of tags.
+  //Read the content rows for a set of tags within one tenant.
   //Tags with no row simply do not appear in the result.
-  getContentByTags(tags: string[]): Promise<ContentRecord[]>;
+  getContentByTags(tenant: string, tags: string[]): Promise<ContentRecord[]>;
 
-  //Create a brand new tag with empty content and the given type.
+  //Create a brand new tag with empty content and the given type, in one tenant.
   //Only a superuser should reach this method.
-  createTag(tag: string, type: TagType, actor: Actor): Promise<ContentRecord>;
+  createTag(tenant: string, tag: string, type: TagType, actor: Actor): Promise<ContentRecord>;
 
-  //Save the body and media url for a tag.
+  //Save the body and media url for a tag in one tenant.
   //The handler decides who is allowed to call this.
-  upsertContent(input: ContentInput, actor: Actor): Promise<ContentRecord>;
+  upsertContent(tenant: string, input: ContentInput, actor: Actor): Promise<ContentRecord>;
 
-  //Change a tag's type. Only a superuser should reach this method.
-  setTagType(tag: string, type: TagType, actor: Actor): Promise<ContentRecord>;
+  //Change a tag's type within one tenant. Only a superuser should reach this.
+  setTagType(tenant: string, tag: string, type: TagType, actor: Actor): Promise<ContentRecord>;
 
-  //Delete a tag and its content.
+  //Delete a tag and its content within one tenant.
   //Only a superuser should reach this method.
-  deleteTag(tag: string, actor: Actor): Promise<void>;
+  deleteTag(tenant: string, tag: string, actor: Actor): Promise<void>;
 
-  //List every tag that currently has a row.
-  listTags(): Promise<string[]>;
+  //List every tag that currently has a row in one tenant.
+  listTags(tenant: string): Promise<string[]>;
 
   //List every user, without their password hashes.
   listUsers(): Promise<AuthUser[]>;

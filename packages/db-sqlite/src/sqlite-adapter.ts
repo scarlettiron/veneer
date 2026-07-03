@@ -92,7 +92,7 @@ export class SqliteAdapter implements DbAdapter {
     }
   }
 
-  public async getContentByTags(tags: string[]): Promise<ContentRecord[]> {
+  public async getContentByTags(tenant: string, tags: string[]): Promise<ContentRecord[]> {
     if (tags.length === 0) {
       return [];
     }
@@ -103,21 +103,26 @@ export class SqliteAdapter implements DbAdapter {
       .prepare(
         `SELECT tag, type, body, media_url, updated_at, updated_by
          FROM "${CONTENT_TABLE}"
-         WHERE tag IN (${placeholders});`,
+         WHERE tenant = ? AND tag IN (${placeholders});`,
       )
-      .all(...tags) as never[];
+      .all(tenant, ...tags) as never[];
 
     return rows.map((row) => mapContentRow(row));
   }
 
-  public async createTag(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+  public async createTag(
+    tenant: string,
+    tag: string,
+    type: TagType,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     try {
       this.db
         .prepare(
-          `INSERT INTO "${CONTENT_TABLE}" (tag, type, body, media_url, updated_by)
-           VALUES (?, ?, '', NULL, ?);`,
+          `INSERT INTO "${CONTENT_TABLE}" (tenant, tag, type, body, media_url, updated_by)
+           VALUES (?, ?, ?, '', NULL, ?);`,
         )
-        .run(tag, type, actor.userId);
+        .run(tenant, tag, type, actor.userId);
     } catch (error) {
       if (isConstraintError(error)) {
         throw conflict(`The tag "${tag}" already exists`);
@@ -126,7 +131,7 @@ export class SqliteAdapter implements DbAdapter {
       throw error;
     }
 
-    const [record] = await this.getContentByTags([tag]);
+    const [record] = await this.getContentByTags(tenant, [tag]);
 
     if (!record) {
       throw new Error('The tag could not be read back after it was created');
@@ -135,20 +140,24 @@ export class SqliteAdapter implements DbAdapter {
     return record;
   }
 
-  public async upsertContent(input: ContentInput, actor: Actor): Promise<ContentRecord> {
+  public async upsertContent(
+    tenant: string,
+    input: ContentInput,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     this.db
       .prepare(
-        `INSERT INTO "${CONTENT_TABLE}" (tag, body, media_url, updated_by)
-         VALUES (?, ?, ?, ?)
-         ON CONFLICT(tag) DO UPDATE SET
+        `INSERT INTO "${CONTENT_TABLE}" (tenant, tag, body, media_url, updated_by)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(tenant, tag) DO UPDATE SET
            body = excluded.body,
            media_url = excluded.media_url,
            updated_at = datetime('now'),
            updated_by = excluded.updated_by;`,
       )
-      .run(input.tag, input.body, input.mediaUrl ?? null, actor.userId);
+      .run(tenant, input.tag, input.body, input.mediaUrl ?? null, actor.userId);
 
-    const [record] = await this.getContentByTags([input.tag]);
+    const [record] = await this.getContentByTags(tenant, [input.tag]);
 
     if (!record) {
       throw new Error('The content could not be read back after it was saved');
@@ -157,17 +166,22 @@ export class SqliteAdapter implements DbAdapter {
     return record;
   }
 
-  public async setTagType(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+  public async setTagType(
+    tenant: string,
+    tag: string,
+    type: TagType,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     this.db
       .prepare(
         `UPDATE "${CONTENT_TABLE}"
          SET type = ?, updated_at = datetime('now'), updated_by = ?
-         WHERE tag = ?;`,
+         WHERE tenant = ? AND tag = ?;`,
       )
-      .run(type, actor.userId, tag);
+      .run(type, actor.userId, tenant, tag);
 
     //Read the row back to confirm it exists and return the new values.
-    const [record] = await this.getContentByTags([tag]);
+    const [record] = await this.getContentByTags(tenant, [tag]);
 
     if (!record) {
       throw notFound(`The tag "${tag}" does not exist`);
@@ -176,18 +190,20 @@ export class SqliteAdapter implements DbAdapter {
     return record;
   }
 
-  public async deleteTag(tag: string): Promise<void> {
-    const result = this.db.prepare(`DELETE FROM "${CONTENT_TABLE}" WHERE tag = ?;`).run(tag);
+  public async deleteTag(tenant: string, tag: string): Promise<void> {
+    const result = this.db
+      .prepare(`DELETE FROM "${CONTENT_TABLE}" WHERE tenant = ? AND tag = ?;`)
+      .run(tenant, tag);
 
     if (result.changes === 0) {
       throw notFound(`The tag "${tag}" does not exist`);
     }
   }
 
-  public async listTags(): Promise<string[]> {
+  public async listTags(tenant: string): Promise<string[]> {
     const rows = this.db
-      .prepare(`SELECT tag FROM "${CONTENT_TABLE}" ORDER BY tag ASC;`)
-      .all() as Array<{ tag: string }>;
+      .prepare(`SELECT tag FROM "${CONTENT_TABLE}" WHERE tenant = ? ORDER BY tag ASC;`)
+      .all(tenant) as Array<{ tag: string }>;
 
     return rows.map((row) => row.tag);
   }

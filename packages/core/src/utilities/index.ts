@@ -27,3 +27,5 @@ export {
 export { assertNoSqlInjection, assertNoDangerousHtml, assertSafeInput } from './safety.js';
 
 export { CSRF_HEADER, requiresCsrf } from './csrf.js';
+
+export { resolveTenant, assertValidTenant } from './tenant.js';

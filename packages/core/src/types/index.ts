@@ -152,6 +152,14 @@ export interface ResolvedAuthConfig {
   cookieSameSite: 'strict' | 'lax' | 'none';
 }
 
+//What the tenant resolver is given to work out the tenant for a request.
+//It carries the request host and headers, so one shared server can map a domain
+//to a tenant.
+export interface TenantContext {
+  host?: string;
+  headers: Record<string, string | string[] | undefined>;
+}
+
 //Cross origin settings, needed when the TweakTags server runs on a different
 //origin than the site that calls it, like a separate React app.
 export interface CorsConfig {
@@ -172,6 +180,15 @@ export interface TweakTagsUserConfig {
   database: DatabaseConfig;
   auth: AuthConfig;
   cors?: CorsConfig;
+
+  //The tenant this site's content belongs to, for sharing one database across
+  //several sites. Tags are scoped to it, so a site only sees and edits its own.
+  //Defaults to 'default'.
+  tenant?: string;
+
+  //An optional way to work out the tenant from the request, for one server that
+  //serves several domains. Return undefined to fall back to the tenant above.
+  resolveTenant?: (context: TenantContext) => string | undefined;
 }
 
 //The fully resolved config, after defaults have been applied.
@@ -184,6 +201,12 @@ export interface TweakTagsConfig {
   database: DatabaseConfig;
   auth: ResolvedAuthConfig;
   cors?: CorsConfig;
+
+  //The default tenant for this server. Always set after resolving the config.
+  tenant: string;
+
+  //An optional resolver to pick the tenant per request, for a shared server.
+  resolveTenant?: (context: TenantContext) => string | undefined;
 }
 
 //One stored refresh token, used to rotate tokens and detect reuse.
@@ -220,6 +243,9 @@ export interface TweakTagsRequest {
   authToken?: string;
   //The refresh token, from the refresh cookie.
   refreshToken?: string;
+  //The tenant this request is scoped to. The server sets this from the config,
+  //so the client can never choose or spoof it. Defaults to 'default'.
+  tenant?: string;
 }
 
 //A response that has been normalized away from any specific web framework.

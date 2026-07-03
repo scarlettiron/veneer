@@ -9,6 +9,7 @@ import {
   CSRF_HEADER,
   TweakTagsError,
   resolveConfig,
+  resolveTenant,
   type TweakTagsConfig,
   type TweakTagsUserConfig,
 } from '@tweaktags/core';
@@ -76,6 +77,13 @@ export const createTweakTagsRouteHandler = (
       const accessToken = readToken(request) ?? cookies[resolved.auth.cookieName];
       const refreshToken = cookies[resolved.auth.refreshCookieName];
       const tweaktagsRequest = toTweakTagsRequest(body, accessToken, refreshToken);
+
+      //Decide the tenant on the server, from the config or the request host,
+      //so the client can never choose which site's tags it touches.
+      tweaktagsRequest.tenant = resolveTenant(resolved, {
+        host: request.headers.get('host') ?? undefined,
+        headers: Object.fromEntries(request.headers.entries()),
+      });
 
       //Block cross site request forgery on the actions that change data.
       assertCsrf(

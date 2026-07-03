@@ -64,4 +64,16 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    //Adds tenant support so one database can serve several sites. Written as a
+    //single ALTER so it runs without multi statement support: it adds the tenant
+    //column, drops the old unique on tag, and adds a unique on tenant and tag.
+    id: '0005_add_content_tenant',
+    sql: `
+      ALTER TABLE \`${CONTENT_TABLE}\`
+        ADD COLUMN tenant VARCHAR(190) NOT NULL DEFAULT 'default',
+        DROP INDEX tag,
+        ADD UNIQUE KEY uniq_tweaktags_tenant_tag (tenant, tag);
+    `,
+  },
 ];

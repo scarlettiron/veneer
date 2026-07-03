@@ -61,6 +61,15 @@ export const DATA_ATTRIBUTE_PREFIX = 'data-tweaktags-';
 //lowercase letters, numbers, and single hyphens between groups.
 export const TAG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+//The tenant used when a config does not name one, so single site installs and
+//existing content keep working with no changes.
+export const DEFAULT_TENANT = 'default';
+
+//A tenant name may only use letters, numbers, hyphens, and underscores. This is
+//checked when a tenant comes from a host name, so a spoofed Host header cannot
+//smuggle anything odd into a query.
+export const TENANT_PATTERN = /^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/i;
+
 //Default values used when the user config leaves a field out.
 export const DEFAULT_MODE = 'embedded';
 export const DEFAULT_API_BASE_PATH = '/api/tweaktags';

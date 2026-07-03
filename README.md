@@ -534,6 +534,51 @@ These are the settings you can put in `tweaktags.config.ts`.
 | `apiBasePath`             | no       | Where the backend route lives. Defaults to `/api/tweaktags`.        |
 | `mode`                    | no       | `'embedded'` for adding to an existing site. This is the default. |
 | `cors.origins`            | no       | Allowed origins when the server runs separately. A list of urls, or `'*'`. |
+| `tenant`                  | no       | The site this server's tags belong to, for sharing one database across many sites. Defaults to `'default'`. See [Multi-tenant](#multi-tenant-one-database-many-sites). |
+| `resolveTenant`           | no       | A function `({ host }) => string` to pick the tenant per request, for one server that serves many domains. |
+
+## Multi-tenant, one database, many sites
+
+You can run several sites from a single TweakTags database. Each site is a **tenant**. A tag belongs
+to a tenant, so a site only ever sees and edits its own tags, even though they share one database
+and one set of users.
+
+The important part: **the tenant is decided by the server, never by the browser.** A visitor cannot
+choose or fake a tenant, so a site can only ever touch its own content.
+
+**The common case, one config per site.** If each site has its own deployment, give each one a
+`tenant` in its config:
+
+```ts
+//drystrip's tweaktags.config.ts
+export default defineConfig({
+  tenant: 'drystrip',
+  database: { provider: 'postgres', connectionString: process.env.DATABASE_URL }, //shared
+  auth: { provider: 'jwt', jwtSecret: process.env.TWEAKTAGS_JWT_SECRET },
+});
+```
+
+Now `hero-title` on the drystrip site is a different tag from `hero-title` on another site, and an
+editor signed in on drystrip can only create and change drystrip's tags.
+
+**One server, many domains.** If a single deployment serves several domains, use `resolveTenant` to
+map the request to a tenant instead:
+
+```ts
+export default defineConfig({
+  resolveTenant: ({ host }) => (host?.endsWith('drystrip.com') ? 'drystrip' : 'default'),
+  database: { provider: 'postgres', connectionString: process.env.DATABASE_URL },
+  auth: { provider: 'jwt', jwtSecret: process.env.TWEAKTAGS_JWT_SECRET },
+});
+```
+
+Notes:
+- Users are **shared** across tenants. A superuser signs in on any site and manages that site's tags.
+- Nothing changes on the client. Your pages, the provider, and the vanilla build are the same.
+- Existing single site installs keep working: with no `tenant` set, everything is the `'default'`
+  tenant, and the migration backfills old rows to `'default'`.
+- The CLI works within your config's tenant. Use `npx tweaktags list-tags --tenant other` to inspect
+  another tenant in the shared database.
 
 ## Sessions and security
 

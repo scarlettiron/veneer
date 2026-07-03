@@ -33,15 +33,21 @@ const superActor: Actor = { userId: '1', role: 'superuser' };
 //It mirrors the real adapters closely enough to exercise the handler branches,
 //including the conflict on a duplicate tag and the not found on a missing one.
 class FakeDb implements DbAdapter {
+  //Keyed by "tenant|tag" so two tenants can hold the same tag independently,
+  //the same way the real adapters key on the pair of tenant and tag.
   public content = new Map<string, ContentRecord>();
+
+  private key(tenant: string, tag: string): string {
+    return `${tenant}|${tag}`;
+  }
 
   async runMigrations(): Promise<void> {}
 
-  async getContentByTags(tags: string[]): Promise<ContentRecord[]> {
+  async getContentByTags(tenant: string, tags: string[]): Promise<ContentRecord[]> {
     const records: ContentRecord[] = [];
 
     for (const tag of tags) {
-      const record = this.content.get(tag);
+      const record = this.content.get(this.key(tenant, tag));
 
       if (record) {
         records.push(record);
@@ -51,8 +57,10 @@ class FakeDb implements DbAdapter {
     return records;
   }
 
-  async createTag(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
-    if (this.content.has(tag)) {
+  async createTag(tenant: string, tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+    const key = this.key(tenant, tag);
+
+    if (this.content.has(key)) {
       throw conflict(`The tag "${tag}" already exists`);
     }
 
@@ -65,49 +73,59 @@ class FakeDb implements DbAdapter {
       updatedBy: actor.userId,
     };
 
-    this.content.set(tag, record);
+    this.content.set(key, record);
 
     return record;
   }
 
-  async upsertContent(input: ContentInput, actor: Actor): Promise<ContentRecord> {
+  async upsertContent(tenant: string, input: ContentInput, actor: Actor): Promise<ContentRecord> {
+    const key = this.key(tenant, input.tag);
+
     const record: ContentRecord = {
       tag: input.tag,
-      type: this.content.get(input.tag)?.type ?? 'plain',
+      type: this.content.get(key)?.type ?? 'plain',
       body: input.body,
       mediaUrl: input.mediaUrl ?? null,
       updatedAt: '2026-01-01T00:00:00.000Z',
       updatedBy: actor.userId,
     };
 
-    this.content.set(input.tag, record);
+    this.content.set(key, record);
 
     return record;
   }
 
-  async setTagType(tag: string, type: TagType): Promise<ContentRecord> {
-    const existing = this.content.get(tag);
+  async setTagType(tenant: string, tag: string, type: TagType): Promise<ContentRecord> {
+    const key = this.key(tenant, tag);
+    const existing = this.content.get(key);
 
     if (!existing) {
       throw notFound(`The tag "${tag}" does not exist`);
     }
 
     const record: ContentRecord = { ...existing, type };
-    this.content.set(tag, record);
+    this.content.set(key, record);
 
     return record;
   }
 
-  async deleteTag(tag: string): Promise<void> {
-    if (!this.content.has(tag)) {
+  async deleteTag(tenant: string, tag: string): Promise<void> {
+    const key = this.key(tenant, tag);
+
+    if (!this.content.has(key)) {
       throw notFound(`The tag "${tag}" does not exist`);
     }
 
-    this.content.delete(tag);
+    this.content.delete(key);
   }
 
-  async listTags(): Promise<string[]> {
-    return Array.from(this.content.keys()).sort();
+  async listTags(tenant: string): Promise<string[]> {
+    const prefix = `${tenant}|`;
+
+    return Array.from(this.content.keys())
+      .filter((key) => key.startsWith(prefix))
+      .map((key) => key.slice(prefix.length))
+      .sort();
   }
 
   async findUserByEmail(): Promise<StoredUser | null> {
@@ -202,7 +220,7 @@ describe('request handler', () => {
 
   describe('reading content', () => {
     it('reads content without a token', async () => {
-      await db.createTag('hero-title', 'plain', superActor);
+      await db.createTag('default', 'hero-title', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.GET_CONTENT,
@@ -214,7 +232,7 @@ describe('request handler', () => {
     });
 
     it('returns only the tags that exist', async () => {
-      await db.createTag('a', 'plain', superActor);
+      await db.createTag('default', 'a', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.GET_CONTENT,
@@ -311,8 +329,8 @@ describe('request handler', () => {
 
   describe('listing tags', () => {
     it('lists tags for a signed in user', async () => {
-      await db.createTag('b', 'plain', superActor);
-      await db.createTag('a', 'plain', superActor);
+      await db.createTag('default', 'b', 'plain', superActor);
+      await db.createTag('default', 'a', 'plain', superActor);
 
       const response = await handle({ action: ACTIONS.LIST_TAGS, authToken: 'editor' });
 
@@ -352,7 +370,7 @@ describe('request handler', () => {
       });
 
       expect(response.status).toBe(201);
-      expect(db.content.has('new-tag')).toBe(true);
+      expect(db.content.has('default|new-tag')).toBe(true);
     });
 
     it('creates a tag with the requested type', async () => {
@@ -386,7 +404,7 @@ describe('request handler', () => {
     });
 
     it('returns a conflict when the tag already exists', async () => {
-      await db.createTag('hero', 'plain', superActor);
+      await db.createTag('default', 'hero', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.CREATE_TAG,
@@ -410,7 +428,7 @@ describe('request handler', () => {
     });
 
     it('lets an editor edit a tag that already exists', async () => {
-      await db.createTag('hero-title', 'plain', superActor);
+      await db.createTag('default', 'hero-title', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.UPDATE_CONTENT,
@@ -419,7 +437,7 @@ describe('request handler', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(db.content.get('hero-title')?.body).toBe('updated');
+      expect(db.content.get('default|hero-title')?.body).toBe('updated');
     });
 
     it('lets a superuser create the row while updating', async () => {
@@ -430,11 +448,11 @@ describe('request handler', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(db.content.get('brand-new')?.body).toBe('hello');
+      expect(db.content.get('default|brand-new')?.body).toBe('hello');
     });
 
     it('rejects body text that looks like sql injection', async () => {
-      await db.createTag('hero-title', 'plain', superActor);
+      await db.createTag('default', 'hero-title', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.UPDATE_CONTENT,
@@ -446,7 +464,7 @@ describe('request handler', () => {
     });
 
     it('rejects body text that contains a script tag', async () => {
-      await db.createTag('hero-title', 'plain', superActor);
+      await db.createTag('default', 'hero-title', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.UPDATE_CONTENT,
@@ -458,7 +476,7 @@ describe('request handler', () => {
     });
 
     it('rejects a media url that contains dangerous html', async () => {
-      await db.createTag('hero-image', 'media', superActor);
+      await db.createTag('default', 'hero-image', 'media', superActor);
 
       const response = await handle({
         action: ACTIONS.UPDATE_CONTENT,
@@ -472,7 +490,7 @@ describe('request handler', () => {
 
   describe('changing tag type', () => {
     it('lets a superuser change a tag type', async () => {
-      await db.createTag('hero-title', 'plain', superActor);
+      await db.createTag('default', 'hero-title', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.UPDATE_TAG_TYPE,
@@ -481,11 +499,11 @@ describe('request handler', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(db.content.get('hero-title')?.type).toBe('rich');
+      expect(db.content.get('default|hero-title')?.type).toBe('rich');
     });
 
     it('refuses a tag type change for an editor', async () => {
-      await db.createTag('hero-title', 'plain', superActor);
+      await db.createTag('default', 'hero-title', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.UPDATE_TAG_TYPE,
@@ -509,7 +527,7 @@ describe('request handler', () => {
 
   describe('deleting tags', () => {
     it('lets a superuser delete a tag', async () => {
-      await db.createTag('hero-title', 'plain', superActor);
+      await db.createTag('default', 'hero-title', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.DELETE_TAG,
@@ -518,11 +536,11 @@ describe('request handler', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(db.content.has('hero-title')).toBe(false);
+      expect(db.content.has('default|hero-title')).toBe(false);
     });
 
     it('refuses a delete for an editor', async () => {
-      await db.createTag('hero-title', 'plain', superActor);
+      await db.createTag('default', 'hero-title', 'plain', superActor);
 
       const response = await handle({
         action: ACTIONS.DELETE_TAG,
@@ -549,6 +567,69 @@ describe('request handler', () => {
       const response = await handle({ action: 'explode' as unknown as typeof ACTIONS.ME });
 
       expect(response.status).toBe(400);
+    });
+  });
+
+  describe('multi-tenant', () => {
+    it('scopes created tags to the request tenant', async () => {
+      await handle({
+        action: ACTIONS.CREATE_TAG,
+        payload: { tag: 'hero' },
+        authToken: 'super',
+        tenant: 'drystrip',
+      });
+
+      const drystrip = await handle({ action: ACTIONS.LIST_TAGS, authToken: 'editor', tenant: 'drystrip' });
+      const other = await handle({ action: ACTIONS.LIST_TAGS, authToken: 'editor', tenant: 'other' });
+
+      expect(drystrip.body.tags).toEqual(['hero']);
+      expect(other.body.tags).toEqual([]);
+    });
+
+    it('lets two tenants hold the same tag name independently', async () => {
+      await db.createTag('drystrip', 'hero', 'plain', superActor);
+      await db.createTag('other', 'hero', 'plain', superActor);
+
+      await handle({
+        action: ACTIONS.UPDATE_CONTENT,
+        payload: { tag: 'hero', body: 'drystrip copy' },
+        authToken: 'super',
+        tenant: 'drystrip',
+      });
+
+      const drystrip = await handle({
+        action: ACTIONS.GET_CONTENT,
+        payload: { tags: ['hero'] },
+        tenant: 'drystrip',
+      });
+      const other = await handle({
+        action: ACTIONS.GET_CONTENT,
+        payload: { tags: ['hero'] },
+        tenant: 'other',
+      });
+
+      expect((drystrip.body.content as ContentRecord[])[0]?.body).toBe('drystrip copy');
+      expect((other.body.content as ContentRecord[])[0]?.body).toBe('');
+    });
+
+    it('does not return another tenant content', async () => {
+      await db.createTag('drystrip', 'hero', 'plain', superActor);
+
+      const response = await handle({
+        action: ACTIONS.GET_CONTENT,
+        payload: { tags: ['hero'] },
+        tenant: 'other',
+      });
+
+      expect((response.body.content as ContentRecord[]).length).toBe(0);
+    });
+
+    it('falls back to the default tenant when the request has none', async () => {
+      await db.createTag('default', 'hero', 'plain', superActor);
+
+      const response = await handle({ action: ACTIONS.GET_CONTENT, payload: { tags: ['hero'] } });
+
+      expect((response.body.content as ContentRecord[]).length).toBe(1);
     });
   });
 });

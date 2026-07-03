@@ -107,7 +107,7 @@ export class PostgresAdapter implements DbAdapter {
     }
   }
 
-  public async getContentByTags(tags: string[]): Promise<ContentRecord[]> {
+  public async getContentByTags(tenant: string, tags: string[]): Promise<ContentRecord[]> {
     if (tags.length === 0) {
       return [];
     }
@@ -115,20 +115,25 @@ export class PostgresAdapter implements DbAdapter {
     const result = await this.pool.query(
       `SELECT tag, type, body, media_url, updated_at, updated_by
        FROM "${CONTENT_TABLE}"
-       WHERE tag = ANY($1);`,
-      [tags],
+       WHERE tenant = $1 AND tag = ANY($2);`,
+      [tenant, tags],
     );
 
     return result.rows.map(mapContentRow);
   }
 
-  public async createTag(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+  public async createTag(
+    tenant: string,
+    tag: string,
+    type: TagType,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     const result = await this.pool.query(
-      `INSERT INTO "${CONTENT_TABLE}" (tag, type, body, media_url, updated_by)
-       VALUES ($1, $2, '', NULL, $3)
-       ON CONFLICT (tag) DO NOTHING
+      `INSERT INTO "${CONTENT_TABLE}" (tenant, tag, type, body, media_url, updated_by)
+       VALUES ($1, $2, $3, '', NULL, $4)
+       ON CONFLICT (tenant, tag) DO NOTHING
        RETURNING tag, type, body, media_url, updated_at, updated_by;`,
-      [tag, type, actor.userId],
+      [tenant, tag, type, actor.userId],
     );
 
     const row = result.rows[0];
@@ -140,30 +145,39 @@ export class PostgresAdapter implements DbAdapter {
     return mapContentRow(row);
   }
 
-  public async upsertContent(input: ContentInput, actor: Actor): Promise<ContentRecord> {
+  public async upsertContent(
+    tenant: string,
+    input: ContentInput,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     const result = await this.pool.query(
-      `INSERT INTO "${CONTENT_TABLE}" (tag, body, media_url, updated_by)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (tag) DO UPDATE SET
+      `INSERT INTO "${CONTENT_TABLE}" (tenant, tag, body, media_url, updated_by)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (tenant, tag) DO UPDATE SET
          body = EXCLUDED.body,
          media_url = EXCLUDED.media_url,
          updated_at = now(),
          updated_by = EXCLUDED.updated_by
        RETURNING tag, type, body, media_url, updated_at, updated_by;`,
-      [input.tag, input.body, input.mediaUrl ?? null, actor.userId],
+      [tenant, input.tag, input.body, input.mediaUrl ?? null, actor.userId],
     );
 
     //The insert always returns a row, so this access is safe.
     return mapContentRow(result.rows[0]);
   }
 
-  public async setTagType(tag: string, type: TagType, actor: Actor): Promise<ContentRecord> {
+  public async setTagType(
+    tenant: string,
+    tag: string,
+    type: TagType,
+    actor: Actor,
+  ): Promise<ContentRecord> {
     const result = await this.pool.query(
       `UPDATE "${CONTENT_TABLE}"
-       SET type = $2, updated_at = now(), updated_by = $3
-       WHERE tag = $1
+       SET type = $3, updated_at = now(), updated_by = $4
+       WHERE tenant = $1 AND tag = $2
        RETURNING tag, type, body, media_url, updated_at, updated_by;`,
-      [tag, type, actor.userId],
+      [tenant, tag, type, actor.userId],
     );
 
     const row = result.rows[0];
@@ -175,17 +189,21 @@ export class PostgresAdapter implements DbAdapter {
     return mapContentRow(row);
   }
 
-  public async deleteTag(tag: string): Promise<void> {
-    const result = await this.pool.query(`DELETE FROM "${CONTENT_TABLE}" WHERE tag = $1;`, [tag]);
+  public async deleteTag(tenant: string, tag: string): Promise<void> {
+    const result = await this.pool.query(
+      `DELETE FROM "${CONTENT_TABLE}" WHERE tenant = $1 AND tag = $2;`,
+      [tenant, tag],
+    );
 
     if (result.rowCount === 0) {
       throw notFound(`The tag "${tag}" does not exist`);
     }
   }
 
-  public async listTags(): Promise<string[]> {
+  public async listTags(tenant: string): Promise<string[]> {
     const result = await this.pool.query<{ tag: string }>(
-      `SELECT tag FROM "${CONTENT_TABLE}" ORDER BY tag ASC;`,
+      `SELECT tag FROM "${CONTENT_TABLE}" WHERE tenant = $1 ORDER BY tag ASC;`,
+      [tenant],
     );
 
     return result.rows.map((row) => row.tag);

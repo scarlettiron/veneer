@@ -31,6 +31,9 @@ const describeSqlite = available ? describe : describe.skip;
 //A superuser actor used as the writer for the content rows.
 const actor: Actor = { userId: '7', role: 'superuser' };
 
+//The tenant the content tests use.
+const TENANT = 'default';
+
 //This runs the real adapter and the real migrations against an in memory SQLite
 //database, so it exercises the actual SQL and the renamed __TweakTags__ tables
 //without needing any external database.
@@ -52,75 +55,107 @@ describeSqlite('sqlite adapter', () => {
     await expect(db.runMigrations()).resolves.toBeUndefined();
 
     //An empty content table proves the migration created it.
-    expect(await db.listTags()).toEqual([]);
+    expect(await db.listTags(TENANT)).toEqual([]);
   });
 
   describe('content', () => {
     it('creates a tag and reads it back', async () => {
-      const created = await db.createTag('hero-title', 'plain', actor);
+      const created = await db.createTag(TENANT, 'hero-title', 'plain', actor);
 
       expect(created.tag).toBe('hero-title');
       expect(created.type).toBe('plain');
 
-      const [record] = await db.getContentByTags(['hero-title']);
+      const [record] = await db.getContentByTags(TENANT, ['hero-title']);
       expect(record?.body).toBe('');
       expect(record?.updatedBy).toBe('7');
     });
 
     it('refuses to create the same tag twice', async () => {
-      await db.createTag('hero-title', 'plain', actor);
+      await db.createTag(TENANT, 'hero-title', 'plain', actor);
 
-      await expect(db.createTag('hero-title', 'plain', actor)).rejects.toThrow();
+      await expect(db.createTag(TENANT, 'hero-title', 'plain', actor)).rejects.toThrow();
     });
 
     it('lists tags in alphabetical order', async () => {
-      await db.createTag('beta', 'plain', actor);
-      await db.createTag('alpha', 'plain', actor);
+      await db.createTag(TENANT, 'beta', 'plain', actor);
+      await db.createTag(TENANT, 'alpha', 'plain', actor);
 
-      expect(await db.listTags()).toEqual(['alpha', 'beta']);
+      expect(await db.listTags(TENANT)).toEqual(['alpha', 'beta']);
     });
 
     it('inserts then updates content with upsert', async () => {
-      await db.createTag('hero-title', 'plain', actor);
+      await db.createTag(TENANT, 'hero-title', 'plain', actor);
 
-      await db.upsertContent({ tag: 'hero-title', body: 'first' }, actor);
-      expect((await db.getContentByTags(['hero-title']))[0]?.body).toBe('first');
+      await db.upsertContent(TENANT, { tag: 'hero-title', body: 'first' }, actor);
+      expect((await db.getContentByTags(TENANT, ['hero-title']))[0]?.body).toBe('first');
 
-      await db.upsertContent({ tag: 'hero-title', body: 'second' }, actor);
-      expect((await db.getContentByTags(['hero-title']))[0]?.body).toBe('second');
+      await db.upsertContent(TENANT, { tag: 'hero-title', body: 'second' }, actor);
+      expect((await db.getContentByTags(TENANT, ['hero-title']))[0]?.body).toBe('second');
     });
 
     it('stores a media url when given one', async () => {
-      await db.createTag('hero-image', 'media', actor);
-      await db.upsertContent({ tag: 'hero-image', body: '', mediaUrl: 'https://x.test/a.png' }, actor);
+      await db.createTag(TENANT, 'hero-image', 'media', actor);
+      await db.upsertContent(TENANT, { tag: 'hero-image', body: '', mediaUrl: 'https://x.test/a.png' }, actor);
 
-      expect((await db.getContentByTags(['hero-image']))[0]?.mediaUrl).toBe('https://x.test/a.png');
+      expect((await db.getContentByTags(TENANT, ['hero-image']))[0]?.mediaUrl).toBe('https://x.test/a.png');
     });
 
     it('changes a tag type', async () => {
-      await db.createTag('hero-title', 'plain', actor);
-      const updated = await db.setTagType('hero-title', 'rich', actor);
+      await db.createTag(TENANT, 'hero-title', 'plain', actor);
+      const updated = await db.setTagType(TENANT, 'hero-title', 'rich', actor);
 
       expect(updated.type).toBe('rich');
     });
 
     it('throws when changing the type of a missing tag', async () => {
-      await expect(db.setTagType('missing', 'rich', actor)).rejects.toThrow();
+      await expect(db.setTagType(TENANT, 'missing', 'rich', actor)).rejects.toThrow();
     });
 
     it('deletes a tag', async () => {
-      await db.createTag('hero-title', 'plain', actor);
-      await db.deleteTag('hero-title', actor);
+      await db.createTag(TENANT, 'hero-title', 'plain', actor);
+      await db.deleteTag(TENANT, 'hero-title', actor);
 
-      expect(await db.getContentByTags(['hero-title'])).toEqual([]);
+      expect(await db.getContentByTags(TENANT, ['hero-title'])).toEqual([]);
     });
 
     it('throws when deleting a missing tag', async () => {
-      await expect(db.deleteTag('missing', actor)).rejects.toThrow();
+      await expect(db.deleteTag(TENANT, 'missing', actor)).rejects.toThrow();
     });
 
     it('returns nothing for an empty tag list', async () => {
-      expect(await db.getContentByTags([])).toEqual([]);
+      expect(await db.getContentByTags(TENANT, [])).toEqual([]);
+    });
+  });
+
+  describe('tenants', () => {
+    it('keeps each tenant content separate and allows the same tag name', async () => {
+      await db.createTag('drystrip', 'hero', 'plain', actor);
+      await db.createTag('other', 'hero', 'plain', actor);
+      await db.upsertContent('drystrip', { tag: 'hero', body: 'drystrip copy' }, actor);
+      await db.upsertContent('other', { tag: 'hero', body: 'other copy' }, actor);
+
+      expect((await db.getContentByTags('drystrip', ['hero']))[0]?.body).toBe('drystrip copy');
+      expect((await db.getContentByTags('other', ['hero']))[0]?.body).toBe('other copy');
+
+      expect(await db.listTags('drystrip')).toEqual(['hero']);
+      expect(await db.listTags('other')).toEqual(['hero']);
+    });
+
+    it('never lists or reads another tenant tags', async () => {
+      await db.createTag('drystrip', 'only-here', 'plain', actor);
+
+      expect(await db.listTags('other')).toEqual([]);
+      expect(await db.getContentByTags('other', ['only-here'])).toEqual([]);
+    });
+
+    it('deletes within a tenant without touching the other', async () => {
+      await db.createTag('drystrip', 'hero', 'plain', actor);
+      await db.createTag('other', 'hero', 'plain', actor);
+
+      await db.deleteTag('drystrip', 'hero', actor);
+
+      expect(await db.getContentByTags('drystrip', ['hero'])).toEqual([]);
+      expect((await db.getContentByTags('other', ['hero'])).length).toBe(1);
     });
   });
 

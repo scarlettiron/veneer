@@ -12,6 +12,7 @@ import {
   TweakTagsError,
   createHandler,
   resolveConfig,
+  resolveTenant,
   type AuthAdapter,
   type DbAdapter,
   type TweakTagsConfig,
@@ -84,6 +85,10 @@ export const createTweakTagsServer = (config: TweakTagsConfig): TweakTagsServer 
       const accessToken = readBearerToken(req) ?? cookies[config.auth.cookieName];
       const refreshToken = cookies[config.auth.refreshCookieName];
       const request = toTweakTagsRequest(body, accessToken, refreshToken);
+
+      //Decide the tenant on the server, from the config or the request host.
+      //The client never sends it, so a site can only ever touch its own tags.
+      request.tenant = resolveTenant(config, { host: req.headers.host, headers: req.headers });
 
       //Block cross site request forgery on the actions that change data.
       const csrfHeaderRaw = req.headers[CSRF_HEADER];

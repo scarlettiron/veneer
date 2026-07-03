@@ -64,4 +64,18 @@ export const MIGRATIONS: Migration[] = [
         ON "${REFRESH_TABLE}" (family_id);
     `,
   },
+  {
+    //Adds tenant support so one database can serve several sites. The tag
+    //uniqueness moves from the tag alone to the pair of tenant and tag, so two
+    //sites can use the same tag name. Existing rows become the default tenant.
+    id: '0005_add_content_tenant',
+    sql: `
+      ALTER TABLE "${CONTENT_TABLE}"
+        ADD COLUMN IF NOT EXISTS tenant TEXT NOT NULL DEFAULT 'default';
+      ALTER TABLE "${CONTENT_TABLE}"
+        DROP CONSTRAINT IF EXISTS "${CONTENT_TABLE}_tag_key";
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_tweaktags_content_tenant_tag
+        ON "${CONTENT_TABLE}" (tenant, tag);
+    `,
+  },
 ];

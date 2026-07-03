@@ -649,6 +649,7 @@
         <div class="group">Reference</div>
         <a href="#databases">Databases</a>
         <a href="#cli">CLI commands</a>
+        <a href="#tenants">Multi-tenant</a>
         <a href="#security">Security</a>
       </nav>
 
@@ -1167,6 +1168,49 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
               </tr>
             </tbody>
           </table>
+        </section>
+
+        <!-- TENANTS -->
+        <section id="tenants">
+          <h2>Multi-tenant: one database, many sites</h2>
+          <p>
+            You can run several sites from a single TweakTags database. Each site is a
+            <strong>tenant</strong>, and a tag belongs to a tenant, so a site only ever sees and
+            edits its own tags. The best part: <strong>the tenant is decided by the server, never by
+            the browser</strong>, so a visitor can never pick or fake one.
+          </p>
+
+          <h3>One config per site</h3>
+          <p>If each site has its own deployment, give each one a <code>tenant</code>:</p>
+          <div class="code" data-lang="ts">
+            <div class="bar"><span>drystrip's tweaktags.config.ts</span><button class="copy">Copy</button></div>
+            <pre><span class="tok-k">export default</span> <span class="tok-f">defineConfig</span>({
+  tenant: <span class="tok-s">'drystrip'</span>,
+  database: { provider: <span class="tok-s">'postgres'</span>, connectionString: process.env.<span class="tok-f">DATABASE_URL</span> }, <span class="tok-c">// shared</span>
+  auth: { provider: <span class="tok-s">'jwt'</span>, jwtSecret: process.env.<span class="tok-f">TWEAKTAGS_JWT_SECRET</span> },
+});</pre>
+          </div>
+          <p>
+            Now <code>hero-title</code> on drystrip is a different tag from <code>hero-title</code> on
+            another site, and an editor signed in on drystrip can only touch drystrip's tags.
+          </p>
+
+          <h3>One server, many domains</h3>
+          <p>If a single deployment serves several domains, map the request to a tenant instead:</p>
+          <div class="code" data-lang="ts">
+            <div class="bar"><span>tweaktags.config.ts</span><button class="copy">Copy</button></div>
+            <pre><span class="tok-k">export default</span> <span class="tok-f">defineConfig</span>({
+  resolveTenant: ({ host }) =&gt; (host?.<span class="tok-f">endsWith</span>(<span class="tok-s">'drystrip.com'</span>) ? <span class="tok-s">'drystrip'</span> : <span class="tok-s">'default'</span>),
+  database: { provider: <span class="tok-s">'postgres'</span>, connectionString: process.env.<span class="tok-f">DATABASE_URL</span> },
+  auth: { provider: <span class="tok-s">'jwt'</span>, jwtSecret: process.env.<span class="tok-f">TWEAKTAGS_JWT_SECRET</span> },
+});</pre>
+          </div>
+
+          <div class="callout">
+            <strong>Good to know.</strong> Users are shared across tenants, so one superuser manages
+            every site. Nothing changes on the client. Existing single-site installs keep working as
+            the <code>default</code> tenant, and the migration backfills old rows for you.
+          </div>
         </section>
 
         <!-- SECURITY -->

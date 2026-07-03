@@ -165,3 +165,24 @@ describe('defineConfig', () => {
     expect(config).toEqual(baseConfig);
   });
 });
+
+describe('resolveConfig tenants', () => {
+  it('defaults the tenant to "default"', () => {
+    expect(resolveConfig(baseConfig).tenant).toBe('default');
+  });
+
+  it('keeps a custom tenant', () => {
+    expect(resolveConfig({ ...baseConfig, tenant: 'drystrip' }).tenant).toBe('drystrip');
+  });
+
+  it('passes a resolveTenant function through', () => {
+    const resolveTenant = () => 'from-host';
+    const resolved = resolveConfig({ ...baseConfig, resolveTenant });
+
+    expect(resolved.resolveTenant).toBe(resolveTenant);
+  });
+
+  it('rejects an invalid tenant name', () => {
+    expect(() => resolveConfig({ ...baseConfig, tenant: 'not a tenant!' })).toThrow();
+  });
+});
