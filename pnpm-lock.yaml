@@ -279,6 +279,9 @@ importers:
 
   packages/react:
     dependencies:
+      '@tweaktags/browser':
+        specifier: workspace:*
+        version: link:../browser
       '@tweaktags/core':
         specifier: workspace:*
         version: link:../core

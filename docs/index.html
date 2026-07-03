@@ -645,6 +645,7 @@
         <a href="#toolbar">Edit bar &amp; toolbar</a>
         <a href="#popup">Popup editor</a>
         <a href="#admin">Admin panel</a>
+        <a href="#vanilla">No framework</a>
         <div class="group">Reference</div>
         <a href="#databases">Databases</a>
         <a href="#cli">CLI commands</a>
@@ -659,11 +660,12 @@
             TweakTags lets you change the words and images on your site without leaving the page.
             Drop a <code>data-tweaktags-*</code> attribute on any element, and the people you trust
             can click in and edit it live. Everyone else just sees the finished content. It installs
-            from npm and drops into any React or Next app.
+            from npm and drops into any React or Next app, or a plain HTML site with a single
+            <a href="#vanilla">script tag</a>.
           </p>
 
           <div class="pill-row">
-            <span class="pill">React &amp; Next</span>
+            <span class="pill">React, Next, or plain JS</span>
             <span class="pill">Postgres &middot; MySQL &middot; MariaDB &middot; SQLite</span>
             <span class="pill">JWT auth with roles</span>
             <span class="pill">Rich text, plain text, media</span>
@@ -1030,6 +1032,54 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
             <code>shell</code>, <code>topbar</code>, <code>nav</code>, <code>card</code>,
             <code>input</code>, <code>button</code>, <code>subtleButton</code>,
             <code>dangerButton</code>, <code>label</code>, <code>listRow</code>, <code>badge</code>.
+          </p>
+        </section>
+
+        <!-- VANILLA -->
+        <section id="vanilla">
+          <h2>No framework? No problem.</h2>
+          <p>
+            React is optional. <code>@tweaktags/vanillajs</code> gives you the same thing on any
+            site: the draggable, mobile friendly edit bar, the popup editor, and the full admin
+            panel, all in plain JavaScript. The backend is set up exactly the same way, only the
+            browser side changes.
+          </p>
+
+          <h3>Drop in a script tag</h3>
+          <p>
+            The quickest way is a CDN script. It is one self contained file that also injects its own
+            styles, so this is the whole browser side, no build step:
+          </p>
+          <div class="code" data-lang="html">
+            <div class="bar"><span>index.html</span><button class="copy">Copy</button></div>
+            <pre>&lt;<span class="tok-f">script</span> src=<span class="tok-s">"https://cdn.jsdelivr.net/npm/@tweaktags/vanillajs@1.0.0/dist/index.global.js"</span>&gt;&lt;/<span class="tok-f">script</span>&gt;
+&lt;<span class="tok-f">script</span>&gt;
+  <span class="tok-f">TweakTags</span>.<span class="tok-f">init</span>({ apiBasePath: <span class="tok-s">'/api/tweaktags'</span> });
+&lt;/<span class="tok-f">script</span>&gt;</pre>
+          </div>
+          <p>
+            unpkg works too, and its short form resolves to the script build for you:
+            <code>https://unpkg.com/@tweaktags/vanillajs@1.0.0</code>. The CDN link is automatic once
+            the package is on npm, nothing to set up. Pin a version like <code>@1.0.0</code> instead
+            of the latest so a release cannot change your site by surprise, and put the tag before
+            <code>&lt;/body&gt;</code> or add <code>defer</code> so the page is ready before it runs.
+          </p>
+
+          <h3>Or install it with npm</h3>
+          <div class="code" data-lang="js">
+            <div class="bar"><span>your bundle</span><button class="copy">Copy</button></div>
+            <pre><span class="tok-c">// npm install @tweaktags/vanillajs</span>
+<span class="tok-k">import</span> { <span class="tok-f">init</span> } <span class="tok-k">from</span> <span class="tok-s">'@tweaktags/vanillajs'</span>;
+
+<span class="tok-f">init</span>({ apiBasePath: <span class="tok-s">'/api/tweaktags'</span>, richText: <span class="tok-k">true</span>, theme: { primary: <span class="tok-s">'#16a34a'</span> } });</pre>
+          </div>
+
+          <p>
+            Mark content the same way, with <code>data-tweaktags-{tag}</code> attributes. Pass a
+            <code>theme</code> to recolor everything, or a <code>css</code> string for finer control.
+            For the full page dashboard on its own route, call
+            <code>TweakTags.mountAdmin('#admin', { apiBasePath: '/api/tweaktags' })</code> instead of
+            <code>init</code>.
           </p>
         </section>
 

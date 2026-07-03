@@ -800,14 +800,29 @@ import { init } from '@tweaktags/vanillajs';
 init({ apiBasePath: '/api/tweaktags', richText: true });
 ```
 
-Or with a plain script tag, no build step:
+Or with a plain script tag from a CDN, no build step at all. The script is one self contained file
+that also injects its own styles, so this is everything you need on the page:
 
 ```html
-<script src="https://unpkg.com/@tweaktags/vanillajs/dist/index.global.js"></script>
+<!-- jsDelivr, pinned to a version -->
+<script src="https://cdn.jsdelivr.net/npm/@tweaktags/vanillajs@1.0.0/dist/index.global.js"></script>
 <script>
   TweakTags.init({ apiBasePath: '/api/tweaktags' });
 </script>
 ```
+
+unpkg works the same way, and the short form resolves to the script build for you:
+
+```html
+<script src="https://unpkg.com/@tweaktags/vanillajs@1.0.0"></script>
+<script>
+  TweakTags.init({ apiBasePath: '/api/tweaktags', richText: true });
+</script>
+```
+
+The CDN link is automatic once the package is published to npm, there is nothing to set up. Pin a
+version like `@1.0.0` rather than using the latest, so a future release cannot change your site by
+surprise. Put the script before `</body>`, or add `defer`, so the page has loaded before it runs.
 
 Then mark content the same way, with `data-tweaktags-{tag}` attributes on your HTML. To recolor
 everything, pass a `theme`, and for finer control pass a `css` string. For a full page dashboard
