@@ -25,8 +25,8 @@ const COLORS = {
   border: '#2b2d38',
   text: '#f3f4f6',
   muted: '#9aa0ac',
-  primary: '#5b8cff',
-  primaryHover: '#7aa2ff',
+  primary: '#3b82f6',
+  primaryHover: '#60a5fa',
   danger: '#e5484d',
 };
 
@@ -718,10 +718,15 @@ export const TweakTagsEditBar = (): ReactElement => {
     </>
   );
 
-  //Signed out: a tidy vertical login card, the same on every screen size.
+  //Signed out: a compact login card. The drag handle and title sit on their own
+  //line, then the email, password, and button sit inline and wrap onto more
+  //lines on narrow screens so nothing is cramped underneath the handle.
   if (!user) {
     return (
-      <div ref={barRef} style={{ ...menuStyle, ...positionStyle }}>
+      <div
+        ref={barRef}
+        style={{ ...menuStyle, width: 'min(32rem, calc(100vw - 2rem))', ...positionStyle }}
+      >
         <div style={headerStyle}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             {dragHandle}
@@ -729,23 +734,26 @@ export const TweakTagsEditBar = (): ReactElement => {
           </span>
         </div>
 
-        <input
-          style={fullInputStyle}
-          type="email"
-          placeholder="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-        <input
-          style={fullInputStyle}
-          type="password"
-          placeholder="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-        <button style={menuButtonStyle} type="button" onClick={() => void handleLogin()}>
-          Sign in
-        </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+          <input
+            style={{ ...inputStyle, flex: '1 1 9rem', minWidth: '8rem', boxSizing: 'border-box' }}
+            type="email"
+            placeholder="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+          <input
+            style={{ ...inputStyle, flex: '1 1 9rem', minWidth: '8rem', boxSizing: 'border-box' }}
+            type="password"
+            placeholder="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <button style={buttonStyle} type="button" onClick={() => void handleLogin()}>
+            Sign in
+          </button>
+        </div>
+
         {error ? <span style={{ color: '#ff9a9a' }}>{error}</span> : null}
       </div>
     );

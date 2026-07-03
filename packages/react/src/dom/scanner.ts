@@ -9,7 +9,7 @@ import { DATA_ATTRIBUTE_PREFIX, tagFromDataAttribute } from '@tweaktags/core';
 
 //Marks elements that the Editable component already controls,
 //so the plain html crawler knows to leave them alone.
-export const MANAGED_ATTRIBUTE = 'data-tweak-managed';
+export const MANAGED_ATTRIBUTE = 'data-tweaktags-managed';
 
 //A plain html element on the page that carries a TweakTags tag.
 export interface ScannedElement {

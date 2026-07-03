@@ -22,8 +22,8 @@ export default function HomePage() {
         </Editable>
       </p>
 
-      <p data-tweak-plain-note>
-        This plain HTML paragraph has no component, only a data-tweak-plain-note attribute, and
+      <p data-tweaktags-plain-note>
+        This plain HTML paragraph has no component, only a data-tweaktags-plain-note attribute, and
         it is still editable.
       </p>
     </main>

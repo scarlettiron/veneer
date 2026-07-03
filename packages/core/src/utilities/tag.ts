@@ -32,7 +32,7 @@ export const assertValidTag = (tag: string): string => {
   return tag;
 };
 
-//Builds the html attribute name for a tag, like "data-tweak-hero-title".
+//Builds the html attribute name for a tag, like "data-tweaktags-hero-title".
 export const dataAttributeForTag = (tag: string): string => `${DATA_ATTRIBUTE_PREFIX}${tag}`;
 
 //Reads the tag name back out of a data attribute name.

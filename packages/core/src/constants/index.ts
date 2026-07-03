@@ -54,8 +54,8 @@ export const ERROR_CODES = {
 } as const;
 
 //Editable elements carry an attribute that bakes the tag name into the name itself.
-//A tag named "hero-title" becomes the attribute "data-tweak-hero-title".
-export const DATA_ATTRIBUTE_PREFIX = 'data-tweak-';
+//A tag named "hero-title" becomes the attribute "data-tweaktags-hero-title".
+export const DATA_ATTRIBUTE_PREFIX = 'data-tweaktags-';
 
 //Tag names live inside an html attribute name, so they may only use
 //lowercase letters, numbers, and single hyphens between groups.

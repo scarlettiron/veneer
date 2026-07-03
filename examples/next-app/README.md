@@ -7,7 +7,7 @@ This small app shows TweakTags working end to end with Next.js and Postgres.
 - A backend handler mounted at `app/api/tweaktags/route.ts`.
 - The provider and edit bar wired up in `app/layout.tsx`.
 - Two editable spots using the `<Editable>` component and one plain HTML element that only has a
-  `data-tweak-plain-note` attribute, in `app/page.tsx`.
+  `data-tweaktags-plain-note` attribute, in `app/page.tsx`.
 
 ## Run it
 

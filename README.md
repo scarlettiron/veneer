@@ -36,9 +36,9 @@ this kind of thing before, that is fine. Follow each step in order and copy the 
 ## How it works in plain words
 
 - A **tag** is a name for one managed spot on your site, like `hero-title` or `footer-note`.
-- You put a tag on an HTML element using an attribute named `data-tweak-{tag}`. For a tag called
-  `hero-title` the attribute is `data-tweak-hero-title`.
-- When a page loads, TweakTags **crawls it for every `data-tweak-` attribute**, loads the saved
+- You put a tag on an HTML element using an attribute named `data-tweaktags-{tag}`. For a tag called
+  `hero-title` the attribute is `data-tweaktags-hero-title`.
+- When a page loads, TweakTags **crawls it for every `data-tweaktags-` attribute**, loads the saved
   content from your database, and shows it to **all visitors**. For text elements it fills in the
   text. For an `<img>` it sets the image source.
 - It keeps watching the page, so content on pages you navigate to, and anything added later, is
@@ -67,7 +67,7 @@ production. It can reach the database and it holds your secrets.
 **Client side.** This runs in the browser, on the page your visitors see. It has no database
 access and no secrets.
 
-- Files: your pages and layout, the `data-tweak-` attributes, the provider, and the edit bar.
+- Files: your pages and layout, the `data-tweaktags-` attributes, the provider, and the edit bar.
 - Package: `@tweaktags/react` (the provider, the page scanner, the `<Editable>` component, the hooks).
 
 **Both sides.**
@@ -381,18 +381,18 @@ page itself. You can use it on its own, or alongside the in place editor on your
 _This is client side. These are the elements in your pages._
 
 Pick the spots on your site you want TweakTags to manage and give each one a tag. You do this by
-adding a `data-tweak-{tag}` attribute to any normal HTML element. That is all that is needed.
+adding a `data-tweaktags-{tag}` attribute to any normal HTML element. That is all that is needed.
 TweakTags will show the saved content there to everyone, and make it editable for signed in editors.
 
 ```tsx
 export default function HomePage() {
   return (
     <main>
-      <h1 data-tweak-hero-title>Welcome to my site</h1>
-      <p data-tweak-hero-body>This text can be edited right on the page.</p>
+      <h1 data-tweaktags-hero-title>Welcome to my site</h1>
+      <p data-tweaktags-hero-body>This text can be edited right on the page.</p>
 
       {/* On an image, TweakTags sets the src from the saved content. */}
-      <img data-tweak-hero-image src="/placeholder.png" alt="Hero" />
+      <img data-tweaktags-hero-image src="/placeholder.png" alt="Hero" />
     </main>
   );
 }
@@ -461,7 +461,7 @@ Only a superuser can create tags. An editor can only change tags that already ex
 ways for a superuser to create one.
 
 **By editing (the simple way).** When you are signed in as a superuser and you edit a
-`data-tweak-` spot that has never been saved before, that first save creates the tag in the
+`data-tweaktags-` spot that has never been saved before, that first save creates the tag in the
 database. After that, editors can change it too. So for most cases you do not need to do anything
 special, just edit and save.
 
@@ -474,7 +474,7 @@ Click it to open a panel where you can:
   and cannot be undone.
 
 This is useful when you want to set up a tag ahead of time so an editor can fill it in later. Keep
-in mind a tag only appears on a page where an element actually has that `data-tweak-{tag}`
+in mind a tag only appears on a page where an element actually has that `data-tweaktags-{tag}`
 attribute, so creating a tag here does not put anything on a page by itself. It just registers the
 tag so it exists and can be edited.
 
@@ -632,7 +632,7 @@ Run the command from the root folder of your app, the folder that has `tweaktags
 
 **I signed in but nothing is editable.**
 Make sure you clicked **Edit page** in the bar, and that the user you signed in with exists. Also
-check that your elements have a `data-tweak-` attribute with a valid tag name.
+check that your elements have a `data-tweaktags-` attribute with a valid tag name.
 
 **The secret is too short error.**
 `TWEAKTAGS_JWT_SECRET` must be at least 16 characters. Make a longer one with the command in Step 3.
@@ -642,7 +642,7 @@ Open your browser developer tools and look at the Network tab while you edit. Th
 `/api/tweaktags` will show the error message from the backend.
 
 **My saved content is not showing to visitors.**
-Check that the element's `data-tweak-` tag exactly matches the tag you saved, that the
+Check that the element's `data-tweaktags-` tag exactly matches the tag you saved, that the
 `/api/tweaktags` route is reachable (look for its request in the Network tab), and that the content
 was actually saved. Remember the text inside the element is only the fallback until something is
 saved for that tag.
@@ -689,7 +689,7 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 ```
 
-Everything else, the config file, the `data-tweak-{tag}` attributes, the cli commands, and the
+Everything else, the config file, the `data-tweaktags-{tag}` attributes, the cli commands, and the
 edit bar, is exactly the same. The crawler also keeps working as you move between pages in either
 router.
 
@@ -753,7 +753,7 @@ export function Root() {
 }
 ```
 
-Everything else is the same. Add `data-tweak-{tag}` attributes to your HTML, and content is
+Everything else is the same. Add `data-tweaktags-{tag}` attributes to your HTML, and content is
 displayed and made editable exactly as it is in Next.
 
 If you already have your own Node backend, like Express, you can skip the standalone server and
@@ -795,7 +795,7 @@ to build a new database or auth backend.
 | `@tweaktags/db-sqlite`  | Server   | The SQLite database adapter and migrations                          |
 | `@tweaktags/auth-jwt`   | Server   | Email and password login that issues secure tokens                 |
 | `@tweaktags/cli`        | Terminal | The `tweaktags` command for migrations and creating users             |
-| `@tweaktags/react`      | Browser  | The provider and page scanner that power `data-tweak-*` editing, plus an optional `<Editable>` component and hooks |
+| `@tweaktags/react`      | Browser  | The provider and page scanner that power `data-tweaktags-*` editing, plus an optional `<Editable>` component and hooks |
 | `@tweaktags/next`       | Both     | The server side route handler plus the browser side React pieces, in one package |
 
 ## More

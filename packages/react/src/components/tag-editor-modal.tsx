@@ -27,8 +27,8 @@ const SCROLLBAR_CLASS = 'tweaktags-editor-scroll';
 const scrollbarCss = `
 .${SCROLLBAR_CLASS}::-webkit-scrollbar { width: 10px; }
 .${SCROLLBAR_CLASS}::-webkit-scrollbar-track { background: #1c1c1c; }
-.${SCROLLBAR_CLASS}::-webkit-scrollbar-thumb { background: #5b8cff; border-radius: 5px; }
-.${SCROLLBAR_CLASS}::-webkit-scrollbar-thumb:hover { background: #7aa2ff; }
+.${SCROLLBAR_CLASS}::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 5px; }
+.${SCROLLBAR_CLASS}::-webkit-scrollbar-thumb:hover { background: #60a5fa; }
 `;
 
 const overlayStyle: CSSProperties = {
@@ -69,7 +69,7 @@ const bodyStyle: CSSProperties = {
   flexDirection: 'column',
   gap: '1.5rem',
   scrollbarWidth: 'thin',
-  scrollbarColor: '#5b8cff #1c1c1c',
+  scrollbarColor: '#3b82f6 #1c1c1c',
 };
 
 const rowStyle: CSSProperties = {
@@ -102,7 +102,7 @@ const buttonStyle: CSSProperties = {
   padding: '0.45rem 0.9rem',
   borderRadius: '0.35rem',
   border: 'none',
-  background: '#5b8cff',
+  background: '#3b82f6',
   color: '#fff',
   cursor: 'pointer',
 };

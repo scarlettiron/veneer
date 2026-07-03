@@ -50,7 +50,7 @@ describe('tag utilities', () => {
   it('builds and reads the data attribute', () => {
     const attribute = dataAttributeForTag('hero-title');
 
-    expect(attribute).toBe('data-tweak-hero-title');
+    expect(attribute).toBe('data-tweaktags-hero-title');
     expect(tagFromDataAttribute(attribute)).toBe('hero-title');
     expect(tagFromDataAttribute('class')).toBeNull();
     expect(tagFromDataAttribute('data-other-thing')).toBeNull();

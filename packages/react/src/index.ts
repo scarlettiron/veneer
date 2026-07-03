@@ -12,7 +12,12 @@ export { Editable } from './components/editable.js';
 export type { EditableProps } from './components/editable.js';
 
 export { TweakTagsEditBar } from './components/edit-bar.js';
-export { TweakTagsAdminPanel } from './components/admin-panel.js';
+export { TweakTagsAdminPanel, DEFAULT_ADMIN_THEME } from './components/admin-panel.js';
+export type {
+  TweakTagsAdminPanelProps,
+  AdminTheme,
+  AdminPanelStyles,
+} from './components/admin-panel.js';
 export { DefaultLoader } from './components/default-loader.js';
 export { ToastHost } from './components/toast-host.js';
 export type { Toast } from './components/toast-host.js';

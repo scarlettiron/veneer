@@ -16,8 +16,8 @@
         --border: #2b2d38;
         --text: #f3f4f6;
         --muted: #9aa0ac;
-        --primary: #5b8cff;
-        --primary-hover: #7aa2ff;
+        --primary: #3b82f6;
+        --primary-hover: #60a5fa;
         --danger: #e5484d;
         --code-bg: #0b0c10;
         --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -87,8 +87,8 @@
         width: 1.5rem;
         height: 1.5rem;
         border-radius: 0.45rem;
-        background: linear-gradient(135deg, var(--primary), #8f6bff);
-        box-shadow: 0 4px 14px rgba(91, 140, 255, 0.5);
+        background: linear-gradient(135deg, var(--primary), #60a5fa);
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.5);
       }
 
       header.site .links {
@@ -268,7 +268,7 @@
         color: #6b7280;
       } /* comment */
       .tok-k {
-        color: #c792ea;
+        color: #38bdf8;
       } /* keyword */
       .tok-s {
         color: #98c379;
@@ -656,10 +656,10 @@
         <section id="overview">
           <h1>Edit your site, right on the page.</h1>
           <p class="lede">
-            TweakTags is a lightweight, npm installable <strong>edit in place content layer</strong> for
-            otherwise static React and Next sites. Mark any HTML with a
-            <code>data-tweak-*</code> attribute, and signed in editors can change that content
-            directly on the live page. Everyone else just sees the saved content.
+            TweakTags lets you change the words and images on your site without leaving the page.
+            Drop a <code>data-tweaktags-*</code> attribute on any element, and the people you trust
+            can click in and edit it live. Everyone else just sees the finished content. It installs
+            from npm and drops into any React or Next app.
           </p>
 
           <div class="pill-row">
@@ -674,18 +674,19 @@
 
           <h3>How it works</h3>
           <p>
-            A small browser crawler finds every element with a <code>data-tweak-</code> attribute,
-            fills it with the content saved in your database, and shows it to all visitors. When a
-            signed in editor turns on edit mode, those same elements become editable in place, or
-            through a form, or through a full admin panel. A framework agnostic server handler and a
-            CLI take care of the database and the initial setup.
+            When a page loads, TweakTags looks for your <code>data-tweaktags-</code> attributes and
+            fills each one with whatever is saved in your database, so every visitor sees the latest
+            content. Sign in, flip on edit mode, and those same spots open up for editing, right on
+            the page, in a popup form, or from a full admin panel, whichever you like. The database
+            work happens on the server through a small handler and a CLI, and none of it ever reaches
+            the browser.
           </p>
         </section>
 
         <!-- INSTALL -->
         <section id="install">
           <h2>Install</h2>
-          <p>For a Next.js app using Postgres, this is everything you need:</p>
+          <p>Here is everything a Next.js app on Postgres needs to get going:</p>
 
           <div class="code" data-lang="bash">
             <div class="bar"><span>terminal</span><button class="copy">Copy</button></div>
@@ -717,9 +718,9 @@ npm install @tweaktags/db-sqlite     <span class="tok-c"># SQLite</span></pre>
 
           <h3>1. Configure TweakTags</h3>
           <p>
-            Create a <code>tweaktags.config.ts</code> at the root of your app. It is the single source
-            of truth for your database and auth. Secrets come from the environment, so nothing
-            sensitive is committed.
+            Create a <code>tweaktags.config.ts</code> in your project root. This one file is the
+            source of truth for your database and auth. Pull your secrets from the environment so you
+            never commit them.
           </p>
           <div class="code" data-lang="ts">
             <div class="bar"><span>tweaktags.config.ts</span><button class="copy">Copy</button></div>
@@ -781,11 +782,11 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
           </div>
 
           <h3>5. Mark content as editable</h3>
-          <p>Add a <code>data-tweak-{tag}</code> attribute to any element. That is it.</p>
+          <p>Add a <code>data-tweaktags-{tag}</code> attribute to any element. That is it.</p>
           <div class="code" data-lang="tsx">
             <div class="bar"><span>anywhere in your app</span><button class="copy">Copy</button></div>
-            <pre>&lt;h1 data-tweak-hero-title&gt;Welcome to my site&lt;/h1&gt;
-&lt;p data-tweak-hero-subtitle&gt;The default text lives right here&lt;/p&gt;</pre>
+            <pre>&lt;h1 data-tweaktags-hero-title&gt;Welcome to my site&lt;/h1&gt;
+&lt;p data-tweaktags-hero-subtitle&gt;The default text lives right here&lt;/p&gt;</pre>
           </div>
           <p>
             Sign in through the edit bar, turn on <strong>Edit page</strong>, and change the text in
@@ -796,7 +797,10 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
         <!-- MODES -->
         <section id="modes">
           <h2>Three ways to edit</h2>
-          <p>Pick the editing style that fits your site. All three use the same server and data.</p>
+          <p>
+            Everyone works differently, so TweakTags gives you three ways to edit. They all talk to
+            the same server and the same data, so you can even mix them.
+          </p>
           <table>
             <thead>
               <tr>
@@ -829,9 +833,10 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
         <section id="toolbar">
           <h2>The edit bar &amp; toolbar</h2>
           <p>
-            The <code>TweakTagsEditBar</code> floats in the corner. Signed out it is a small login card.
-            Signed in it becomes a toolbar to save, close, manage tags, and get help. You can drag it
-            anywhere by the grip. When you edit a rich text tag, a formatting toolbar floats above it.
+            The <code>TweakTagsEditBar</code> tucks into the corner of the page. Signed out, it is
+            just a small login card. Once you sign in, it turns into a toolbar for saving, closing,
+            managing tags, and pulling up help, and you can drag it out of your way by the grip. Edit
+            a rich text tag and a little formatting toolbar pops up right above it.
           </p>
 
           <div class="stage">
@@ -868,11 +873,13 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
           <div class="stage">
             <span class="tag">Live preview &middot; login card</span>
             <div class="canvas">
-              <div class="v-card v-font">
+              <div class="v-card v-font" style="width: min(30rem, 100%)">
                 <div class="head"><span class="v-grip"></span> Sign in to edit</div>
-                <input class="v-input" type="email" placeholder="email" />
-                <input class="v-input" type="password" placeholder="password" />
-                <button class="v-btn" style="width: 100%">Sign in</button>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center">
+                  <input class="v-input" type="email" placeholder="email" style="flex: 1 1 9rem; min-width: 8rem; width: auto" />
+                  <input class="v-input" type="password" placeholder="password" style="flex: 1 1 9rem; min-width: 8rem; width: auto" />
+                  <button class="v-btn">Sign in</button>
+                </div>
               </div>
             </div>
           </div>
@@ -882,9 +889,11 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
         <section id="popup">
           <h2>The popup editor</h2>
           <p>
-            With <code>editInView: false</code>, clicking <strong>Edit page</strong> opens a scrollable
-            popup that lists every tag with labeled inputs, prefilled with the saved content. Change
-            what you want and save it all at once.
+            Prefer a form? Set <code>editInView: false</code> and <strong>Edit page</strong> opens a
+            scrollable popup instead. It lists every tag with a labeled input, already filled in with
+            what is saved, so you can run down the list, change what you need, and save it all in one
+            go. Handy when the editable spots are fiddly to click, or when you just want to see
+            everything in one place.
           </p>
 
           <div class="stage">
@@ -924,9 +933,10 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
         <section id="admin">
           <h2>The full page admin panel</h2>
           <p>
-            Render <code>&lt;TweakTagsAdminPanel /&gt;</code> on a dedicated route for a traditional
-            dashboard. It has a full page login, and tabs to view, create, and edit tags. Both the
-            view and edit lists have their own search and pagination.
+            If you would rather manage content away from the live site, drop
+            <code>&lt;TweakTagsAdminPanel /&gt;</code> on its own route and you get a proper dashboard:
+            a full page login, then tabs to view, create, and edit your tags. The view and edit lists
+            each come with their own search and pagination, so big sites stay easy to get around.
           </p>
 
           <div class="code" data-lang="tsx">
@@ -980,15 +990,50 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
               </div>
             </div>
           </div>
+
+          <h3>Theming and custom CSS</h3>
+          <p>
+            Out of the box the panel wears a dark look with a vibrant blue accent. Want your own
+            colors? Pass a <code>theme</code> with any of the tokens below. Need to go further? Pass
+            <code>styles</code> to restyle individual parts with your own CSS. Skip anything you do
+            not care about and it keeps our default, so you only write the bits you actually want to
+            change. There is also a <code>className</code> on the root if you would rather reach for a
+            stylesheet.
+          </p>
+          <div class="code" data-lang="tsx">
+            <div class="bar"><span>app/admin/page.tsx</span><button class="copy">Copy</button></div>
+            <pre>&lt;<span class="tok-f">TweakTagsAdminPanel</span>
+  <span class="tok-c">// recolor everything from a few tokens</span>
+  theme={{ primary: <span class="tok-s">'#16a34a'</span>, bg: <span class="tok-s">'#0b0f0c'</span> }}
+  <span class="tok-c">// override just the parts you want, the rest stay default</span>
+  styles={{
+    card: { borderRadius: <span class="tok-s">'1rem'</span> },
+    button: { textTransform: <span class="tok-s">'uppercase'</span> },
+  }}
+  className=<span class="tok-s">"my-admin"</span>
+/&gt;</pre>
+          </div>
+          <p>
+            <strong>Theme tokens:</strong> <code>bg</code>, <code>surface</code>,
+            <code>surfaceRaised</code>, <code>border</code>, <code>text</code>, <code>muted</code>,
+            <code>primary</code>, <code>primaryHover</code>, <code>danger</code>, <code>font</code>.
+          </p>
+          <p>
+            <strong>Style parts:</strong> <code>page</code>, <code>loginCard</code>,
+            <code>shell</code>, <code>topbar</code>, <code>nav</code>, <code>card</code>,
+            <code>input</code>, <code>button</code>, <code>subtleButton</code>,
+            <code>dangerButton</code>, <code>label</code>, <code>listRow</code>, <code>badge</code>.
+          </p>
         </section>
 
         <!-- DATABASES -->
         <section id="databases">
           <h2>Databases</h2>
           <p>
-            Postgres ships with the server. For the others, install the matching adapter package and
-            set the provider in your config. The <code>migrate</code> and <code>create-superuser</code>
-            commands work the same on all of them.
+            Postgres comes bundled with the server, so it needs nothing extra. For anything else,
+            add the matching adapter package and point your config at it. Either way,
+            <code>migrate</code> and <code>create-superuser</code> behave exactly the same, so you can
+            switch databases without relearning anything.
           </p>
           <table>
             <thead>
@@ -1070,7 +1115,10 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
         <!-- SECURITY -->
         <section id="security">
           <h2>Security</h2>
-          <p>TweakTags takes auth seriously out of the box:</p>
+          <p>
+            Auth is the part you do not want to get wrong, so TweakTags handles the fiddly bits for
+            you, right out of the box:
+          </p>
           <ul style="max-width: 46rem; color: var(--muted)">
             <li>Passwords are hashed with bcrypt before they are stored.</li>
             <li>
