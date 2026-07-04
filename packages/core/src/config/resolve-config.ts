@@ -60,6 +60,16 @@ export const resolveConfig = (input: TweakTagsUserConfig): TweakTagsConfig => {
     throw badRequest('The auth config needs a jwtSecret of at least 16 characters');
   }
 
+  if (input.storage) {
+    if (input.storage.provider !== 's3') {
+      throw badRequest("The storage provider must be 's3', which also covers S3 compatible stores");
+    }
+
+    if (!input.storage.bucket) {
+      throw badRequest('The storage config needs a bucket name');
+    }
+  }
+
   return {
     mode: input.mode ?? DEFAULT_MODE,
     editInView: input.editInView ?? DEFAULT_EDIT_IN_VIEW,
@@ -81,6 +91,7 @@ export const resolveConfig = (input: TweakTagsUserConfig): TweakTagsConfig => {
       cookieSameSite: input.auth.cookieSameSite ?? 'lax',
     },
     cors: input.cors,
+    storage: input.storage,
     //The tenant is validated now so a bad value fails at startup, not per request.
     tenant: assertValidTenant(input.tenant ?? DEFAULT_TENANT),
     resolveTenant: input.resolveTenant,

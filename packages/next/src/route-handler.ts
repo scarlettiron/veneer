@@ -80,9 +80,14 @@ export const createTweakTagsRouteHandler = (
 
       //Decide the tenant on the server, from the config or the request host,
       //so the client can never choose which site's tags it touches.
+      const headerRecord: Record<string, string> = {};
+      request.headers.forEach((value, key) => {
+        headerRecord[key] = value;
+      });
+
       tweaktagsRequest.tenant = resolveTenant(resolved, {
         host: request.headers.get('host') ?? undefined,
-        headers: Object.fromEntries(request.headers.entries()),
+        headers: headerRecord,
       });
 
       //Block cross site request forgery on the actions that change data.

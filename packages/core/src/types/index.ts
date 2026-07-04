@@ -152,6 +152,37 @@ export interface ResolvedAuthConfig {
   cookieSameSite: 'strict' | 'lax' | 'none';
 }
 
+//Where uploaded media files are stored. Optional, so media can always just be a
+//url the user pastes in. When set, editors get an upload button, and the server
+//hands out a short lived presigned url so the browser uploads straight to the
+//store. Provider 's3' also covers any S3 compatible store, like Cloudflare R2,
+//DigitalOcean Spaces, Backblaze B2, or MinIO, by setting an endpoint.
+export interface StorageConfig {
+  provider: 's3';
+  bucket: string;
+  region?: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  //A custom endpoint for an S3 compatible store. Leave out for AWS S3.
+  endpoint?: string;
+  //Use path style urls, needed by some S3 compatible stores like MinIO.
+  forcePathStyle?: boolean;
+  //A cdn or custom domain in front of the bucket, used to build the public url.
+  publicBaseUrl?: string;
+  //An optional prefix added to every stored key, like 'uploads/'.
+  keyPrefix?: string;
+}
+
+//The presigned target the server hands back for one upload.
+export interface UploadTarget {
+  //The presigned url the browser uploads the file to with a PUT.
+  uploadUrl: string;
+  //The final public url to save as the media tag's content.
+  publicUrl: string;
+  //Headers the browser must send on the PUT, like the content type.
+  headers?: Record<string, string>;
+}
+
 //What the tenant resolver is given to work out the tenant for a request.
 //It carries the request host and headers, so one shared server can map a domain
 //to a tenant.
@@ -181,6 +212,9 @@ export interface TweakTagsUserConfig {
   auth: AuthConfig;
   cors?: CorsConfig;
 
+  //Optional storage for media uploads. Leave it out to only allow media urls.
+  storage?: StorageConfig;
+
   //The tenant this site's content belongs to, for sharing one database across
   //several sites. Tags are scoped to it, so a site only sees and edits its own.
   //Defaults to 'default'.
@@ -201,6 +235,9 @@ export interface TweakTagsConfig {
   database: DatabaseConfig;
   auth: ResolvedAuthConfig;
   cors?: CorsConfig;
+
+  //Optional storage for media uploads.
+  storage?: StorageConfig;
 
   //The default tenant for this server. Always set after resolving the config.
   tenant: string;

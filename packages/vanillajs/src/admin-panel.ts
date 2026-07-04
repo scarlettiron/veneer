@@ -9,6 +9,7 @@ import { ROLES, isValidTag, type ContentRecord, type TagType, type TweakTagsEngi
 
 import { clear, el, type Child } from './dom.js';
 import { applyScope, type TweakTagsTheme } from './theme.js';
+import { uploadButton } from './upload.js';
 import type { ConfirmFn } from './confirm.js';
 
 const PAGE_SIZE = 10;
@@ -219,6 +220,18 @@ export const mountAdminPanel = (
 
     button.addEventListener('click', () => void handleCreate());
 
+    //An upload button for the starting content, shown only when the new tag is a
+    //media tag. Media tags need rich text on, so newType exists in that case.
+    const upload = newType ? uploadButton(engine, (url) => (newContent.value = url)) : null;
+
+    if (upload && newType) {
+      const syncUpload = (): void => {
+        upload.style.display = newType.value === 'media' ? '' : 'none';
+      };
+      syncUpload();
+      newType.addEventListener('change', syncUpload);
+    }
+
     const field = (labelText: string, control: HTMLElement): HTMLElement =>
       el('div', { class: 'tt-field' }, [el('label', { class: 'tt-label', text: labelText }), control]);
 
@@ -228,8 +241,13 @@ export const mountAdminPanel = (
       kids.push(field('Type', newType));
     }
 
+    kids.push(field('Starting content (optional)', newContent));
+
+    if (upload) {
+      kids.push(upload);
+    }
+
     kids.push(
-      field('Starting content (optional)', newContent),
       button,
       error,
       el('span', { class: 'tt-hint', text: 'A tag only shows on a page where an element has its data-tweaktags- attribute.' }),
@@ -295,10 +313,16 @@ export const mountAdminPanel = (
       const fieldKids: Child[] = [];
 
       if (entry.type === 'media') {
-        const input = el('input', { class: 'tt-input', type: 'text', placeholder: 'https://...', value: initialMedia });
+        const input = el('input', { class: 'tt-input', type: 'text', placeholder: 'https://... or upload a file', value: initialMedia });
         getBody = () => initialBody;
         getMedia = () => (input.value.trim() === '' ? null : input.value);
         fieldKids.push(el('label', { class: 'tt-label', text: 'Media URL' }), input);
+        const upload = uploadButton(engine, (url) => {
+          input.value = url;
+        });
+        if (upload) {
+          fieldKids.push(upload);
+        }
       } else if (entry.type === 'rich') {
         const editor = el('div', { class: 'tt-input', html: initialBody, style: { minHeight: '4rem' } });
         editor.setAttribute('contenteditable', 'true');

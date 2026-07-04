@@ -13,6 +13,7 @@ import { ROLES, isValidTag, type ContentRecord, type TagType } from '@tweaktags/
 import { useTweakTags } from '../hooks/use-tweaktags.js';
 import { Spinner } from './spinner.js';
 import { RichTextEditor } from './rich-text-editor.js';
+import { UploadButton } from './upload-button.js';
 
 //How many tags to show on one page of a list.
 const PAGE_SIZE = 10;
@@ -502,6 +503,7 @@ const CreateTab = ({ onCreated }: { onCreated: () => Promise<void> }): ReactElem
           value={newContent}
           onChange={(event) => setNewContent(event.target.value)}
         />
+        {newType === 'media' ? <UploadButton onUploaded={(url) => setNewContent(url)} /> : null}
       </div>
 
       <button
@@ -762,10 +764,11 @@ const EditTab = ({
                         <input
                           style={s.input}
                           type="text"
-                          placeholder="https://..."
+                          placeholder="https://... or upload a file"
                           value={draft.mediaUrl}
                           onChange={(event) => setField('mediaUrl', event.target.value)}
                         />
+                        <UploadButton onUploaded={(url) => setField('mediaUrl', url)} />
                         {draft.mediaUrl ? (
                           <img
                             src={draft.mediaUrl}

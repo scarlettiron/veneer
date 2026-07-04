@@ -186,3 +186,33 @@ describe('resolveConfig tenants', () => {
     expect(() => resolveConfig({ ...baseConfig, tenant: 'not a tenant!' })).toThrow();
   });
 });
+
+describe('resolveConfig storage', () => {
+  it('keeps a valid storage config', () => {
+    const resolved = resolveConfig({
+      ...baseConfig,
+      storage: { provider: 's3', bucket: 'my-bucket', region: 'us-east-1' },
+    });
+
+    expect(resolved.storage?.bucket).toBe('my-bucket');
+  });
+
+  it('leaves storage undefined when not given', () => {
+    expect(resolveConfig(baseConfig).storage).toBeUndefined();
+  });
+
+  it('rejects a storage config with no bucket', () => {
+    expect(() =>
+      resolveConfig({ ...baseConfig, storage: { provider: 's3' } as { provider: 's3'; bucket: string } }),
+    ).toThrow();
+  });
+
+  it('rejects an unknown storage provider', () => {
+    expect(() =>
+      resolveConfig({
+        ...baseConfig,
+        storage: { provider: 'gcs' as 's3', bucket: 'b' },
+      }),
+    ).toThrow();
+  });
+});

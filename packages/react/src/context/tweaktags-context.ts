@@ -28,6 +28,9 @@ export interface TweakTagsContextValue {
   //Whether the rich text editor and tag types are turned on.
   richText: boolean;
 
+  //Whether the media upload button is turned on.
+  mediaUpload: boolean;
+
   //Whether the current user is allowed to edit.
   canEdit: boolean;
 
@@ -66,6 +69,10 @@ export interface TweakTagsContextValue {
   //Loads the content records for a set of tags and returns them.
   //Also updates the shared cache. Used by the popup editor.
   loadContent: (tags: string[]) => Promise<ContentRecord[]>;
+
+  //Uploads a media file and returns the public url to save. Needs storage on
+  //the server and the mediaUpload option on the client.
+  uploadMedia: (file: File) => Promise<string>;
 
   //True when there are edits on the page that have not been saved yet.
   hasUnsavedChanges: boolean;

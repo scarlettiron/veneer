@@ -18,6 +18,11 @@ export interface EngineOptions {
   //Turns on the rich text editor and tag types. Defaults to false.
   richText?: boolean;
 
+  //Turns on the upload button for media tags. The server must have storage
+  //configured for uploads to work. Defaults to false, which allows media urls
+  //to be pasted in but shows no upload button.
+  mediaUpload?: boolean;
+
   //How the login token is kept. 'cookie' relies on a secure httpOnly cookie set
   //by the server. 'header' keeps the token in the browser and sends it as a
   //bearer header. Must match your server config. Defaults to 'cookie'.
@@ -35,6 +40,7 @@ export interface EngineState {
   canEdit: boolean;
   editInView: boolean;
   richText: boolean;
+  mediaUpload: boolean;
   hasUnsavedChanges: boolean;
 }
 

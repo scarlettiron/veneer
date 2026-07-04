@@ -40,6 +40,10 @@ export interface TweakTagsProviderProps {
   //Turns on the rich text editor and tag types. Defaults to false.
   richText?: boolean;
 
+  //Turns on the upload button for media tags. The server must have storage
+  //configured for uploads to work. Defaults to false.
+  mediaUpload?: boolean;
+
   //How the login token is kept. 'cookie' relies on a secure httpOnly cookie set
   //by the server, which is the safest option. 'header' stores the token in the
   //browser and sends it as a bearer header, needed for a separate app on another
@@ -64,6 +68,7 @@ export const TweakTagsProvider = ({
   apiBasePath = DEFAULT_API_BASE_PATH,
   editInView = true,
   richText = false,
+  mediaUpload = false,
   tokenStorage = 'cookie',
   csrfCookieName = 'tweaktags_csrf',
   loadingComponent,
@@ -76,6 +81,7 @@ export const TweakTagsProvider = ({
       apiBasePath,
       editInView,
       richText,
+      mediaUpload,
       tokenStorage,
       csrfCookieName,
     });
@@ -161,6 +167,7 @@ export const TweakTagsProvider = ({
       setTagType: (tag: string, type: TagType) => engine.setTagType(tag, type),
       listTags: () => engine.listTags(),
       loadContent: (tags: string[]) => engine.loadContent(tags),
+      uploadMedia: (file: File) => engine.uploadMedia(file),
       saveEdits: () => engine.saveEdits(),
       discardEdits: () => engine.discardEdits(),
       notify: (message: string, type: 'success' | 'error') => engine.notify(message, type),
@@ -175,6 +182,7 @@ export const TweakTagsProvider = ({
       isEditing: engine.isEditing,
       editInView: engine.editInView,
       richText: engine.richText,
+      mediaUpload: engine.mediaUpload,
       canEdit: engine.canEdit,
       hasUnsavedChanges: engine.hasUnsavedChanges,
       ...actions,

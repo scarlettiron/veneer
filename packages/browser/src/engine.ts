@@ -12,6 +12,7 @@ import {
   type AuthUser,
   type ContentRecord,
   type TagType,
+  type UploadTarget,
 } from '@tweaktags/core';
 
 import { createApiClient, type ApiClient } from './api-client.js';
@@ -51,6 +52,7 @@ export class TweakTagsEngine {
 
   private readonly _editInView: boolean;
   private readonly _richText: boolean;
+  private readonly _mediaUpload: boolean;
 
   private _user: AuthUser | null = null;
   private _isEditing = false;
@@ -107,6 +109,7 @@ export class TweakTagsEngine {
     this.apiBasePath = options.apiBasePath ?? DEFAULT_API_BASE_PATH;
     this._editInView = options.editInView ?? true;
     this._richText = options.richText ?? false;
+    this._mediaUpload = options.mediaUpload ?? false;
     this.tokenStorage = options.tokenStorage ?? 'cookie';
     this.csrfCookieName = options.csrfCookieName ?? 'tweaktags_csrf';
 
@@ -140,6 +143,10 @@ export class TweakTagsEngine {
     return this._richText;
   }
 
+  public get mediaUpload(): boolean {
+    return this._mediaUpload;
+  }
+
   public get canEdit(): boolean {
     return this._user !== null;
   }
@@ -156,6 +163,7 @@ export class TweakTagsEngine {
       canEdit: this.canEdit,
       editInView: this._editInView,
       richText: this._richText,
+      mediaUpload: this._mediaUpload,
       hasUnsavedChanges: this._hasUnsavedChanges,
     };
   }
@@ -334,6 +342,29 @@ export class TweakTagsEngine {
     this.emitChange();
 
     return result.content;
+  }
+
+  //Uploads a media file and returns the public url to save as a media tag's
+  //content. The server signs a short lived upload url, and the file goes straight
+  //from the browser to the store, never through the TweakTags server. The caller
+  //then saves the returned url like any other media url.
+  public async uploadMedia(file: File): Promise<string> {
+    const target = await this.api.request<UploadTarget>(ACTIONS.SIGN_UPLOAD, {
+      filename: file.name,
+      contentType: file.type || 'application/octet-stream',
+    });
+
+    const response = await fetch(target.uploadUrl, {
+      method: 'PUT',
+      headers: target.headers ?? {},
+      body: file,
+    });
+
+    if (!response.ok) {
+      throw new Error('The file could not be uploaded to storage.');
+    }
+
+    return target.publicUrl;
   }
 
   //Puts the saved content into one element for display. Media tags set a url,

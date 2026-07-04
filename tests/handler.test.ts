@@ -20,6 +20,7 @@ import {
   type CreateUserInput,
   type DbAdapter,
   type RefreshTokenRecord,
+  type StorageAdapter,
   type StoredUser,
   type TagType,
   type TweakTagsConfig,
@@ -205,6 +206,18 @@ const fakeAuth: AuthAdapter = {
   },
   async createUser() {
     return { userId: '1', role: 'superuser' };
+  },
+};
+
+//A fake storage adapter that echoes the key back in the urls, so tests can check
+//the key is namespaced by tenant.
+const fakeStorage: StorageAdapter = {
+  async createUploadUrl({ key, contentType }) {
+    return {
+      uploadUrl: `https://s3.test/upload/${key}`,
+      publicUrl: `https://cdn.test/${key}`,
+      headers: { 'Content-Type': contentType },
+    };
   },
 };
 
@@ -630,6 +643,44 @@ describe('request handler', () => {
       const response = await handle({ action: ACTIONS.GET_CONTENT, payload: { tags: ['hero'] } });
 
       expect((response.body.content as ContentRecord[]).length).toBe(1);
+    });
+  });
+
+  describe('media uploads', () => {
+    it('rejects an upload when no storage is set up', async () => {
+      const response = await handle({
+        action: ACTIONS.SIGN_UPLOAD,
+        payload: { filename: 'a.png', contentType: 'image/png' },
+        authToken: 'super',
+      });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('requires a signed in user to sign an upload', async () => {
+      const withStorage = createHandler({ db, auth: fakeAuth, storage: fakeStorage, config: {} as TweakTagsConfig });
+
+      const response = await withStorage({
+        action: ACTIONS.SIGN_UPLOAD,
+        payload: { filename: 'a.png', contentType: 'image/png' },
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('signs an upload and namespaces the key by tenant', async () => {
+      const withStorage = createHandler({ db, auth: fakeAuth, storage: fakeStorage, config: {} as TweakTagsConfig });
+
+      const response = await withStorage({
+        action: ACTIONS.SIGN_UPLOAD,
+        payload: { filename: 'hero.png', contentType: 'image/png' },
+        authToken: 'super',
+        tenant: 'drystrip',
+      });
+
+      expect(response.status).toBe(200);
+      expect(String(response.body.uploadUrl)).toContain('drystrip/');
+      expect(String(response.body.publicUrl)).toContain('drystrip/');
     });
   });
 });

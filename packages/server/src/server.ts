@@ -21,7 +21,7 @@ import {
 } from '@tweaktags/core';
 import { loadConfig, type LoadConfigOptions } from '@tweaktags/core/loader';
 
-import { buildAuthAdapter, buildDbAdapter } from './adapters/select-adapters.js';
+import { buildAuthAdapter, buildDbAdapter, buildStorageAdapter } from './adapters/select-adapters.js';
 import { readBearerToken, readJsonBody, toTweakTagsRequest } from './utilities/http.js';
 import { applyCors } from './utilities/cors.js';
 import { parseCookies, resolveAuthCookie } from './utilities/cookies.js';
@@ -61,7 +61,8 @@ const sendJson = (res: ServerResponse, status: number, body: unknown): void => {
 export const createTweakTagsServer = (config: TweakTagsConfig): TweakTagsServer => {
   const db = buildDbAdapter(config);
   const auth = buildAuthAdapter(config, db);
-  const handle = createHandler({ db, auth, config });
+  const storage = buildStorageAdapter(config);
+  const handle = createHandler({ db, auth, storage, config });
 
   const nodeHandler: NodeRequestHandler = async (req, res) => {
     //Add cross origin headers when configured. This also answers the browser's

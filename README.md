@@ -536,6 +536,7 @@ These are the settings you can put in `tweaktags.config.ts`.
 | `cors.origins`            | no       | Allowed origins when the server runs separately. A list of urls, or `'*'`. |
 | `tenant`                  | no       | The site this server's tags belong to, for sharing one database across many sites. Defaults to `'default'`. See [Multi-tenant](#multi-tenant-one-database-many-sites). |
 | `resolveTenant`           | no       | A function `({ host }) => string` to pick the tenant per request, for one server that serves many domains. |
+| `storage`                 | no       | Where media uploads go. Leave it out to only allow pasted media urls. See [Media uploads](#media-uploads). |
 
 ## Multi-tenant, one database, many sites
 
@@ -579,6 +580,63 @@ Notes:
   tenant, and the migration backfills old rows to `'default'`.
 - The CLI works within your config's tenant. Use `npx tweaktags list-tags --tenant other` to inspect
   another tenant in the shared database.
+
+## Media uploads
+
+A media tag holds an image url. By default you paste that url in. If you would rather upload files,
+point TweakTags at an S3 bucket (or any S3 compatible store) and editors get an **Upload a file**
+button next to the url box. You choose: paste a url, or upload.
+
+The nice part is TweakTags never handles the file bytes. The server hands the browser a short lived
+presigned url, and the file goes **straight from the browser to your bucket**. TweakTags only signs.
+
+**1. Install the storage adapter** in your app:
+
+```sh
+npm install @tweaktags/storage-s3
+```
+
+**2. Add a `storage` block to your config.** Keep the keys in your environment, like your other
+secrets.
+
+```ts
+export default defineConfig({
+  database: { provider: 'postgres', connectionString: process.env.DATABASE_URL },
+  auth: { provider: 'jwt', jwtSecret: process.env.TWEAKTAGS_JWT_SECRET },
+  storage: {
+    provider: 's3',
+    bucket: process.env.S3_BUCKET,
+    region: process.env.S3_REGION,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    //Optional, for Cloudflare R2, DigitalOcean Spaces, Backblaze B2, MinIO:
+    endpoint: process.env.S3_ENDPOINT,
+    //Optional, a cdn or custom domain in front of the bucket:
+    publicBaseUrl: process.env.S3_PUBLIC_BASE_URL,
+  },
+});
+```
+
+The same adapter works for **Amazon S3, Cloudflare R2, DigitalOcean Spaces, Backblaze B2, and
+MinIO**. Set `endpoint` for anything other than AWS.
+
+**3. Turn on the button on the client** by adding `mediaUpload` where you set up the provider:
+
+```tsx
+<TweakTagsProvider apiBasePath="/api/tweaktags" richText mediaUpload>
+```
+
+For the vanilla build, pass it to `init`: `TweakTags.init({ apiBasePath: '/api/tweaktags', mediaUpload: true })`.
+
+Two things to set on the bucket, both one time:
+
+- **CORS**: allow a `PUT` from your site's origin, since the browser uploads directly. In S3, add a
+  CORS rule permitting the `PUT` method from your domain.
+- **Public read**: uploaded files must be readable at their url, so either make the bucket or the
+  key prefix public, or put a cdn in front and set `publicBaseUrl`.
+
+Uploads are namespaced by tenant, so in a multi-tenant setup each site's uploads stay separate. If
+you skip storage entirely, media still works, you just paste urls.
 
 ## Sessions and security
 
@@ -885,6 +943,7 @@ of `init`.
 | `@tweaktags/db-mariadb` | Server   | A thin alias that installs and re-exports `@tweaktags/db-mysql` for MariaDB |
 | `@tweaktags/db-sqlite`  | Server   | The SQLite database adapter and migrations                          |
 | `@tweaktags/auth-jwt`   | Server   | Email and password login that issues secure tokens                 |
+| `@tweaktags/storage-s3` | Server   | Optional media uploads to S3 or any S3 compatible store, using presigned uploads |
 | `@tweaktags/cli`        | Terminal | The `tweaktags` command for migrations and creating users             |
 | `@tweaktags/browser`    | Browser  | The framework agnostic engine that crawls the page, loads content, and runs editing. Both the React and vanilla UIs sit on top of it |
 | `@tweaktags/react`      | Browser  | The provider and page scanner that power `data-tweaktags-*` editing, plus an optional `<Editable>` component and hooks |

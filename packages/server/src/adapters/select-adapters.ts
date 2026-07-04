@@ -9,7 +9,14 @@ import { createRequire } from 'node:module';
 
 import { JwtAuthAdapter } from '@tweaktags/auth-jwt';
 import { PostgresAdapter } from '@tweaktags/db-postgres';
-import { badRequest, type AuthAdapter, type DbAdapter, type TweakTagsConfig } from '@tweaktags/core';
+import {
+  badRequest,
+  type AuthAdapter,
+  type DbAdapter,
+  type StorageAdapter,
+  type StorageConfig,
+  type TweakTagsConfig,
+} from '@tweaktags/core';
 
 //Lets us load an optional adapter package by name at runtime, so a project only
 //needs to install the database package it actually uses.
@@ -27,8 +34,8 @@ const loadAdapter = (
     return requirePackage(packageName) as Record<string, unknown>;
   } catch {
     throw badRequest(
-      `The "${installName}" package is needed for the "${provider}" database. ` +
-        `Install it in your project to use this database.`,
+      `The "${installName}" package is needed for "${provider}". ` +
+        `Install it in your project to use this feature.`,
     );
   }
 };
@@ -63,6 +70,26 @@ export const buildDbAdapter = (config: TweakTagsConfig): DbAdapter => {
   }
 
   throw badRequest(`Unsupported database provider "${String(provider)}"`);
+};
+
+//Builds the storage adapter when media uploads are configured, or returns
+//undefined when they are not. The S3 package is loaded only when it is used, so
+//projects that only paste media urls never need to install it.
+export const buildStorageAdapter = (config: TweakTagsConfig): StorageAdapter | undefined => {
+  if (!config.storage) {
+    return undefined;
+  }
+
+  const provider = config.storage.provider;
+
+  if (provider === 's3') {
+    const module = loadAdapter('@tweaktags/storage-s3', `${provider} storage`);
+    const S3StorageAdapter = module.S3StorageAdapter as new (config: StorageConfig) => StorageAdapter;
+
+    return new S3StorageAdapter(config.storage);
+  }
+
+  throw badRequest(`Unsupported storage provider "${String(provider)}"`);
 };
 
 //Builds the auth adapter that matches the config provider.

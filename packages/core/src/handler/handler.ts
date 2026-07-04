@@ -8,6 +8,7 @@
 import { ACTIONS, DEFAULT_TENANT, ROLES, TAG_TYPES } from '../constants/index.js';
 import type { AuthAdapter } from '../adapters/auth-adapter.js';
 import type { DbAdapter } from '../adapters/db-adapter.js';
+import type { StorageAdapter } from '../adapters/storage-adapter.js';
 import type {
   Actor,
   TagType,
@@ -50,7 +51,20 @@ export interface HandlerDependencies {
   db: DbAdapter;
   auth: AuthAdapter;
   config: TweakTagsConfig;
+  //Optional storage for media uploads. Absent means uploads are turned off.
+  storage?: StorageAdapter;
 }
+
+//Cleans a filename down to safe characters for an object key, and keeps it short.
+const safeFilename = (name: string): string => {
+  const base = name.replace(/^.*[\\/]/, '').replace(/[^a-zA-Z0-9._-]/g, '-');
+
+  return (base || 'file').slice(-100);
+};
+
+//A short unique id for an upload key. Not a secret, just a collision guard, so a
+//plain timestamp and random suffix is enough and avoids any node only imports.
+const uploadId = (): string => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
 
 //A function that takes a normalized request and returns a normalized response.
 export type TweakTagsHandler = (request: TweakTagsRequest) => Promise<TweakTagsResponse>;
@@ -249,6 +263,32 @@ export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
     return { status: 200, body: { ok: true, tag } };
   };
 
+  const handleSignUpload = async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
+    //Any signed in editor may upload, the same as saving content.
+    await requireActor(request);
+
+    if (!deps.storage) {
+      throw badRequest('Media uploads are not set up on this server');
+    }
+
+    const filename = requireString(request.payload, 'filename');
+    const contentType = optionalString(request.payload, 'contentType') ?? 'application/octet-stream';
+
+    //The key is namespaced by tenant, so one site's uploads never mix with
+    //another's, and the browser never chooses where the file lands.
+    const key = `${tenantOf(request)}/${uploadId()}-${safeFilename(filename)}`;
+    const target = await deps.storage.createUploadUrl({ key, contentType });
+
+    return {
+      status: 200,
+      body: {
+        uploadUrl: target.uploadUrl,
+        publicUrl: target.publicUrl,
+        headers: target.headers ?? {},
+      },
+    };
+  };
+
   //Routes each action to the function that handles it.
   return async (request: TweakTagsRequest): Promise<TweakTagsResponse> => {
     try {
@@ -282,6 +322,9 @@ export const createHandler = (deps: HandlerDependencies): TweakTagsHandler => {
 
         case ACTIONS.DELETE_TAG:
           return await handleDeleteTag(request);
+
+        case ACTIONS.SIGN_UPLOAD:
+          return await handleSignUpload(request);
 
         default:
           throw badRequest(`Unknown action "${String(request.action)}"`);

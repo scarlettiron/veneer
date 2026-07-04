@@ -25,6 +25,8 @@ export { ConfirmDialog } from './components/confirm-dialog.js';
 export type { ConfirmDialogProps } from './components/confirm-dialog.js';
 export { Spinner } from './components/spinner.js';
 export { TagEditorModal } from './components/tag-editor-modal.js';
+export { UploadButton } from './components/upload-button.js';
+export type { UploadButtonProps } from './components/upload-button.js';
 export { RichTextEditor } from './components/rich-text-editor.js';
 export type { RichTextEditorProps } from './components/rich-text-editor.js';
 export { RichTextToolbar } from './components/rich-text-toolbar.js';

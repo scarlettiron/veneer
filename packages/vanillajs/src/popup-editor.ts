@@ -9,6 +9,7 @@ import { type ContentRecord, type TagType, type TweakTagsEngine } from '@tweakta
 
 import { clear, el, type Child } from './dom.js';
 import { applyScope, type TweakTagsTheme } from './theme.js';
+import { uploadButton } from './upload.js';
 import type { ConfirmFn } from './confirm.js';
 
 //One tag's editable field in the popup, with a way to read its current value.
@@ -51,10 +52,16 @@ export const mountPopupEditor = (
     let getMedia: () => string | null;
 
     if (type === 'media') {
-      const input = el('input', { class: 'tt-input', type: 'text', placeholder: 'https://...', value: initialMedia });
+      const input = el('input', { class: 'tt-input', type: 'text', placeholder: 'https://... or upload a file', value: initialMedia });
       getBody = () => initialBody;
       getMedia = () => (input.value.trim() === '' ? null : input.value);
       kids.push(el('label', { class: 'tt-label', text: 'Media URL' }), input);
+      const upload = uploadButton(engine, (url) => {
+        input.value = url;
+      });
+      if (upload) {
+        kids.push(upload);
+      }
     } else if (type === 'rich') {
       const editor = el('div', { class: 'tt-input', html: initialBody, style: { minHeight: '4rem' } });
       editor.setAttribute('contenteditable', 'true');

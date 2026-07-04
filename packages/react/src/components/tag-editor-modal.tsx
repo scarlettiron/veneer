@@ -13,6 +13,7 @@ import type { TagType } from '@tweaktags/core';
 import { useTweakTags } from '../hooks/use-tweaktags.js';
 import { Spinner } from './spinner.js';
 import { RichTextEditor } from './rich-text-editor.js';
+import { UploadButton } from './upload-button.js';
 
 //The editable fields for one tag.
 interface Draft {
@@ -304,10 +305,11 @@ export const TagEditorModal = (): ReactElement => {
                       <input
                         style={inputStyle}
                         type="text"
-                        placeholder="https://..."
+                        placeholder="https://... or upload a file"
                         value={draft.mediaUrl}
                         onChange={(event) => setField(tag, 'mediaUrl', event.target.value)}
                       />
+                      <UploadButton onUploaded={(url) => setField(tag, 'mediaUrl', url)} />
                       {draft.mediaUrl ? (
                         <img
                           src={draft.mediaUrl}

@@ -41,6 +41,8 @@ export const ACTIONS = {
   UPDATE_CONTENT: 'updateContent',
   UPDATE_TAG_TYPE: 'updateTagType',
   DELETE_TAG: 'deleteTag',
+  //Asks the server for a presigned url to upload a media file to.
+  SIGN_UPLOAD: 'signUpload',
 } as const;
 
 //Stable error codes the client can branch on.

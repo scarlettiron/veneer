@@ -5,6 +5,13 @@
 //Contributors:
 //Scarlett A. Scott (codescarlett)
 
-export type { DbAdapter, UserStore, RefreshTokenStore } from './db-adapter.js';
-export type { AuthAdapter } from './auth-adapter.js';
-export type { StorageAdapter } from './storage-adapter.js';
+import { defineConfig } from 'tsup';
+
+export default defineConfig({
+  entry: ['src/index.ts'],
+  format: ['esm', 'cjs'],
+  target: 'node16',
+  dts: true,
+  clean: true,
+  sourcemap: true,
+});

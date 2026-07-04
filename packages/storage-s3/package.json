@@ -1,7 +1,7 @@
 {
-  "name": "@tweaktags/server",
+  "name": "@tweaktags/storage-s3",
   "version": "1.0.0",
-  "description": "Framework agnostic Node backend handler for TweakTags",
+  "description": "S3 and S3 compatible media storage adapter for TweakTags, using presigned uploads",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -26,28 +26,11 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@tweaktags/auth-jwt": "workspace:*",
     "@tweaktags/core": "workspace:*",
-    "@tweaktags/db-postgres": "workspace:*"
-  },
-  "peerDependencies": {
-    "@tweaktags/db-mysql": "workspace:*",
-    "@tweaktags/db-sqlite": "workspace:*",
-    "@tweaktags/storage-s3": "workspace:*"
-  },
-  "peerDependenciesMeta": {
-    "@tweaktags/db-mysql": {
-      "optional": true
-    },
-    "@tweaktags/db-sqlite": {
-      "optional": true
-    },
-    "@tweaktags/storage-s3": {
-      "optional": true
-    }
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
     "rimraf": "^6.0.1",
     "tsup": "^8.3.5",
     "typescript": "^5.6.3"

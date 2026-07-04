@@ -650,6 +650,7 @@
         <a href="#databases">Databases</a>
         <a href="#cli">CLI commands</a>
         <a href="#tenants">Multi-tenant</a>
+        <a href="#uploads">Media uploads</a>
         <a href="#security">Security</a>
       </nav>
 
@@ -1210,6 +1211,49 @@ npx tweaktags create-superuser --email you@example.com --password a-strong-passw
             <strong>Good to know.</strong> Users are shared across tenants, so one superuser manages
             every site. Nothing changes on the client. Existing single-site installs keep working as
             the <code>default</code> tenant, and the migration backfills old rows for you.
+          </div>
+        </section>
+
+        <!-- UPLOADS -->
+        <section id="uploads">
+          <h2>Media uploads</h2>
+          <p>
+            A media tag holds an image url. By default you paste it in. Want to upload files instead?
+            Point TweakTags at an S3 bucket, or any S3 compatible store, and editors get an
+            <strong>Upload a file</strong> button next to the url box. Either works.
+          </p>
+          <p>
+            TweakTags never touches the file bytes: the server hands the browser a short lived
+            presigned url, and the file goes <strong>straight from the browser to your bucket</strong>.
+          </p>
+          <div class="code" data-lang="ts">
+            <div class="bar"><span>tweaktags.config.ts</span><button class="copy">Copy</button></div>
+            <pre><span class="tok-c">// npm install @tweaktags/storage-s3</span>
+<span class="tok-k">export default</span> <span class="tok-f">defineConfig</span>({
+  database: { <span class="tok-c">/* … */</span> },
+  auth: { <span class="tok-c">/* … */</span> },
+  storage: {
+    provider: <span class="tok-s">'s3'</span>,
+    bucket: process.env.<span class="tok-f">S3_BUCKET</span>,
+    region: process.env.<span class="tok-f">S3_REGION</span>,
+    accessKeyId: process.env.<span class="tok-f">AWS_ACCESS_KEY_ID</span>,
+    secretAccessKey: process.env.<span class="tok-f">AWS_SECRET_ACCESS_KEY</span>,
+    endpoint: process.env.<span class="tok-f">S3_ENDPOINT</span>,        <span class="tok-c">// R2 / Spaces / MinIO</span>
+    publicBaseUrl: process.env.<span class="tok-f">S3_PUBLIC_BASE_URL</span>, <span class="tok-c">// optional cdn</span>
+  },
+});</pre>
+          </div>
+          <p>
+            Then turn the button on in the client with <code>mediaUpload</code>
+            (<code>&lt;TweakTagsProvider … mediaUpload&gt;</code>, or
+            <code>TweakTags.init({ … mediaUpload: true })</code>). The one S3 adapter covers
+            <strong>S3, Cloudflare R2, DigitalOcean Spaces, Backblaze B2, and MinIO</strong>.
+          </p>
+          <div class="callout">
+            <strong>Two one-time bucket settings.</strong> Allow a <code>PUT</code> from your site's
+            origin (CORS), since the browser uploads directly, and make the uploaded files publicly
+            readable (a public prefix or a cdn with <code>publicBaseUrl</code>). Skip storage
+            entirely and media still works, you just paste urls. Uploads are namespaced per tenant.
           </div>
         </section>
 

@@ -11,6 +11,7 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactElement } f
 import { ROLES, isValidTag, type TagType } from '@tweaktags/core';
 
 import { useTweakTags } from '../hooks/use-tweaktags.js';
+import { UploadButton } from './upload-button.js';
 
 //The top layer, so the bar and its popups sit over the whole page.
 const TOP_LAYER = 2147483647;
@@ -375,6 +376,8 @@ const TagManager = ({ onClose }: { onClose: () => void }): ReactElement => {
         value={newContent}
         onChange={(event) => setNewContent(event.target.value)}
       />
+
+      {newType === 'media' ? <UploadButton onUploaded={(url) => setNewContent(url)} /> : null}
 
       <button style={buttonStyle} type="button" disabled={busy} onClick={() => void handleCreate()}>
         {busy ? 'Creating...' : 'Create tag'}

@@ -9,6 +9,7 @@ import { ROLES, isValidTag, type TagType, type TweakTagsEngine } from '@tweaktag
 
 import { clear, el, type Child } from './dom.js';
 import { applyScope, type TweakTagsTheme } from './theme.js';
+import { uploadButton } from './upload.js';
 import type { ConfirmFn } from './confirm.js';
 
 //The width below which the bar collapses into a mobile menu.
@@ -511,6 +512,17 @@ export const mountEditBar = (
       drawList();
     });
 
+    //An upload button for the starting content, shown only for a media tag.
+    const upload = newType ? uploadButton(engine, (url) => (newContent.value = url)) : null;
+
+    if (upload && newType) {
+      const syncUpload = (): void => {
+        upload.style.display = newType.value === 'media' ? '' : 'none';
+      };
+      syncUpload();
+      newType.addEventListener('change', syncUpload);
+    }
+
     const kids: Child[] = [
       panelHeader('Tags', () => {
         openPanel = null;
@@ -520,6 +532,7 @@ export const mountEditBar = (
       newTag,
       newType,
       newContent,
+      upload,
       createButton,
       createError,
       el('hr', { class: 'tt-divider' }),
